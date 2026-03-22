@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LiveTrack Pro</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        #map { height: 100%; width: 100%; position: absolute; inset: 0; z-index: 1; }
+        .ui-overlay { z-index: 1000; position: relative; pointer-events: none; height: 100vh; }
+        .ui-element { pointer-events: auto; }
+        .custom-label {
+            background: white; border: 2px solid #4f46e5; border-radius: 20px;
+            padding: 2px 10px; font-weight: bold; color: #1e1b4b; font-size: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); white-space: nowrap;
+        }
+        .gps-dot {
+            width: 16px; height: 16px; background: #4f46e5; border: 3px solid white;
+            border-radius: 50%; position: relative; z-index: 2;
+        }
+        .pulse {
+            position: absolute; width: 32px; height: 32px; background: rgba(79, 70, 229, 0.5);
+            border-radius: 50%; animation: ripple 1.5s infinite; left: -8px; top: -8px; z-index: 1;
+        }
+        @keyframes ripple { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+    </style>
+</head>
+<body class="bg-slate-50 overflow-hidden">
+
+    <div id="map"></div>
+
+    <div class="ui-overlay flex flex-col p-4">
+        <div id="setup-panel" class="ui-element bg-white/95 backdrop-blur-md shadow-2xl rounded-3xl p-6 w-full max-w-sm mx-auto mt-4 border border-slate-200 transition-all">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-200">
+                    <i class="fa-solid fa-location-arrow text-xl"></i>
+                </div>
+                <h1 class="text-xl font-black text-slate-800 tracking-tight">LiveTrack Pro</h1>
+            </div>
+
+            <div id="error-display" class="hidden mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl italic"></div>
+
+            <div class="space-y-4">
+                <input type="text" id="user-name" placeholder="Twoja nazwa na mapie" class="w-full bg-slate-100 border-none rounded-xl py-4 px-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-semibold">
+                
+                <button id="btn-start" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-100 transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play"></i> URUCHOM NADAWANIE
+                </button>
+
+                <div class="relative py-2 flex items-center gap-2 text-slate-300 font-bold text-[10px] uppercase tracking-widest">
+                    <div class="flex-grow border-t"></div> LUB ŚLEDŹ <div class="flex-grow border-t"></div>
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="text" id="session-input" placeholder="KOD SESJI" class="w-1/2 bg-slate-100 border-none rounded-xl px-2 text-center font-mono font-bold uppercase outline-none focus:ring-2 focus:ring-emerald-500 tracking-widest">
+                    <button id="btn-observe" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-100 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-eye"></i> ŚLEDŹ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Aktywny -->
+        <div id="active-panel" class="ui-element hidden bg-white/95 backdrop-blur shadow-2xl rounded-2xl p-4 w-full max-w-sm mx-auto mt-4 border border-slate-200">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div id="indicator-bg" class="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md">
+                        <i id="indicator-icon" class="fa-solid"></i>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-black uppercase text-slate-400 tracking-tighter mb-0.5">KOD SESJI</p>
+                        <h2 id="display-id" class="text-xl font-mono font-black text-slate-800 tracking-widest leading-none">------</h2>
+                    </div>
+                </div>
+                <button onclick="location.reload()" class="bg-red-50 text-red-600 w-10 h-10 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+            </div>
+            <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-500">
+                <span id="status-text">Inicjalizacja...</span>
+                <span class="flex items-center gap-1.5 text-green-500 uppercase tracking-tighter">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> AKTYWNY
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'live-track-final';
+
+        // UI
+        const setup = document.getElementById('setup-panel');
+        const active = document.getElementById('active-panel');
+        const errDiv = document.getElementById('error-display');
+        
+        const map = L.map('map', { zoomControl: false }).setView([52.23, 21.01], 6);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+
+        let marker = null;
+        let watchId = null;
+
+        const setUIActive = (mode, id, name) => {
+            setup.classList.add('hidden');
+            active.classList.remove('hidden');
+            document.getElementById('display-id').innerText = id;
+            document.getElementById('status-text').innerText = name;
+            const bg = document.getElementById('indicator-bg');
+            const ico = document.getElementById('indicator-icon');
+            
+            if(mode === 'track') {
+                bg.className += " bg-indigo-600";
+                ico.className += " fa-satellite-dish";
+            } else {
+                bg.className += " bg-emerald-600";
+                ico.className += " fa-eye";
+            }
+        };
+
+        const updateMap = (lat, lng, name) => {
+            const pos = [lat, lng];
+            if (!marker) {
+                const icon = L.divIcon({
+                    className: '',
+                    html: `<div style="position:relative"><div class="pulse"></div><div class="gps-dot"></div><div class="custom-label" style="position:absolute; bottom:25px; left:50%; transform:translateX(-50%)">${name}</div></div>`,
+                    iconSize: [0, 0]
+                });
+                marker = L.marker(pos, { icon }).addTo(map);
+                map.flyTo(pos, 16);
+            } else {
+                marker.setLatLng(pos);
+            }
+        };
+
+        // --- AKCJA: START ---
+        document.getElementById('btn-start').onclick = async () => {
+            errDiv.classList.add('hidden');
+            
+            if (!navigator.geolocation) {
+                errDiv.innerText = "Twoja przeglądarka nie obsługuje GPS.";
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Najpierw logowanie
+            try {
+                await signInAnonymously(auth);
+            } catch(e) {
+                errDiv.innerText = "Błąd połączenia z bazą danych.";
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Próba pobrania pozycji
+            navigator.geolocation.getCurrentPosition(
+                async (p) => {
+                    const sid = Math.random().toString(36).substring(2, 7).toUpperCase();
+                    const name = document.getElementById('user-name').value || "Użytkownik";
+                    
+                    setUIActive('track', sid, "Udostępniasz jako: " + name);
+                    
+                    watchId = navigator.geolocation.watchPosition(async (pos) => {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        updateMap(lat, lng, name);
+                        
+                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sid), {
+                            lat, lng, name, ts: Date.now()
+                        });
+                    }, null, { enableHighAccuracy: true });
+                },
+                (err) => {
+                    let m = "Nie udało się pobrać lokalizacji.";
+                    if(err.code === 1) m = "Zablokowałeś dostęp do GPS. Zmień uprawnienia w pasku adresu.";
+                    if(window.self !== window.top) m += " [UWAGA: Uruchom aplikację w nowym oknie/karcie, nie wewnątrz czatu!]";
+                    errDiv.innerText = m;
+                    errDiv.classList.remove('hidden');
+                }
+            );
+        };
+
+        // --- AKCJA: ŚLEDŹ ---
+        document.getElementById('btn-observe').onclick = async () => {
+            const sid = document.getElementById('session-input').value.toUpperCase();
+            if(!sid) return;
+
+            await signInAnonymously(auth);
+            setUIActive('obs', sid, "Szukanie sygnału...");
+
+            onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sid), (snap) => {
+                if(snap.exists()) {
+                    const d = snap.data();
+                    document.getElementById('status-text').innerText = "Śledzisz: " + d.name;
+                    updateMap(d.lat, d.lng, d.name);
+                    map.panTo([d.lat, d.lng]);
+                }
+            });
+        };
+    </script>
+</body>
+</html>
