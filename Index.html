@@ -90,54 +90,37 @@
         </div>
     </div>
 
+    <!-- Moduły Firebase załadowane przez CDN (dla środowisk bez npm) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ============================================================================
-        // ⚠️ KONFIGURACJA FIREBASE DLA GITHUB PAGES ⚠️
-        // ============================================================================
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+        // Twoja konfiguracja Firebase (bezpośrednio wklejona)
+        const firebaseConfig = {
+            apiKey: "AIzaSyB945gBzXgAoxhBHnSM40XuVwuIhqIvE6g",
+            authDomain: "geopos-bc0a3.firebaseapp.com",
+            projectId: "geopos-bc0a3",
+            storageBucket: "geopos-bc0a3.firebasestorage.app",
+            messagingSenderId: "95000257697",
+            appId: "1:95000257697:web:0fc5c7889c1ec1aef87ce0",
+            measurementId: "G-C09Q6YM8L9"
+        };
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyB945gBzXgAoxhBHnSM40XuVwuIhqIvE6g",
-  authDomain: "geopos-bc0a3.firebaseapp.com",
-  projectId: "geopos-bc0a3",
-  storageBucket: "geopos-bc0a3.firebasestorage.app",
-  messagingSenderId: "95000257697",
-  appId: "1:95000257697:web:0fc5c7889c1ec1aef87ce0",
-  measurementId: "G-C09Q6YM8L9"
-};
+        // Inicjalizacja usług Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appIdStr = 'live-track-github'; // Identyfikator aplikacji dla struktury bazy
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-        // Wykrywanie czy jesteśmy w Canvasie (testowanie) czy na zewnętrznym serwerze (np. GitHub)
-        const isCanvasEnv = typeof __firebase_config !== 'undefined';
-        const firebaseConfig = isCanvasEnv ? JSON.parse(__firebase_config) : fallbackConfig;
-        const appIdStr = typeof __app_id !== 'undefined' ? __app_id : 'live-track-github';
-
-        let app, auth, db;
-        
-        // Inicjuj tylko jeśli podano prawidłowy klucz (zapobiega błędom konsoli przed konfiguracją)
-        if (firebaseConfig.apiKey !== "TWÓJ_API_KEY") {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-        }
-
-        // UI
+        // UI Elementy
         const setup = document.getElementById('setup-panel');
         const active = document.getElementById('active-panel');
         const errDiv = document.getElementById('error-display');
         
+        // Inicjalizacja Mapy (Leaflet)
         const map = L.map('map', { zoomControl: false }).setView([52.23, 21.01], 6);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
@@ -176,20 +159,9 @@ const analytics = getAnalytics(app);
             }
         };
 
-        const checkConfig = () => {
-            if (firebaseConfig.apiKey === "TWÓJ_API_KEY") {
-                errDiv.innerHTML = "<strong>Brak konfiguracji bazy danych!</strong><br/>Otwórz ten plik <code>index.html</code> w edytorze kodu i podmień zmienną <code>fallbackConfig</code> na klucze ze swojego konta Firebase.";
-                errDiv.classList.remove('hidden');
-                return false;
-            }
-            return true;
-        };
-
-        // --- AKCJA: START ---
+        // --- AKCJA: NADAWANIE ---
         document.getElementById('btn-start').onclick = async () => {
             errDiv.classList.add('hidden');
-            
-            if (!checkConfig()) return;
 
             if (!navigator.geolocation) {
                 errDiv.innerText = "Twoja przeglądarka nie obsługuje GPS.";
@@ -197,17 +169,17 @@ const analytics = getAnalytics(app);
                 return;
             }
 
-            // Najpierw logowanie
+            // Logowanie anonimowe
             try {
                 await signInAnonymously(auth);
             } catch(e) {
-                errDiv.innerText = "Błąd połączenia z bazą danych Firebase. Upewnij się, że włączyłeś Logowanie Anonimowe w Firebase Console.";
+                errDiv.innerText = "Błąd autoryzacji Firebase. Upewnij się, że włączyłeś 'Logowanie anonimowe' (Anonymous) w konsoli Firebase Authentication!";
                 errDiv.classList.remove('hidden');
                 console.error(e);
                 return;
             }
 
-            // Próba pobrania pozycji
+            // Pobieranie pozycji GPS
             navigator.geolocation.getCurrentPosition(
                 async (p) => {
                     const sid = Math.random().toString(36).substring(2, 7).toUpperCase();
@@ -220,25 +192,28 @@ const analytics = getAnalytics(app);
                         const lng = pos.coords.longitude;
                         updateMap(lat, lng, name);
                         
-                        await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'sessions', sid), {
-                            lat, lng, name, ts: Date.now()
-                        });
+                        // Zapis do bazy danych Firestore
+                        try {
+                            await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'sessions', sid), {
+                                lat, lng, name, ts: Date.now()
+                            });
+                        } catch (error) {
+                            console.error("Błąd zapisu:", error);
+                            // Cichy błąd zapisu zasygnalizowany w konsoli
+                        }
                     }, null, { enableHighAccuracy: true });
                 },
                 (err) => {
                     let m = "Nie udało się pobrać lokalizacji.";
                     if(err.code === 1) m = "Zablokowałeś dostęp do GPS. Zmień uprawnienia w pasku adresu przeglądarki.";
-                    if(window.self !== window.top) m += " [UWAGA: Na GitHubie musisz otworzyć stronę pod adresem z certyfikatem HTTPS!]";
                     errDiv.innerText = m;
                     errDiv.classList.remove('hidden');
                 }
             );
         };
 
-        // --- AKCJA: ŚLEDŹ ---
+        // --- AKCJA: ŚLEDZENIE ---
         document.getElementById('btn-observe').onclick = async () => {
-            if (!checkConfig()) return;
-
             const sid = document.getElementById('session-input').value.toUpperCase();
             if(!sid) return;
 
@@ -252,16 +227,19 @@ const analytics = getAnalytics(app);
 
             setUIActive('obs', sid, "Szukanie sygnału...");
 
+            // Nasłuchiwanie zmian w bazie (odbieranie sygnału)
             onSnapshot(doc(db, 'artifacts', appIdStr, 'public', 'data', 'sessions', sid), (snap) => {
                 if(snap.exists()) {
                     const d = snap.data();
                     document.getElementById('status-text').innerText = "Śledzisz: " + d.name;
                     updateMap(d.lat, d.lng, d.name);
                     map.panTo([d.lat, d.lng]);
+                } else {
+                    document.getElementById('status-text').innerText = "Oczekiwanie na sygnał GPS...";
                 }
             }, (error) => {
                 console.error("Błąd nasłuchiwania:", error);
-                errDiv.innerText = "Błąd połączenia z serwerem. Sprawdź bazę Firebase.";
+                errDiv.innerText = "Błąd połączenia. Upewnij się, że reguły Firestore pozwalają na odczyt!";
                 errDiv.classList.remove('hidden');
             });
         };
