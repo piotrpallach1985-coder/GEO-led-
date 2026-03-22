@@ -98,16 +98,27 @@
         // ============================================================================
         // ⚠️ KONFIGURACJA FIREBASE DLA GITHUB PAGES ⚠️
         // ============================================================================
-        const fallbackConfig = {
-            apiKey: "AIzaSyB945gBzXgAoxhBHnSM40XuVwuIhqIvE6g",
-            authDomain: "geopos-bc0a3.firebaseapp.com",
-            projectId: "geopos-bc0a3",
-            storageBucket: "geopos-bc0a3.firebasestorage.app",
-            messagingSenderId: "95000257697",
-            appId: "1:95000257697:web:0fc5c7889c1ec1aef87ce0",
-            measurementId: "G-C09Q6YM8L9" // <-- NAPRAWIONE (Wcześniej było tu ponownie "appId")
-        };
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyB945gBzXgAoxhBHnSM40XuVwuIhqIvE6g",
+  authDomain: "geopos-bc0a3.firebaseapp.com",
+  projectId: "geopos-bc0a3",
+  storageBucket: "geopos-bc0a3.firebasestorage.app",
+  messagingSenderId: "95000257697",
+  appId: "1:95000257697:web:0fc5c7889c1ec1aef87ce0",
+  measurementId: "G-C09Q6YM8L9"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
         // Wykrywanie czy jesteśmy w Canvasie (testowanie) czy na zewnętrznym serwerze (np. GitHub)
         const isCanvasEnv = typeof __firebase_config !== 'undefined';
         const firebaseConfig = isCanvasEnv ? JSON.parse(__firebase_config) : fallbackConfig;
