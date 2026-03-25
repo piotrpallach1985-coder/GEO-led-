@@ -2,1114 +2,270 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kreator Schematów - Klon Visio</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lean Six Sigma Mapping | System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Usunięto touch-action: none; z body, by pozwolić na natywne przewijanie planszy */
-        body { margin: 0; overflow: hidden; background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
-        .canvas-grid {
-            background-color: #ffffff;
-            background-image: radial-gradient(#cbd5e1 1px, transparent 0);
-            background-size: 10px 10px;
-            background-position: -5px -5px;
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #f8fafc;
+            overflow: hidden;
         }
 
-        .shape-node {
+        .sidebar {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 280px;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar.collapsed .nav-text,
+        .sidebar.collapsed .logo-text,
+        .sidebar.collapsed .lang-container,
+        .sidebar.collapsed .footer-text {
+            display: none;
+        }
+
+        .nav-link {
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .nav-link.active {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .nav-link.active::before {
+            content: '';
             position: absolute;
-            font-size: 14px;
-            color: #1e293b;
-            cursor: move;
-            user-select: none;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: box-shadow 0.2s, outline 0.1s;
-            outline: 2px solid transparent;
-            min-width: 40px;
-            min-height: 40px;
-            background-color: white;
-            touch-action: none; /* Kształty blokują przewijanie strony w momencie ich przeciągania */
+            left: 0;
+            top: 20%;
+            height: 60%;
+            width: 4px;
+            background: #059669;
+            border-radius: 0 4px 4px 0;
         }
 
-        .shape-node.selected {
-            outline: 2px solid #3b82f6;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            z-index: 50 !important;
+        .main-content {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .shape-process { background-color: #eff6ff; border: 2px solid #3b82f6; border-radius: 4px; }
-        .shape-terminal { background-color: #f0fdf4; border: 2px solid #22c55e; border-radius: 999px; }
-        
-        .shape-decision { background-color: transparent; border: none; box-shadow: none; }
-        .shape-decision.selected { outline: 2px dashed #3b82f6; }
-
-        .shape-data { background-color: transparent; border: none; box-shadow: none; }
-        .shape-data.selected { outline: 2px dashed #3b82f6; }
-
-        .shape-text { background-color: transparent; border: 1px dashed transparent; box-shadow: none; }
-        .shape-text.selected { border: 1px dashed #94a3b8; box-shadow: none; outline: none; z-index: 50 !important; }
-
-        .shape-desc { background-color: #ffffff; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .shape-desc.selected { border: 1px solid #3b82f6; outline: 1px solid #3b82f6; }
-
-        /* WYŚRODKOWANIE DLA EKRANÓW I WYDRUKÓW PDF/PNG */
-        .node-text-container {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: table; z-index: 10; pointer-events: none;
+        .bg-grid {
+            background-image: radial-gradient(#bbf7d0 1px, transparent 0);
+            background-size: 30px 30px;
         }
-        .node-text-wrapper {
-            display: table-cell; vertical-align: middle; text-align: center; padding: 6px; pointer-events: auto;
+
+        iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
         }
-        .node-text { 
-            width: 100%; outline: none; word-wrap: break-word; line-height: 1.2; 
-            font-weight: 500; min-height: 1em; user-select: text; -webkit-user-select: text;
-        }
-        .node-text:empty:before { content: "Tekst..."; color: #94a3b8; }
-
-        .shape-desc .node-text-wrapper { vertical-align: top; text-align: left; padding: 10px; }
-
-        /* Większe kotwice - łatwiejsze celowanie palcem na telefonie */
-        .anchor-point {
-            position: absolute; width: 24px; height: 24px; background-color: #fff; border: 2px solid #3b82f6; border-radius: 50%;
-            display: none; cursor: crosshair; z-index: 100; touch-action: none;
-        }
-        .shape-node.selected .anchor-point { display: block; }
-        
-        .anchor-top { top: -12px; left: calc(50% - 12px); }
-        .anchor-bottom { bottom: -12px; left: calc(50% - 12px); }
-        .anchor-left { left: -12px; top: calc(50% - 12px); }
-        .anchor-right { right: -12px; top: calc(50% - 12px); }
-
-        .edge-path { fill: none; stroke: #64748b; stroke-width: 2.5; transition: stroke 0.2s; pointer-events: stroke; cursor: pointer; touch-action: none; }
-        .edge-path.selected { stroke: #3b82f6 !important; stroke-width: 4; } 
-        .edge-path.ok { stroke: #22c55e !important; }
-        .edge-path.nok { stroke: #ef4444 !important; }
-        
-        .edge-path.dashed { stroke-dasharray: 6, 6; }
-        .edge-path.dotted { stroke-dasharray: 2, 5; }
-
-        .edge-label {
-            position: absolute; padding: 2px 6px; background-color: white; border: 1px solid #cbd5e1; border-radius: 6px;
-            font-size: 11px; font-weight: 800; transform: translate(-50%, -50%); z-index: 20; pointer-events: auto; cursor: pointer;
-        }
-        .edge-label.ok { color: #16a34a; border-color: #bbf7d0; background-color: #f0fdf4; }
-        .edge-label.nok { color: #dc2626; border-color: #fecaca; background-color: #fef2f2; }
-
-        .instruction-collapsed { height: 0 !important; opacity: 0; visibility: hidden; padding-top: 0 !important; padding-bottom: 0 !important; margin: 0 !important; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="flex flex-col h-[100dvh] select-none">
+<body class="bg-grid flex h-screen">
 
-    <header class="bg-white border-b border-slate-200 h-14 flex items-center justify-between px-2 sm:px-4 z-20 shadow-sm shrink-0 w-full overflow-hidden">
-        <div class="flex items-center gap-2 text-indigo-700 shrink-0 relative mr-2">
-            <i data-lucide="network" class="w-5 h-5 sm:w-6 sm:h-6"></i>
-            <!-- Krótszy input na mobile, żeby nie wypychał ikon -->
-            <input type="text" id="project-title" value="Nowy Schemat" class="font-bold text-sm sm:text-lg bg-transparent border-b-2 border-transparent hover:border-indigo-200 focus:border-indigo-500 outline-none w-24 sm:w-64 transition-colors text-ellipsis">
-            <span id="autosave-indicator" class="hidden absolute -bottom-3.5 left-8 text-[10px] font-bold text-green-600 whitespace-nowrap">Zapisano pomyślnie!</span>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar bg-white border-r border-emerald-100 flex flex-col z-50">
+        <!-- Logo Area -->
+        <div class="p-6 flex items-center gap-4 border-b border-emerald-50 h-20">
+            <div onclick="resetToWelcome()" class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-emerald-200 cursor-pointer hover:scale-105 transition-transform">
+                <i class="fas fa-layer-group text-white"></i>
+            </div>
+            <div class="logo-text overflow-hidden">
+                <h1 class="font-extrabold text-slate-800 leading-tight text-sm">Lean Six Sigma<br><span class="text-emerald-600">Mapping</span></h1>
+            </div>
         </div>
+
+        <!-- Language Switcher in Menu -->
+        <div class="px-6 py-4 lang-container">
+            <div class="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+                <button onclick="setLanguage('pl')" id="lang-pl" class="flex-1 px-3 py-1 rounded-md text-xs font-bold transition-all bg-white text-emerald-600 shadow-sm">PL</button>
+                <button onclick="setLanguage('en')" id="lang-en" class="flex-1 px-3 py-1 rounded-md text-xs font-bold transition-all text-slate-400 hover:text-slate-600">EN</button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-grow p-4 space-y-2">
+            <p class="nav-text text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 mb-2" id="label-projects">Projekty</p>
+
+            <button onclick="switchView('sipoc')" class="nav-link w-full flex items-center gap-4 p-3 rounded-xl text-slate-500 hover:bg-emerald-50 hover:text-emerald-700" id="btn-sipoc">
+                <i class="fas fa-project-diagram w-6 shrink-0"></i>
+                <span class="nav-text font-bold text-sm" id="nav-sipoc">SIPOC Generator</span>
+            </button>
+
+            <button onclick="switchView('flowchart')" class="nav-link w-full flex items-center gap-4 p-3 rounded-xl text-slate-500 hover:bg-emerald-50 hover:text-emerald-700" id="btn-flowchart">
+                <i class="fas fa-sitemap w-6 shrink-0"></i>
+                <span class="nav-text font-bold text-sm" id="nav-flowchart">Flowchart Maker</span>
+            </button>
+
+            <button onclick="switchView('vsm')" class="nav-link w-full flex items-center gap-4 p-3 rounded-xl text-slate-500 hover:bg-emerald-50 hover:text-emerald-700" id="btn-vsm">
+                <i class="fas fa-chart-line w-6 shrink-0"></i>
+                <span class="nav-text font-bold text-sm" id="nav-vsm">VSM Analysis</span>
+            </button>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-emerald-50">
+            <button onclick="toggleSidebar()" class="w-full flex items-center gap-4 p-3 rounded-xl text-slate-400 hover:bg-slate-50 transition-colors">
+                <i id="toggle-icon" class="fas fa-angle-double-left w-6 shrink-0"></i>
+                <span class="nav-text font-bold text-sm" id="label-collapse">Zwiń menu</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content flex-grow flex flex-col relative overflow-hidden">
         
-        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 overflow-x-auto hide-scrollbar pr-1">
-            <!-- Zoom -->
-            <div class="flex items-center bg-slate-50 p-1 rounded-lg border border-slate-200 shadow-inner shrink-0">
-                <button id="btn-zoom-out" class="p-1 hover:bg-white rounded text-slate-600 transition-all"><i data-lucide="zoom-out" class="w-3 h-3 sm:w-4 sm:h-4"></i></button>
-                <span id="zoom-level" class="text-[10px] sm:text-[11px] font-bold text-slate-600 w-8 sm:w-10 text-center">100%</span>
-                <button id="btn-zoom-in" class="p-1 hover:bg-white rounded text-slate-600 transition-all"><i data-lucide="zoom-in" class="w-3 h-3 sm:w-4 sm:h-4"></i></button>
+        <!-- Content Container -->
+        <div class="flex-grow relative overflow-hidden">
+            
+            <!-- Welcome Screen -->
+            <div id="view-welcome-content" class="absolute inset-0 p-8 overflow-y-auto">
+                <div class="max-w-6xl mx-auto py-12">
+                    <div class="text-center mb-16">
+                        <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
+                            <span id="welcome-title">Witaj w</span> <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-green-600">Workspace</span>
+                        </h1>
+                        <p class="text-slate-500 max-w-xl mx-auto font-medium" id="welcome-desc">Wybierz narzędzie z menu po lewej stronie, aby rozpocząć optymalizację procesu.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <button onclick="switchView('sipoc')" class="bg-white p-8 rounded-[2rem] border border-emerald-50 shadow-lg hover:shadow-emerald-900/10 hover:-translate-y-2 transition-all text-left group">
+                            <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-emerald-200">
+                                <i class="fas fa-project-diagram text-white"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2">SIPOC</h3>
+                            <p class="text-xs text-slate-500 leading-relaxed mb-6" id="desc-sipoc">Definiowanie granic procesu i kluczowych interesariuszy.</p>
+                            <span class="text-emerald-600 font-bold text-[10px] uppercase tracking-wider group-hover:underline" id="link-sipoc">Uruchom moduł</span>
+                        </button>
+
+                        <button onclick="switchView('flowchart')" class="bg-white p-8 rounded-[2rem] border border-emerald-50 shadow-lg hover:shadow-green-900/10 hover:-translate-y-2 transition-all text-left group">
+                            <div class="w-12 h-12 bg-green-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-green-200">
+                                <i class="fas fa-sitemap text-white"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2">Flowchart</h3>
+                            <p class="text-xs text-slate-500 leading-relaxed mb-6" id="desc-flowchart">Mapowanie logiki i decyzji operacyjnych krok po kroku.</p>
+                            <span class="text-green-700 font-bold text-[10px] uppercase tracking-wider group-hover:underline" id="link-flowchart">Uruchom moduł</span>
+                        </button>
+
+                        <button onclick="switchView('vsm')" class="bg-white p-8 rounded-[2rem] border border-emerald-50 shadow-lg hover:shadow-teal-900/10 hover:-translate-y-2 transition-all text-left group">
+                            <div class="w-12 h-12 bg-teal-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-teal-200">
+                                <i class="fas fa-chart-line text-white"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2">VSM</h3>
+                            <p class="text-xs text-slate-500 leading-relaxed mb-6" id="desc-vsm">Analiza strumienia wartości i identyfikacja marnotrawstwa.</p>
+                            <span class="text-teal-700 font-bold text-[10px] uppercase tracking-wider group-hover:underline" id="link-vsm">Uruchom moduł</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <!-- Akcje Kopiuj/Usuń -->
-            <button id="btn-duplicate" class="p-1.5 sm:px-2 sm:py-1.5 text-xs sm:text-sm font-bold bg-green-100 text-green-700 hover:bg-green-200 border border-green-300 rounded flex items-center gap-1 shadow-sm transition-all shrink-0" title="Kopiuj zaznaczony (Ctrl+C/V)">
-                <i data-lucide="copy" class="w-4 h-4"></i> <span class="hidden sm:inline">Kopiuj</span>
-            </button>
-            <button id="btn-delete" class="p-1.5 sm:px-2 sm:py-1.5 text-xs sm:text-sm font-bold bg-red-100 text-red-700 hover:bg-red-200 border border-red-300 rounded flex items-center gap-1 shadow-sm transition-all shrink-0" title="Usuń element">
-                <i data-lucide="trash-2" class="w-4 h-4"></i> <span class="hidden sm:inline">Usuń</span>
-            </button>
-            
-            <div class="w-px h-6 bg-slate-200 mx-0.5 shrink-0"></div>
-            
-            <!-- Akcje Zapisz/Wczytaj -->
-            <button id="btn-load" class="p-1.5 sm:p-2 bg-slate-100 rounded border border-slate-300 hover:bg-slate-200 shrink-0" title="Wczytaj projekt"><i data-lucide="folder-open" class="w-4 h-4"></i></button>
-            <button id="btn-save" class="p-1.5 sm:p-2 bg-slate-100 rounded border border-slate-300 hover:bg-slate-200 shrink-0" title="Zapisz projekt (Nadpisz)"><i data-lucide="save" class="w-4 h-4"></i></button>
-            <button id="btn-save-as" class="p-1.5 sm:p-2 bg-slate-100 rounded border border-slate-300 hover:bg-slate-200 shrink-0" title="Zapisz jako..."><i data-lucide="download" class="w-4 h-4"></i></button>
-            
-            <div class="w-px h-6 bg-slate-200 mx-0.5 shrink-0"></div>
-            
-            <!-- Eksporty -->
-            <button id="btn-export-png" class="px-2 py-1.5 sm:px-3 text-xs sm:text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded shadow-sm shrink-0">PNG</button>
-            <button id="btn-export-pdf" class="px-2 py-1.5 sm:px-3 text-xs sm:text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded shadow-sm shrink-0">PDF</button>
+            <!-- Iframe Container -->
+            <div id="iframe-container" class="absolute inset-0 hidden">
+                <iframe id="app-iframe" src="about:blank"></iframe>
+            </div>
+
         </div>
-    </header>
-
-    <div class="flex flex-col sm:flex-row flex-1 overflow-hidden relative">
-        <!-- Sidebar - Pasek boczny responsywny -->
-        <aside class="w-full sm:w-64 bg-slate-50 border-b sm:border-r border-slate-200 flex flex-col z-10 shadow-sm shrink-0">
-            <div class="p-3 sm:p-4 border-b border-slate-200 bg-slate-100 flex justify-between items-center hidden sm:flex">
-                <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Biblioteka</h2>
-                <button id="btn-clear" class="text-slate-400 hover:text-red-500" title="Wyczyść planszę"><i data-lucide="file-x" class="w-4 h-4"></i></button>
-            </div>
-            
-            <!-- Na mobilnych: poziomy scroll, na PC: pionowy -->
-            <div class="p-2 sm:p-4 flex flex-row sm:flex-col gap-3 sm:gap-4 overflow-x-auto sm:overflow-y-auto flex-none sm:flex-1 hide-scrollbar items-center sm:items-stretch bg-slate-50">
-                <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2" draggable="true" ondragstart="handleDragStart(event, 'terminal')" onclick="addShapeCenter('terminal')">
-                    <div class="w-20 h-8 sm:w-24 sm:h-10 border-2 border-green-500 rounded-full flex items-center justify-center text-[9px] sm:text-[10px] font-bold bg-green-50">Start/Koniec</div>
-                </div>
-                <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2" draggable="true" ondragstart="handleDragStart(event, 'process')" onclick="addShapeCenter('process')">
-                    <div class="w-20 h-10 sm:w-24 sm:h-14 border-2 border-blue-500 rounded flex items-center justify-center text-[9px] sm:text-[10px] font-bold bg-blue-50">Proces</div>
-                </div>
-                <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2" draggable="true" ondragstart="handleDragStart(event, 'decision')" onclick="addShapeCenter('decision')">
-                    <div class="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center text-[8px] sm:text-[10px] font-bold relative">
-                        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,2 98,50 50,98 2,50" fill="#fefce8" stroke="#eab308" stroke-width="2" /></svg>
-                        <span class="z-10">Decyzja</span>
-                    </div>
-                </div>
-                <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2" draggable="true" ondragstart="handleDragStart(event, 'data')" onclick="addShapeCenter('data')">
-                    <div class="w-20 h-10 sm:w-24 sm:h-14 flex items-center justify-center text-[9px] sm:text-[10px] font-bold relative">
-                        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="15,2 98,2 85,98 2,98" fill="#faf5ff" stroke="#a855f7" stroke-width="2" /></svg>
-                        <span class="z-10">We/Wy</span>
-                    </div>
-                </div>
-                <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2" draggable="true" ondragstart="handleDragStart(event, 'text')" onclick="addShapeCenter('text')">
-                    <div class="w-16 h-8 sm:w-20 sm:h-8 border border-dashed border-slate-400 rounded flex items-center justify-center text-[9px] sm:text-[10px] font-bold bg-transparent">Tekst</div>
-                </div>
-                <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2" draggable="true" ondragstart="handleDragStart(event, 'desc')" onclick="addShapeCenter('desc')">
-                    <div class="w-24 h-10 sm:w-full border border-slate-300 bg-white rounded p-1 sm:p-2 text-[8px] sm:text-[9px] text-slate-400 border-dashed flex items-start">Pole opisowe...</div>
-                </div>
-            </div>
-
-            <!-- Instrukcja Obsługi (Kompaktowa na telefonach) -->
-            <div class="border-t border-slate-200 bg-white">
-                <button id="btn-toggle-instructions" class="w-full p-2 sm:p-3 flex items-center justify-between text-slate-600 hover:bg-slate-50 transition-colors">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="help-circle" class="w-4 h-4"></i>
-                        <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider">Instrukcja</span>
-                    </div>
-                    <i id="instruction-arrow" data-lucide="chevron-down" class="w-4 h-4 transition-transform"></i>
-                </button>
-                
-                <div id="instruction-panel" class="px-3 sm:px-4 pb-3 sm:pb-4 text-[10px] sm:text-[11px] text-slate-500 space-y-1.5 sm:space-y-2 leading-relaxed overflow-hidden transition-all duration-300 instruction-collapsed">
-                    <p><b>📱 Telefony:</b> Dotknij figury w menu, aby dodać ją na środek ekranu.</p>
-                    <p><b>🔍 Zoom:</b> Uszczypnij dwoma palcami ekran lub użyj przycisków.</p>
-                    <p><b>🔗 Łączenie:</b> Przeciągnij linię z niebieskiej kropki do innej figury.</p>
-                    <p><b>🧠 Trasy:</b> Złamane linie automatycznie omijają inne kafelki.</p>
-                    <p><b>📝 Tekst:</b> Podwójny klik (lub tap), aby edytować.</p>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Canvas Area -->
-        <main class="flex-1 relative overflow-auto bg-slate-200" id="workspace" style="touch-action: pan-x pan-y;">
-            <div id="canvas-board" class="canvas-grid relative w-[2500px] h-[2500px] bg-white shadow-xl m-4 sm:m-8" style="transform-origin: 0 0;" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
-                <svg id="edges-layer" class="absolute inset-0 w-full h-full pointer-events-none z-0">
-                    <defs>
-                        <marker id="arrowhead" markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="12" refX="0" refY="6" orient="auto"><polygon points="0 0, 16 6, 0 12" fill="#64748b" /></marker>
-                        <marker id="arrowhead-selected" markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="12" refX="0" refY="6" orient="auto"><polygon points="0 0, 16 6, 0 12" fill="#3b82f6" /></marker>
-                        <marker id="arrowhead-ok" markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="12" refX="0" refY="6" orient="auto"><polygon points="0 0, 16 6, 0 12" fill="#22c55e" /></marker>
-                        <marker id="arrowhead-nok" markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="12" refX="0" refY="6" orient="auto"><polygon points="0 0, 16 6, 0 12" fill="#ef4444" /></marker>
-                    </defs>
-                    <path id="temp-edge" class="edge-path hidden" stroke-dasharray="5,5" marker-end="url(#arrowhead)"></path>
-                    <circle id="edge-handle-from" class="hidden" r="8" fill="#fff" stroke="#3b82f6" stroke-width="2" cursor="pointer" pointer-events="all"></circle>
-                    <circle id="edge-handle-to" class="hidden" r="8" fill="#fff" stroke="#3b82f6" stroke-width="2" cursor="pointer" pointer-events="all"></circle>
-                </svg>
-                <div id="nodes-layer" class="absolute inset-0 w-full h-full pointer-events-none z-10"></div>
-                <div id="labels-layer" class="absolute inset-0 w-full h-full pointer-events-none z-20"></div>
-
-                <!-- Floating Toolbar: Z pełnymi opcjami trasy i przerywania -->
-                <div id="edge-toolbar" class="hidden absolute bg-white shadow-xl border border-slate-200 rounded-xl p-1.5 flex gap-1.5 z-50 transform -translate-x-1/2 -translate-y-[120%] pointer-events-auto items-center min-w-max">
-                    <button id="tb-route" class="p-1.5 sm:p-2 text-slate-600 hover:text-indigo-600 rounded-lg" title="Zmień trasę (Złamana / Płynna)"><i data-lucide="git-merge"></i></button>
-                    <button id="tb-dash" class="p-1.5 sm:p-2 text-slate-600 hover:text-indigo-600 rounded-lg" title="Zmień styl przerywania"><i data-lucide="minus"></i></button>
-                    <div class="w-px h-6 sm:h-8 bg-slate-200 mx-1"></div>
-                    <button id="tb-label-ok" class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-bold text-green-600 hover:bg-green-50 rounded-lg">OK</button>
-                    <button id="tb-label-nok" class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-bold text-red-600 hover:bg-red-50 border border-transparent rounded-lg">NOK</button>
-                    <button id="tb-label-clear" class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-bold text-slate-400 hover:bg-slate-100 rounded-lg">Brak</button>
-                    <div class="w-px h-6 sm:h-8 bg-slate-200 mx-1"></div>
-                    <button id="tb-delete-edge" class="p-1.5 sm:p-2 text-red-500 hover:bg-red-50 rounded-lg" title="Usuń linię"><i data-lucide="trash-2"></i></button>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <footer class="bg-slate-100 border-t border-slate-200 h-6 sm:h-8 flex items-center justify-center text-[9px] sm:text-[10px] font-bold text-slate-400 shrink-0 z-20 shadow-inner">
-        Design by Piotr Pallach &copy; 2026
-    </footer>
-
-    <!-- Export Modal -->
-    <div id="export-modal" class="hidden fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[200] p-4">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-96 max-w-full">
-            <h2 class="text-lg font-bold mb-4" id="export-modal-title">Konfiguracja Zapisu</h2>
-            <div class="space-y-4">
-                <select id="export-format" class="w-full border rounded-lg p-2 text-sm outline-none">
-                    <option value="auto">Dopasuj do diagramu</option>
-                    <option value="a4">Standardowe A4</option>
-                    <option value="a3">Duże A3</option>
-                </select>
-                <select id="export-orientation" class="w-full border rounded-lg p-2 text-sm outline-none" disabled>
-                    <option value="p">Pionowa</option>
-                    <option value="l">Pozioma</option>
-                </select>
-            </div>
-            <div class="mt-6 flex justify-end gap-2">
-                <button id="btn-export-cancel" class="px-4 py-2 text-sm font-medium hover:bg-slate-100 rounded-lg transition-colors">Anuluj</button>
-                <button id="btn-export-confirm" class="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Generuj</button>
-            </div>
-        </div>
-    </div>
-
-    <input type="file" id="file-input" class="hidden" accept=".json">
+    </main>
 
     <script>
-        // --- DEKLARACJE GLOBALNE ---
-        const workspace = document.getElementById('workspace');
-        const canvasBoard = document.getElementById('canvas-board');
-        const nodesLayer = document.getElementById('nodes-layer');
-        const edgesLayer = document.getElementById('edges-layer');
-        const labelsLayer = document.getElementById('labels-layer');
-        const tempEdge = document.getElementById('temp-edge');
-        const edgeToolbar = document.getElementById('edge-toolbar');
-        const handleFrom = document.getElementById('edge-handle-from');
-        const handleTo = document.getElementById('edge-handle-to');
-        const projectTitleInput = document.getElementById('project-title');
-        const zoomLevelEl = document.getElementById('zoom-level');
-        const fileInput = document.getElementById('file-input');
-        const exportModal = document.getElementById('export-modal');
-        const exportFormat = document.getElementById('export-format');
-        const exportOrientation = document.getElementById('export-orientation');
+        const sidebar = document.getElementById('sidebar');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const welcomeContent = document.getElementById('view-welcome-content');
+        const iframeContainer = document.getElementById('iframe-container');
+        const appIframe = document.getElementById('app-iframe');
 
-        let fileHandles = { json: null, png: null, pdf: null };
-
-        const state = {
-            nodes: [], edges: [], zoom: 1, 
-            selectedNodeId: null, selectedEdgeId: null,
-            clipboardNode: null, isDraggingNode: false, draggedNodeId: null, dragOffsetX: 0, dragOffsetY: 0,
-            isConnecting: false, connectFromNode: null, connectFromAnchor: null,
-            isReconnecting: false, reconnectEnd: null
-        };
-
-        const GRID_SIZE = 10;
-        const SHAPE_DEFAULTS = {
-            'terminal': { w: 120, h: 50, text: 'Start / Koniec' },
-            'process': { w: 140, h: 80, text: 'Zadanie' },
-            'decision': { w: 120, h: 120, text: 'Warunek?' },
-            'data': { w: 140, h: 80, text: 'Dane wejściowe' },
-            'text': { w: 80, h: 30, text: 'Tekst' },
-            'desc': { w: 200, h: 100, text: 'Opis lub legenda...' }
-        };
-        const ANCHORS = ['top', 'right', 'bottom', 'left'];
-        let isEditingText = false;
-        let lastTapTime = 0;
-
-        function generateId() { return 'id_' + Math.random().toString(36).substr(2, 9); }
-
-        // --- OBSŁUGA ZOOM (PC + PINCH MOBILE) ---
-        let initialPinchDist = null;
-        let initialPinchZoom = 1;
-
-        function setZoom(val) {
-            state.zoom = Math.max(0.2, Math.min(val, 3));
-            canvasBoard.style.transform = `scale(${state.zoom})`;
-            zoomLevelEl.innerText = Math.round(state.zoom * 100) + '%';
-        }
-        document.getElementById('btn-zoom-in').onclick = () => setZoom(state.zoom + 0.1);
-        document.getElementById('btn-zoom-out').onclick = () => setZoom(state.zoom - 0.1);
-
-        workspace.addEventListener('wheel', (e) => {
-            if (e.ctrlKey) { e.preventDefault(); setZoom(state.zoom * (e.deltaY > 0 ? 0.9 : 1.1)); }
-        }, { passive: false });
-
-        workspace.addEventListener('touchstart', (e) => {
-            if (e.touches && e.touches.length === 2) {
-                initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                initialPinchZoom = state.zoom;
+        const i18n = {
+            pl: {
+                projects: "Projekty",
+                collapse: "Zwiń menu",
+                welcome: "Witaj w",
+                welcomeDesc: "Wybierz narzędzie z menu po lewej stronie, aby rozpocząć optymalizację procesu.",
+                run: "Uruchom moduł",
+                sipocTitle: "SIPOC Generator",
+                flowchartTitle: "Flowchart Maker",
+                vsmTitle: "VSM Analysis",
+                sipocDesc: "Definiowanie granic procesu i kluczowych interesariuszy.",
+                flowchartDesc: "Mapowanie logiki i decyzji operacyjnych krok po kroku.",
+                vsmDesc: "Analiza strumienia wartości i identyfikacja marnotrawstwa."
+            },
+            en: {
+                projects: "Projects",
+                collapse: "Collapse menu",
+                welcome: "Welcome to",
+                welcomeDesc: "Select a tool from the menu on the left to start process optimization.",
+                run: "Launch module",
+                sipocTitle: "SIPOC Generator",
+                flowchartTitle: "Flowchart Maker",
+                vsmTitle: "VSM Analysis",
+                sipocDesc: "Defining process boundaries and key stakeholders.",
+                flowchartDesc: "Step-by-step mapping of operational logic and decisions.",
+                vsmDesc: "Value stream analysis and waste identification."
             }
-        }, {passive: false});
+        };
 
-        // --- WSPÓŁRZĘDNE ---
-        function getCoords(e) {
-            const rect = canvasBoard.getBoundingClientRect();
-            let clientX, clientY;
-            if (e.touches && e.touches.length > 0) {
-                clientX = e.touches[0].clientX; clientY = e.touches[0].clientY;
-            } else if (e.changedTouches && e.changedTouches.length > 0) {
-                clientX = e.changedTouches[0].clientX; clientY = e.changedTouches[0].clientY;
+        let currentLang = 'pl';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            
+            // Toggle button styles
+            document.getElementById('lang-pl').className = lang === 'pl' 
+                ? "flex-1 px-3 py-1 rounded-md text-xs font-bold transition-all bg-white text-emerald-600 shadow-sm"
+                : "flex-1 px-3 py-1 rounded-md text-xs font-bold transition-all text-slate-400 hover:text-slate-600";
+            
+            document.getElementById('lang-en').className = lang === 'en' 
+                ? "flex-1 px-3 py-1 rounded-md text-xs font-bold transition-all bg-white text-emerald-600 shadow-sm"
+                : "flex-1 px-3 py-1 rounded-md text-xs font-bold transition-all text-slate-400 hover:text-slate-600";
+
+            // Update UI text
+            document.getElementById('label-projects').innerText = i18n[lang].projects;
+            document.getElementById('label-collapse').innerText = i18n[lang].collapse;
+            document.getElementById('welcome-title').innerText = i18n[lang].welcome;
+            document.getElementById('welcome-desc').innerText = i18n[lang].welcomeDesc;
+            
+            document.getElementById('nav-sipoc').innerText = i18n[lang].sipocTitle;
+            document.getElementById('nav-flowchart').innerText = i18n[lang].flowchartTitle;
+            document.getElementById('nav-vsm').innerText = i18n[lang].vsmTitle;
+
+            document.getElementById('desc-sipoc').innerText = i18n[lang].sipocDesc;
+            document.getElementById('desc-flowchart').innerText = i18n[lang].flowchartDesc;
+            document.getElementById('desc-vsm').innerText = i18n[lang].vsmDesc;
+
+            const runLinks = ['link-sipoc', 'link-flowchart', 'link-vsm'];
+            runLinks.forEach(id => document.getElementById(id).innerText = i18n[lang].run);
+        }
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('collapsed');
+            if (sidebar.classList.contains('collapsed')) {
+                toggleIcon.classList.replace('fa-angle-double-left', 'fa-angle-double-right');
             } else {
-                clientX = e.clientX; clientY = e.clientY;
-            }
-            return {
-                x: (clientX - rect.left) / state.zoom,
-                y: (clientY - rect.top) / state.zoom
-            };
-        }
-
-        // --- KSZTAŁTY ---
-        window.handleDragStart = (e, type) => { e.dataTransfer.setData('shapeType', type); };
-        window.handleDragOver = (e) => { e.preventDefault(); };
-        window.handleDrop = (e) => {
-            e.preventDefault();
-            const type = e.dataTransfer.getData('shapeType');
-            if (!SHAPE_DEFAULTS[type]) return;
-            const pt = getCoords(e);
-            addNode(type, pt.x - SHAPE_DEFAULTS[type].w/2, pt.y - SHAPE_DEFAULTS[type].h/2);
-        };
-        
-        window.addShapeCenter = (type) => {
-            const x = (workspace.scrollLeft + workspace.clientWidth/2)/state.zoom - SHAPE_DEFAULTS[type].w/2;
-            const y = (workspace.scrollTop + workspace.clientHeight/2)/state.zoom - SHAPE_DEFAULTS[type].h/2;
-            addNode(type, x, y);
-        };
-
-        function addNode(type, x, y) {
-            const node = { 
-                id: generateId(), type, text: SHAPE_DEFAULTS[type].text,
-                x: Math.round(x/GRID_SIZE)*GRID_SIZE, y: Math.round(y/GRID_SIZE)*GRID_SIZE,
-                width: SHAPE_DEFAULTS[type].w, height: SHAPE_DEFAULTS[type].h
-            };
-            state.nodes.push(node);
-            renderNode(node.id);
-            selectNode(node.id);
-        }
-
-        function renderNode(id) {
-            const node = state.nodes.find(n => n.id === id);
-            let el = document.getElementById(id);
-            if (!el) {
-                el = document.createElement('div'); el.id = id; el.className = `shape-node shape-${node.type} pointer-events-auto`;
-                if (node.type === 'decision') el.innerHTML = `<svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,2 98,50 50,98 2,50" fill="#fefce8" stroke="#eab308" stroke-width="2" /></svg>`;
-                else if (node.type === 'data') el.innerHTML = `<svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="15,2 98,2 85,98 2,98" fill="#faf5ff" stroke="#a855f7" stroke-width="2" /></svg>`;
-                
-                const container = document.createElement('div'); container.className = 'node-text-container';
-                const wrapper = document.createElement('div'); wrapper.className = 'node-text-wrapper';
-                const text = document.createElement('div'); text.className = 'node-text'; text.contentEditable = false; text.innerHTML = node.text;
-                
-                text.addEventListener('dblclick', (e) => { e.stopPropagation(); isEditingText=true; text.contentEditable=true; text.focus(); document.execCommand('selectAll', false, null); });
-                
-                // POPRAWIONE ZDARZENIE DLA EKRANÓW DOTYKOWYCH (Edycja Tekstu)
-                text.addEventListener('touchend', (e) => {
-                    const currentTime = new Date().getTime();
-                    if (currentTime - lastTapTime < 400 && currentTime - lastTapTime > 0) {
-                        e.stopPropagation(); 
-                        isEditingText=true; 
-                        text.contentEditable=true; 
-                        text.focus(); 
-                        setTimeout(() => {
-                            try {
-                                const range = document.createRange();
-                                range.selectNodeContents(text);
-                                const sel = window.getSelection();
-                                sel.removeAllRanges();
-                                sel.addRange(range);
-                            } catch(err) {}
-                        }, 50);
-                    }
-                    lastTapTime = currentTime;
-                });
-                
-                text.addEventListener('blur', () => { isEditingText=false; text.contentEditable=false; node.text = text.innerHTML; });
-                
-                const preventIfEditing = (e) => { if (isEditingText) e.stopPropagation(); };
-                text.addEventListener('mousedown', preventIfEditing);
-                text.addEventListener('touchstart', preventIfEditing, {passive: false});
-
-                wrapper.appendChild(text); container.appendChild(wrapper); el.appendChild(container);
-                
-                ANCHORS.forEach(pos => {
-                    const a = document.createElement('div'); a.className=`anchor-point anchor-${pos}`;
-                    const start = (e) => { e.stopPropagation(); e.preventDefault(); state.isConnecting=true; state.connectFromNode=id; state.connectFromAnchor=pos; };
-                    a.addEventListener('mousedown', start); a.addEventListener('touchstart', start, {passive: false});
-                    el.appendChild(a);
-                });
-
-                const onNodeDown = (e) => {
-                    if (e.target.classList.contains('anchor-point') || isEditingText) return;
-                    selectNode(id); state.isDraggingNode = true; state.draggedNodeId = id;
-                    const pt = getCoords(e); state.dragOffsetX = pt.x - node.x; state.dragOffsetY = pt.y - node.y;
-                };
-                el.addEventListener('mousedown', onNodeDown);
-                el.addEventListener('touchstart', onNodeDown, {passive: false});
-                nodesLayer.appendChild(el);
-            }
-            el.style.left = node.x + 'px'; el.style.top = node.y + 'px';
-            el.style.width = node.width + 'px'; el.style.height = node.height + 'px';
-        }
-
-        // --- ALGORYTMY OMIJANIA DLA LINII ---
-        function getAnchorPos(nodeId, anchor) {
-            const n = state.nodes.find(v => v.id === nodeId);
-            if (!n) return null;
-            let x = n.x, y = n.y;
-            if (anchor === 'top') { x += n.width/2; } else if (anchor === 'bottom') { x += n.width/2; y += n.height; }
-            else if (anchor === 'left') { y += n.height/2; } else { x += n.width; y += n.height/2; }
-            return {x, y};
-        }
-
-        function calculateBezierPath(start, end, startDir, endDir) {
-            const dx = Math.abs(end.x - start.x); const dy = Math.abs(end.y - start.y);
-            const curve = Math.max(40, Math.min(dx, dy) / 1.5);
-            let cp1x = start.x, cp1y = start.y, cp2x = end.x, cp2y = end.y;
-
-            if (startDir === 'top') cp1y -= curve; else if (startDir === 'bottom') cp1y += curve;
-            else if (startDir === 'left') cp1x -= curve; else if (startDir === 'right') cp1x += curve;
-            if (endDir === 'top') cp2y -= curve; else if (endDir === 'bottom') cp2y += curve;
-            else if (endDir === 'left') cp2x -= curve; else if (endDir === 'right') cp2x += curve;
-
-            return {
-                d: `M ${start.x} ${start.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${end.x} ${end.y}`,
-                mid: { x: 0.125 * start.x + 0.375 * cp1x + 0.375 * cp2x + 0.125 * end.x, y: 0.125 * start.y + 0.375 * cp1y + 0.375 * cp2y + 0.125 * end.y }
-            };
-        }
-
-        function calculateBasicOrthogonalPath(start, end, startDir, endDir) {
-            const OFF = 20;
-            const getOff = (p, d) => d==='top'?{x:p.x,y:p.y-OFF}:d==='bottom'?{x:p.x,y:p.y+OFF}:d==='left'?{x:p.x-OFF,y:p.y}:{x:p.x+OFF,y:p.y};
-            const c1 = getOff(start, startDir), c2 = getOff(end, endDir);
-            let pts = [start, c1];
-            
-            if (startDir==='top'||startDir==='bottom') {
-                if (endDir==='top'||endDir==='bottom') { pts.push({x: c1.x, y: (c1.y+c2.y)/2}, {x: c2.x, y: (c1.y+c2.y)/2}); }
-                else pts.push({x: c1.x, y: c2.y});
-            } else {
-                if (endDir==='left'||endDir==='right') { pts.push({x: (c1.x+c2.x)/2, y: c1.y}, {x: (c1.x+c2.x)/2, y: c2.y}); }
-                else pts.push({x: c2.x, y: c1.y});
-            }
-            pts.push(c2, end);
-            
-            pts = pts.filter((p, i, a) => i === 0 || Math.abs(p.x - a[i-1].x) > 1 || Math.abs(p.y - a[i-1].y) > 1);
-            const d = `M ${pts[0].x} ${pts[0].y} ` + pts.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
-            
-            let midIdx = Math.floor(pts.length / 2);
-            let mid = pts.length % 2 === 0 ? { x: (pts[midIdx].x + pts[midIdx-1].x)/2, y: (pts[midIdx].y + pts[midIdx-1].y)/2 } : pts[midIdx];
-
-            return { d, mid };
-        }
-
-        // ALGORYTM A* DLA LINII OMIJAJĄCYCH PRZESZKODY
-        function calculateOrthogonalPathWithObstacles(start, end, startDir, endDir, obstacles = []) {
-            if (!obstacles || obstacles.length === 0) return calculateBasicOrthogonalPath(start, end, startDir, endDir);
-            
-            const OFF = 20;
-            const getOff = (p, d) => d==='top'?{x:p.x,y:p.y-OFF}:d==='bottom'?{x:p.x,y:p.y+OFF}:d==='left'?{x:p.x-OFF,y:p.y}:{x:p.x+OFF,y:p.y};
-            const c1 = getOff(start, startDir), c2 = getOff(end, endDir);
-            
-            let xs = new Set([start.x, c1.x, c2.x, end.x]);
-            let ys = new Set([start.y, c1.y, c2.y, end.y]);
-            
-            obstacles.forEach(o => { 
-                xs.add(o.l); xs.add(o.r); ys.add(o.t); ys.add(o.b); 
-                xs.add(o.l - OFF); xs.add(o.r + OFF); ys.add(o.t - OFF); ys.add(o.b + OFF);
-            });
-            
-            let minX = Math.min(...xs)-OFF*2, maxX = Math.max(...xs)+OFF*2;
-            let minY = Math.min(...ys)-OFF*2, maxY = Math.max(...ys)+OFF*2;
-            xs.add(minX); xs.add(maxX); ys.add(minY); ys.add(maxY);
-            
-            const xArr = Array.from(xs).sort((a,b) => a-b);
-            const yArr = Array.from(ys).sort((a,b) => a-b);
-            
-            const isIntersecting = (x1, y1, x2, y2) => {
-                const mx = Math.min(x1, x2), M = Math.max(x1, x2), my = Math.min(y1, y2), My = Math.max(y1, y2);
-                for(let o of obstacles) {
-                    if(y1 === y2 && y1 > o.t && y1 < o.b && mx < o.r && M > o.l) return true;
-                    if(x1 === x2 && x1 > o.l && x1 < o.r && my < o.b && My > o.t) return true;
-                }
-                return false;
-            };
-
-            let startI = xArr.indexOf(c1.x), startJ = yArr.indexOf(c1.y);
-            let endI = xArr.indexOf(c2.x), endJ = yArr.indexOf(c2.y);
-            if(startI === -1 || startJ === -1 || endI === -1 || endJ === -1) return calculateBasicOrthogonalPath(start, end, startDir, endDir);
-
-            let open = [{i: startI, j: startJ, g: 0, dir: startDir, path: [{x: start.x, y: start.y}, {x: c1.x, y: c1.y}]}];
-            let closed = new Set();
-            let finalPath = null;
-
-            for (let iter = 0; iter < 5000 && open.length > 0; iter++) {
-                open.sort((a, b) => (a.g + Math.hypot(xArr[a.i]-c2.x, yArr[a.j]-c2.y)) - (b.g + Math.hypot(xArr[b.i]-c2.x, yArr[b.j]-c2.y)));
-                let curr = open.shift();
-                let key = curr.i + ',' + curr.j + ',' + curr.dir; 
-                if (closed.has(key)) continue;
-                closed.add(key);
-                
-                if (curr.i === endI && curr.j === endJ) { finalPath = curr.path; break; }
-                
-                [{di:1, dj:0, dir:'right'}, {di:-1, dj:0, dir:'left'}, {di:0, dj:1, dir:'bottom'}, {di:0, dj:-1, dir:'top'}].forEach(n => {
-                    let ni = curr.i + n.di, nj = curr.j + n.dj;
-                    if (ni >= 0 && ni < xArr.length && nj >= 0 && nj < yArr.length) {
-                        let nx = xArr[ni], ny = yArr[nj];
-                        if (!isIntersecting(xArr[curr.i], yArr[curr.j], nx, ny)) {
-                            let dist = Math.hypot(nx - xArr[curr.i], ny - yArr[curr.j]);
-                            let g = curr.g + dist;
-                            if (curr.dir !== n.dir) g += 40; 
-                            open.push({i: ni, j: nj, g: g, dir: n.dir, path: [...curr.path, {x: nx, y: ny}]});
-                        }
-                    }
-                });
-            }
-            
-            if (!finalPath) return calculateBasicOrthogonalPath(start, end, startDir, endDir);
-            
-            finalPath.push({x: end.x, y: end.y});
-            
-            let clean = [finalPath[0]];
-            for (let i = 1; i < finalPath.length - 1; i++) {
-                let p = clean[clean.length-1], curr = finalPath[i], nxt = finalPath[i+1];
-                if ((p.x === curr.x && curr.x === nxt.x) || (p.y === curr.y && curr.y === nxt.y)) continue;
-                clean.push(curr);
-            }
-            clean.push(finalPath[finalPath.length-1]);
-            
-            let d = `M ${clean[0].x} ${clean[0].y} ` + clean.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
-            let midIdx = Math.floor(clean.length / 2);
-            let mid = clean.length % 2 === 0 ? { x: (clean[midIdx].x + clean[midIdx-1].x)/2, y: (clean[midIdx].y + clean[midIdx-1].y)/2 } : clean[midIdx];
-            return { d, mid };
-        }
-
-        function getPathData(start, end, startDir, endDir, routeType, obstacles = []) {
-            if (routeType === 'bezier') return calculateBezierPath(start, end, startDir, endDir);
-            return calculateOrthogonalPathWithObstacles(start, end, startDir, endDir, obstacles);
-        }
-
-        function createEdge(fromId, fromAnchor, toId, toAnchor) {
-            const exists = state.edges.some(e => e.fromNode === fromId && e.toNode === toId && e.fromAnchor === fromAnchor && e.toAnchor === toAnchor);
-            if (exists) return;
-            const id = 'edge_' + generateId();
-            state.edges.push({ id, fromNode: fromId, fromAnchor, toNode: toId, toAnchor, style: 'solid', route: 'orthogonal', label: '' });
-            renderAllEdges(); selectEdge(id);
-        }
-
-        function renderAllEdges() {
-            edgesLayer.querySelectorAll('g.edge-group').forEach(g => g.remove());
-            labelsLayer.innerHTML = '';
-            
-            state.edges.forEach(edge => {
-                const p1 = getAnchorPos(edge.fromNode, edge.fromAnchor);
-                const p2 = getAnchorPos(edge.toNode, edge.toAnchor);
-                if(!p1 || !p2) return;
-
-                const arrowOffset = 16;
-                const p2_path = { x: p2.x, y: p2.y };
-                if (edge.toAnchor === 'top') p2_path.y -= arrowOffset;
-                else if (edge.toAnchor === 'bottom') p2_path.y += arrowOffset;
-                else if (edge.toAnchor === 'left') p2_path.x -= arrowOffset;
-                else if (edge.toAnchor === 'right') p2_path.x += arrowOffset;
-
-                // Wyłuskanie obrysów przeszkadzających kafelków
-                const obstacles = state.nodes.filter(n => n.id !== edge.fromNode && n.id !== edge.toNode).map(n => ({
-                    l: n.x - 15, r: n.x + n.width + 15, t: n.y - 15, b: n.y + n.height + 15
-                }));
-
-                const pathData = getPathData(p1, p2_path, edge.fromAnchor, edge.toAnchor, edge.route || 'orthogonal', obstacles);
-                
-                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); g.setAttribute('class', 'edge-group');
-                
-                const halo = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                halo.setAttribute('d', pathData.d); halo.setAttribute('fill', 'none'); halo.setAttribute('stroke', '#ffffff'); halo.setAttribute('stroke-width', '10'); halo.setAttribute('class', 'pointer-events-none');
-                
-                let cl = 'edge-path pointer-events-auto'; let mId = 'arrowhead';
-                if(edge.style === 'dashed') cl += ' dashed'; else if(edge.style === 'dotted') cl += ' dotted';
-
-                if(state.selectedEdgeId===edge.id) { cl += ' selected'; mId = 'arrowhead-selected'; }
-                else if(edge.label==='OK') { cl += ' ok'; mId = 'arrowhead-ok'; } else if(edge.label==='NOK') { cl += ' nok'; mId = 'arrowhead-nok'; }
-                
-                const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                p.setAttribute('d', pathData.d); p.setAttribute('class', cl); p.setAttribute('marker-end', `url(#${mId})`);
-                p.onmousedown = (e) => { e.stopPropagation(); selectEdge(edge.id); };
-                p.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); selectEdge(edge.id); }, {passive: false});
-                
-                g.appendChild(halo); g.appendChild(p); edgesLayer.insertBefore(g, tempEdge);
-
-                if (edge.label) {
-                    const lbl = document.createElement('div'); lbl.className = `edge-label ${edge.label.toLowerCase()}`;
-                    lbl.style.left = pathData.mid.x + 'px'; lbl.style.top = pathData.mid.y + 'px'; lbl.innerText = edge.label;
-                    lbl.onmousedown = (e) => { e.stopPropagation(); selectEdge(edge.id); };
-                    lbl.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); selectEdge(edge.id); }, {passive: false});
-                    labelsLayer.appendChild(lbl);
-                }
-
-                if (state.selectedEdgeId === edge.id && !state.isReconnecting) {
-                    edgeToolbar.style.left = pathData.mid.x + 'px'; edgeToolbar.style.top = (pathData.mid.y - 20) + 'px'; edgeToolbar.classList.remove('hidden');
-                    handleFrom.setAttribute('cx', p1.x); handleFrom.setAttribute('cy', p1.y); handleFrom.classList.remove('hidden');
-                    handleTo.setAttribute('cx', p2.x); handleTo.setAttribute('cy', p2.y); handleTo.classList.remove('hidden');
-                }
-            });
-            if(!state.selectedEdgeId || state.isReconnecting) {
-                handleFrom.classList.add('hidden'); handleTo.classList.add('hidden');
+                toggleIcon.classList.replace('fa-angle-double-right', 'fa-angle-double-left');
             }
         }
 
-        // --- AKCJE I ZDARZENIA ---
-        function selectNode(id) { deselectAll(); state.selectedNodeId = id; document.getElementById(id)?.classList.add('selected'); }
-        function selectEdge(id) { 
-            deselectAll(); state.selectedEdgeId = id; renderAllEdges(); 
-        }
-        function deselectAll() {
-            if(state.selectedNodeId) document.getElementById(state.selectedNodeId)?.classList.remove('selected');
-            state.selectedNodeId = null; state.selectedEdgeId = null; edgeToolbar.classList.add('hidden'); renderAllEdges();
-            if (isEditingText && document.activeElement) document.activeElement.blur();
+        function switchView(view) {
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.getElementById(`btn-${view}`).classList.add('active');
+
+            welcomeContent.classList.add('hidden');
+            iframeContainer.classList.remove('hidden');
+            appIframe.src = `${view}.html`;
         }
 
-        const onBoardDown = (e) => {
-            if (!e.target.closest('.shape-node') && !e.target.closest('.edge-path') && !e.target.closest('.edge-label') && !e.target.closest('#edge-toolbar')) {
-                deselectAll();
-            }
-        };
-        canvasBoard.addEventListener('mousedown', onBoardDown);
-        canvasBoard.addEventListener('touchstart', onBoardDown, {passive: true}); 
-
-        function deleteSelected() {
-            if (isEditingText) return;
-            if (state.selectedNodeId) {
-                const id = state.selectedNodeId;
-                state.nodes = state.nodes.filter(n => n.id !== id);
-                state.edges = state.edges.filter(e => e.fromNode !== id && e.toNode !== id);
-                document.getElementById(id)?.remove();
-            } else if (state.selectedEdgeId) {
-                state.edges = state.edges.filter(e => e.id !== state.selectedEdgeId);
-            }
-            deselectAll();
+        function resetToWelcome() {
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            welcomeContent.classList.remove('hidden');
+            iframeContainer.classList.add('hidden');
+            appIframe.src = "about:blank";
         }
-
-        document.getElementById('btn-duplicate').onclick = () => {
-            if (!state.selectedNodeId || isEditingText) return;
-            const n = state.nodes.find(v => v.id === state.selectedNodeId);
-            const newNode = { ...n, id: generateId(), x: n.x + 20, y: n.y + 20 };
-            state.nodes.push(newNode); renderNode(newNode.id); selectNode(newNode.id);
-        };
-        document.getElementById('btn-delete').onclick = deleteSelected;
-        document.getElementById('tb-delete-edge').onclick = deleteSelected;
-        document.getElementById('btn-clear').onclick = () => { if(confirm('Wyczyścić planszę?')) { state.nodes=[]; state.edges=[]; nodesLayer.innerHTML=''; renderAllEdges(); fileHandles.json=null; } };
-
-        document.getElementById('tb-route').onclick = () => { const e = state.edges.find(e => e.id === state.selectedEdgeId); if(e) { e.route = e.route === 'bezier' ? 'orthogonal' : 'bezier'; renderAllEdges(); } };
-        document.getElementById('tb-dash').onclick = () => { const e = state.edges.find(e => e.id === state.selectedEdgeId); if(e) { if (e.style === 'solid' || !e.style) e.style = 'dashed'; else if (e.style === 'dashed') e.style = 'dotted'; else e.style = 'solid'; renderAllEdges(); } };
-        document.getElementById('tb-label-ok').onclick = () => { const e = state.edges.find(ev => ev.id === state.selectedEdgeId); if(e) { e.label = 'OK'; renderAllEdges(); }};
-        document.getElementById('tb-label-nok').onclick = () => { const e = state.edges.find(ev => ev.id === state.selectedEdgeId); if(e) { e.label = 'NOK'; renderAllEdges(); }};
-        document.getElementById('tb-label-clear').onclick = () => { const e = state.edges.find(ev => ev.id === state.selectedEdgeId); if(e) { e.label = ''; renderAllEdges(); }};
-
-        const handleReconnFrom = (e) => { e.stopPropagation(); e.preventDefault(); state.isReconnecting = true; state.reconnectEnd = 'from'; };
-        const handleReconnTo = (e) => { e.stopPropagation(); e.preventDefault(); state.isReconnecting = true; state.reconnectEnd = 'to'; };
-        handleFrom.addEventListener('mousedown', handleReconnFrom); handleFrom.addEventListener('touchstart', handleReconnFrom, {passive: false});
-        handleTo.addEventListener('mousedown', handleReconnTo); handleTo.addEventListener('touchstart', handleReconnTo, {passive: false});
-
-        function getGlobalClosestAnchor(mx, my) {
-            let closest = null; let minDist = 40; 
-            state.nodes.forEach(node => {
-                ANCHORS.forEach(pos => {
-                    const aPos = getAnchorPos(node.id, pos);
-                    const dist = Math.hypot(mx - aPos.x, my - aPos.y);
-                    if (dist < minDist) { minDist = dist; closest = { nodeId: node.id, pos: pos, abs: aPos }; }
-                });
-            });
-            return closest;
-        }
-
-        const handleGlobalMove = (e) => {
-            if (e.type === 'touchmove' && e.touches && e.touches.length === 2) {
-                if (initialPinchDist) {
-                    e.preventDefault();
-                    const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                    setZoom(initialPinchZoom * (dist / initialPinchDist));
-                }
-                return;
-            }
-
-            if (e.type === 'touchmove' && (state.isDraggingNode || state.isConnecting || state.isReconnecting)) {
-                e.preventDefault(); 
-            }
-            const pt = getCoords(e);
-            let mx = pt.x, my = pt.y;
-
-            if (state.isDraggingNode && state.draggedNodeId) {
-                const n = state.nodes.find(v => v.id === state.draggedNodeId);
-                n.x = Math.round((pt.x - state.dragOffsetX)/GRID_SIZE)*GRID_SIZE;
-                n.y = Math.round((pt.y - state.dragOffsetY)/GRID_SIZE)*GRID_SIZE;
-                renderNode(n.id); renderAllEdges();
-            }
-            if (state.isConnecting && state.connectFromNode) {
-                tempEdge.classList.remove('hidden');
-                const startPos = getAnchorPos(state.connectFromNode, state.connectFromAnchor);
-                let p2_path = {x: mx, y: my}, targetDir = 'top';
-                const closest = getGlobalClosestAnchor(mx, my);
-                if (closest) {
-                    p2_path = {x: closest.abs.x, y: closest.abs.y}; targetDir = closest.pos;
-                    const arrowOffset = 16;
-                    if (targetDir === 'top') p2_path.y -= arrowOffset; else if (targetDir === 'bottom') p2_path.y += arrowOffset;
-                    else if (targetDir === 'left') p2_path.x -= arrowOffset; else if (targetDir === 'right') p2_path.x += arrowOffset;
-                }
-                const obstacles = state.nodes.filter(n => n.id !== state.connectFromNode).map(n => ({l: n.x - 15, r: n.x + n.width + 15, t: n.y - 15, b: n.y + n.height + 15}));
-                const pathData = getPathData(startPos, p2_path, state.connectFromAnchor, targetDir, 'orthogonal', obstacles);
-                tempEdge.setAttribute('d', pathData.d);
-            }
-
-            if (state.isReconnecting && state.selectedEdgeId) {
-                const edge = state.edges.find(e => e.id === state.selectedEdgeId);
-                let targetX = mx, targetY = my, targetDir = 'top', snapped = false;
-                const closest = getGlobalClosestAnchor(mx, my);
-                if (closest) { targetX = closest.abs.x; targetY = closest.abs.y; targetDir = closest.pos; snapped = true; }
-                let d = ''; const arrowOffset = 16; const rType = edge.route || 'orthogonal';
-                const obstacles = state.nodes.filter(n => n.id !== edge.fromNode && n.id !== edge.toNode).map(n => ({l: n.x - 15, r: n.x + n.width + 15, t: n.y - 15, b: n.y + n.height + 15}));
-
-                if (state.reconnectEnd === 'from') {
-                    const p2 = getAnchorPos(edge.toNode, edge.toAnchor); const p2_path = { x: p2.x, y: p2.y };
-                    if (edge.toAnchor === 'top') p2_path.y -= arrowOffset; else if (edge.toAnchor === 'bottom') p2_path.y += arrowOffset;
-                    else if (edge.toAnchor === 'left') p2_path.x -= arrowOffset; else if (edge.toAnchor === 'right') p2_path.x += arrowOffset;
-                    d = getPathData({x: targetX, y: targetY}, p2_path, targetDir, edge.toAnchor, rType, obstacles).d;
-                } else {
-                    const p1 = getAnchorPos(edge.fromNode, edge.fromAnchor); const p2_path = { x: targetX, y: targetY };
-                    if (snapped) {
-                        if (targetDir === 'top') p2_path.y -= arrowOffset; else if (targetDir === 'bottom') p2_path.y += arrowOffset;
-                        else if (targetDir === 'left') p2_path.x -= arrowOffset; else if (targetDir === 'right') p2_path.x += arrowOffset;
-                    }
-                    d = getPathData(p1, p2_path, edge.fromAnchor, targetDir, rType, obstacles).d;
-                }
-                tempEdge.setAttribute('d', d); tempEdge.classList.remove('hidden');
-                edgeToolbar.classList.add('hidden'); handleFrom.classList.add('hidden'); handleTo.classList.add('hidden');
-                const origPathGroup = document.getElementById(edge.id)?.parentElement;
-                if (origPathGroup) origPathGroup.style.opacity = '0.2';
-            }
-        };
-
-        const handleGlobalUp = (e) => {
-            if (e.touches && e.touches.length < 2) {
-                initialPinchDist = null;
-            }
-
-            if (state.isDraggingNode) { state.isDraggingNode=false; state.draggedNodeId=null; }
-            if (state.isConnecting) {
-                state.isConnecting=false; tempEdge.classList.add('hidden');
-                const pt = getCoords(e);
-                const closest = getGlobalClosestAnchor(pt.x, pt.y);
-                if(closest && closest.nodeId !== state.connectFromNode) {
-                    createEdge(state.connectFromNode, state.connectFromAnchor, closest.nodeId, closest.pos);
-                }
-            }
-            if (state.isReconnecting) {
-                state.isReconnecting = false; tempEdge.classList.add('hidden');
-                const pt = getCoords(e);
-                const closest = getGlobalClosestAnchor(pt.x, pt.y);
-                const edge = state.edges.find(ev => ev.id === state.selectedEdgeId);
-                if (closest && edge) {
-                    if (state.reconnectEnd === 'from') { edge.fromNode = closest.nodeId; edge.fromAnchor = closest.pos; } 
-                    else { edge.toNode = closest.nodeId; edge.toAnchor = closest.pos; }
-                }
-                const origPathGroup = document.getElementById(state.selectedEdgeId)?.parentElement;
-                if (origPathGroup) origPathGroup.style.opacity = '1';
-                renderAllEdges();
-            }
-        };
-
-        window.addEventListener('mousemove', handleGlobalMove, {passive: false});
-        window.addEventListener('touchmove', handleGlobalMove, {passive: false});
-        window.addEventListener('mouseup', handleGlobalUp);
-        window.addEventListener('touchend', handleGlobalUp);
-
-        window.addEventListener('keydown', (e) => { 
-            if(document.activeElement.tagName === "INPUT" || document.activeElement.contentEditable === "true") return;
-            if (e.key === 'Delete' || e.key === 'Backspace') { deleteSelected(); e.preventDefault(); }
-            if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) { 
-                if (state.selectedNodeId) state.clipboardNode = JSON.parse(JSON.stringify(state.nodes.find(n => n.id === state.selectedNodeId)));
-                e.preventDefault(); 
-            }
-            if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) { 
-                if (state.clipboardNode) { const c=state.clipboardNode; addNode(c.type, Math.round((c.x+20)/GRID_SIZE)*GRID_SIZE, Math.round((c.y+20)/GRID_SIZE)*GRID_SIZE, c.width, c.height, c.text); }
-                e.preventDefault(); 
-            }
-        });
-
-        // --- ZAPIS (SAVE / OVERWRITE) ---
-        function showSavedIndicator(msg) {
-            const ind = document.getElementById('autosave-indicator');
-            ind.innerText = msg; ind.classList.remove('hidden');
-            setTimeout(() => ind.classList.add('hidden'), 3000);
-        }
-
-        async function writeToFile(fileHandle, contents) {
-            const writable = await fileHandle.createWritable();
-            await writable.write(contents);
-            await writable.close();
-        }
-
-        function fallbackDownload(data, filename) {
-            const blob = new Blob([data], {type: "application/json"});
-            const a = document.createElement('a'); 
-            a.href = URL.createObjectURL(blob); 
-            a.download = filename; 
-            a.click();
-        }
-
-        document.getElementById('btn-save').onclick = async () => {
-            deselectAll(); 
-            const title = projectTitleInput.value.trim() || 'Schemat';
-            const data = JSON.stringify({ title, nodes: state.nodes, edges: state.edges }, null, 2);
-            
-            if (fileHandles.json) {
-                try {
-                    await writeToFile(fileHandles.json, data);
-                    showSavedIndicator("Zapisano pomyślnie!");
-                } catch(e) {
-                    document.getElementById('btn-save-as').click();
-                }
-            } else {
-                document.getElementById('btn-save-as').click();
-            }
-        };
-
-        document.getElementById('btn-save-as').onclick = async () => {
-            deselectAll();
-            const title = projectTitleInput.value.trim() || 'Schemat';
-            const data = JSON.stringify({ title, nodes: state.nodes, edges: state.edges }, null, 2);
-            
-            try {
-                if (window.showSaveFilePicker) {
-                    fileHandles.json = await window.showSaveFilePicker({
-                        suggestedName: title + ".json",
-                        types: [{ description: 'Plik Projektu JSON', accept: { 'application/json': ['.json'] } }]
-                    });
-                    await writeToFile(fileHandles.json, data);
-                    showSavedIndicator("Zapisano jako nową kopię!");
-                } else {
-                    fallbackDownload(data, title + ".json");
-                    showSavedIndicator("Pobrano plik!");
-                }
-            } catch(err) {
-                if(err.name !== 'AbortError') fallbackDownload(data, title + ".json");
-            }
-        };
-
-        // --- AUTOZAPIS ---
-        setInterval(async () => {
-            if (fileHandles.json && state.nodes.length > 0) {
-                try {
-                    if ((await fileHandles.json.queryPermission({ mode: 'readwrite' })) === 'granted') {
-                        const title = projectTitleInput.value.trim() || 'Schemat';
-                        const data = JSON.stringify({ title, nodes: state.nodes, edges: state.edges }, null, 2);
-                        await writeToFile(fileHandles.json, data);
-                        showSavedIndicator("Autozapisano w tle...");
-                    }
-                } catch (e) {}
-            }
-        }, 180000);
-
-        // --- WCZYTYWANIE ---
-        document.getElementById('btn-load').onclick = async () => {
-            if (window.showOpenFilePicker) {
-                try {
-                    const [handle] = await window.showOpenFilePicker({ types: [{ description: 'Plik projektu JSON', accept: {'application/json': ['.json']} }] });
-                    fileHandles.json = handle;
-                    const file = await handle.getFile();
-                    loadProjectData(await file.text());
-                } catch(e) { if(e.name !== 'AbortError') fileInput.click(); }
-            } else {
-                fileInput.click();
-            }
-        };
-        fileInput.onchange = (e) => {
-            if(!e.target.files[0]) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => loadProjectData(ev.target.result);
-            reader.readAsText(e.target.files[0]);
-            e.target.value = '';
-        };
-
-        function loadProjectData(jsonString) {
-            try {
-                const data = JSON.parse(jsonString);
-                if (data && Array.isArray(data.nodes) && Array.isArray(data.edges)) {
-                    if(data.title) projectTitleInput.value = data.title;
-                    state.nodes = data.nodes; state.edges = data.edges; state.selectedNodeId = null; state.selectedEdgeId = null;
-                    nodesLayer.innerHTML = ''; state.nodes.forEach(n => renderNode(n.id)); renderAllEdges();
-                }
-            } catch (err) { alert("Błąd odczytu pliku z projektem!"); }
-        }
-
-        // --- EXPORTY Z PYTANIEM O LOKALIZACJĘ ---
-        exportFormat.addEventListener('change', (e) => { exportOrientation.disabled = (e.target.value === 'auto'); });
-        document.getElementById('btn-export-png').onclick = () => openExportModal('png');
-        document.getElementById('btn-export-pdf').onclick = () => openExportModal('pdf');
-        document.getElementById('btn-export-cancel').onclick = () => exportModal.classList.add('hidden');
-
-        let currentExportType = '';
-        function openExportModal(type) {
-            currentExportType = type; 
-            document.getElementById('export-modal-title').innerText = type === 'pdf' ? 'Eksport do PDF' : 'Eksport do PNG'; 
-            exportModal.classList.remove('hidden'); 
-        }
-
-        document.getElementById('btn-export-confirm').onclick = () => { 
-            exportModal.classList.add('hidden'); 
-            processExport(currentExportType, exportFormat.value, exportOrientation.value); 
-        };
-
-        async function saveExport(blob, defaultName, fileType, acceptOptions) {
-            try {
-                if (window.showSaveFilePicker) {
-                    fileHandles[fileType] = await window.showSaveFilePicker({
-                        suggestedName: defaultName,
-                        types: [acceptOptions]
-                    });
-                    const writable = await fileHandles[fileType].createWritable();
-                    await writable.write(blob);
-                    await writable.close();
-                    return true;
-                }
-            } catch (err) {
-                if (err.name === 'AbortError') return false;
-            }
-            
-            // Fallback dla starszych przeglądarek
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = defaultName;
-            a.click();
-            URL.revokeObjectURL(a.href);
-            return true;
-        }
-
-        function processExport(format, pageSize, orientation) {
-            deselectAll(); 
-            const prevZoom = state.zoom; 
-            setZoom(1);
-
-            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-            if (state.nodes.length === 0) { 
-                setZoom(prevZoom); 
-                return alert('Plansza jest pusta! Dodaj elementy do obszaru roboczego.'); 
-            }
-
-            state.nodes.forEach(n => { 
-                minX = Math.min(minX, n.x); minY = Math.min(minY, n.y); 
-                maxX = Math.max(maxX, n.x + n.width); maxY = Math.max(maxY, n.y + n.height); 
-            });
-
-            edgesLayer.querySelectorAll('.edge-path').forEach(path => {
-                try {
-                    const bbox = path.getBBox();
-                    if (bbox.width > 0 || bbox.height > 0) {
-                        minX = Math.min(minX, bbox.x); minY = Math.min(minY, bbox.y);
-                        maxX = Math.max(maxX, bbox.x + bbox.width); maxY = Math.max(maxY, bbox.y + bbox.height);
-                    }
-                } catch(e) {}
-            });
-
-            const pad = 40;
-            const captureMinX = Math.max(0, minX - pad);
-            const captureMinY = Math.max(0, minY - pad);
-            const w = (maxX + pad) - captureMinX;
-            const h = (maxY + pad) - captureMinY;
-
-            setTimeout(() => {
-                html2canvas(canvasBoard, { 
-                    x: captureMinX, y: captureMinY, width: w, height: h, 
-                    backgroundColor: '#ffffff', scale: 2 
-                }).then(async canvas => {
-                    const titleStr = projectTitleInput.value.trim() || 'Schemat';
-                    if (format === 'pdf') {
-                        await generatePDF(canvas, titleStr, pageSize, orientation);
-                    } else {
-                        await generatePNG(canvas, titleStr, pageSize, orientation);
-                    }
-                    setZoom(prevZoom);
-                }).catch(err => {
-                    console.error(err);
-                    setZoom(prevZoom);
-                });
-            }, 400); 
-        }
-
-        async function generatePDF(canvas, title, pageSize, orientation) {
-            const { jsPDF } = window.jspdf; 
-            let pdf; 
-            const imgData = canvas.toDataURL('image/png');
-            
-            if (pageSize === 'auto') {
-                const pdfW = canvas.width / 2;
-                const pdfH = (canvas.height / 2) + 60;
-                pdf = new jsPDF({ orientation: pdfW > pdfH ? 'l' : 'p', unit: 'px', format: [pdfW, pdfH] });
-                pdf.setFontSize(22); 
-                pdf.text(title, pdfW / 2, 35, { align: 'center' }); 
-                pdf.addImage(imgData, 'PNG', 0, 60, pdfW, canvas.height / 2);
-            } else {
-                pdf = new jsPDF({ orientation: orientation, unit: 'mm', format: pageSize });
-                const pw = pdf.internal.pageSize.getWidth();
-                const ph = pdf.internal.pageSize.getHeight();
-                pdf.setFontSize(22); 
-                pdf.text(title, pw / 2, 20, { align: 'center' });
-                
-                const maxW = pw - 20;
-                const maxH = ph - 40;
-                const imgRatio = canvas.width / canvas.height;
-                let renderW = maxW, renderH = maxW / imgRatio;
-                
-                if (renderH > maxH) { 
-                    renderH = maxH; 
-                    renderW = maxH * imgRatio; 
-                }
-                pdf.addImage(imgData, 'PNG', (pw - renderW) / 2, 30 + (maxH - renderH) / 2, renderW, renderH);
-            }
-            
-            const pdfBlob = pdf.output('blob');
-            await saveExport(pdfBlob, `${title}.pdf`, 'pdf', { description: 'Dokument PDF', accept: { 'application/pdf': ['.pdf'] } });
-        }
-
-        async function generatePNG(canvas, title, pageSize, orientation) {
-            const finalCanvas = document.createElement('canvas'); 
-            const ctx = finalCanvas.getContext('2d');
-            let fw, fh; 
-            const titleHeight = 100;
-            
-            if (pageSize === 'auto') {
-                fw = Math.max(canvas.width, 600); 
-                fh = canvas.height + titleHeight; 
-                finalCanvas.width = fw; 
-                finalCanvas.height = fh;
-                
-                ctx.fillStyle = '#ffffff'; 
-                ctx.fillRect(0, 0, fw, fh); 
-                ctx.font = 'bold 36px sans-serif'; 
-                ctx.fillStyle = '#1e293b'; 
-                ctx.textAlign = 'center'; 
-                ctx.textBaseline = 'middle'; 
-                ctx.fillText(title, fw / 2, titleHeight / 2); 
-                ctx.drawImage(canvas, (fw - canvas.width)/2, titleHeight);
-            } else {
-                const isA4 = pageSize === 'a4'; 
-                fw = isA4 ? 1588 : 2246; 
-                fh = isA4 ? 2246 : 3176; 
-                if (orientation === 'l') [fw, fh] = [fh, fw];
-                
-                finalCanvas.width = fw; 
-                finalCanvas.height = fh; 
-                ctx.fillStyle = '#ffffff'; 
-                ctx.fillRect(0, 0, fw, fh); 
-                ctx.font = 'bold 48px sans-serif'; 
-                ctx.fillStyle = '#1e293b'; 
-                ctx.textAlign = 'center'; 
-                ctx.textBaseline = 'middle'; 
-                ctx.fillText(title, fw / 2, 80);
-                
-                const maxW = fw - 100, maxH = fh - 180, imgRatio = canvas.width / canvas.height;
-                let renderW = maxW, renderH = maxW / imgRatio; 
-                if (renderH > maxH) { renderH = maxH; renderW = maxH * imgRatio; } 
-                ctx.drawImage(canvas, (fw - renderW) / 2, 130 + (maxH - renderH) / 2, renderW, renderH);
-            }
-            
-            finalCanvas.toBlob(async (blob) => {
-                await saveExport(blob, `${title}.png`, 'png', { description: 'Obraz PNG', accept: { 'image/png': ['.png'] } });
-            }, 'image/png');
-        }
-
-        // --- INSTRUKCJA ---
-        const toggleInstructions = () => {
-            const p = document.getElementById('instruction-panel');
-            const arrow = document.getElementById('instruction-arrow');
-            p.classList.toggle('instruction-collapsed');
-            arrow.style.transform = p.classList.contains('instruction-collapsed') ? 'rotate(180deg)' : 'rotate(0deg)';
-        };
-        document.getElementById('btn-toggle-instructions').onclick = toggleInstructions;
-        const btnClose = document.getElementById('btn-close-instructions');
-        if(btnClose) btnClose.onclick = toggleInstructions;
-
-        window.onload = () => { lucide.createIcons(); };
     </script>
 </body>
 </html>
