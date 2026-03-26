@@ -28,6 +28,7 @@
             .sidebar.collapsed .nav-text,
             .sidebar.collapsed .logo-text,
             .sidebar.collapsed .lang-container,
+            .sidebar.collapsed .sidebar-extras,
             .sidebar.collapsed .footer-text {
                 display: none;
             }
@@ -49,6 +50,7 @@
                 position: fixed;
                 inset: 0;
                 background: rgba(0,0,0,0.5);
+                backdrop-filter: blur(2px);
                 z-index: 90;
             }
             .sidebar-overlay.active {
@@ -91,6 +93,10 @@
             width: 100%;
             height: 100%;
         }
+
+        #toast {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
     </style>
 </head>
 <body class="bg-grid flex h-screen">
@@ -99,25 +105,34 @@
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar bg-white border-r border-emerald-100 flex flex-col shadow-2xl md:shadow-none">
+    <aside id="sidebar" class="sidebar bg-white border-r border-emerald-100 flex flex-col shadow-2xl md:shadow-none h-full overflow-y-auto overflow-x-hidden">
+        
         <!-- Logo Area -->
-        <div class="p-6 flex items-center justify-between border-b border-emerald-50 h-20">
+        <div class="p-6 flex items-center justify-between border-b border-emerald-50 h-20 shrink-0">
             <div class="flex items-center gap-4">
                 <div onclick="resetToWelcome()" class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-emerald-200 cursor-pointer hover:scale-105 transition-transform">
                     <i class="fas fa-layer-group text-white"></i>
                 </div>
                 <div class="logo-text overflow-hidden">
-                    <h1 class="font-extrabold text-slate-800 leading-tight text-sm">Lean Six Sigma<br><span class="text-emerald-600">Mapping</span></h1>
+                    <h1 class="font-extrabold text-slate-800 leading-tight text-sm whitespace-nowrap">Lean Six Sigma<br><span class="text-emerald-600">Mapping</span></h1>
                 </div>
             </div>
             <!-- Mobile Close Button -->
-            <button onclick="toggleSidebar()" class="md:hidden text-slate-400">
+            <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-emerald-600">
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
 
-        <!-- Language Switcher in Menu -->
-        <div class="px-6 py-4 lang-container">
+        <!-- Toggle Menu Button (Przeniesione na górę) -->
+        <div class="p-4 border-b border-emerald-50 shrink-0">
+            <button onclick="toggleSidebar()" class="w-full flex items-center gap-4 p-3 rounded-xl text-slate-500 bg-slate-50 hover:bg-slate-100 hover:text-slate-700 transition-colors group">
+                <i id="toggle-icon" class="fas fa-angle-double-left w-6 shrink-0 text-center group-hover:-translate-x-1 transition-transform"></i>
+                <span class="nav-text font-bold text-sm whitespace-nowrap" id="label-collapse">Zwiń menu</span>
+            </button>
+        </div>
+
+        <!-- Language Switcher -->
+        <div class="px-6 py-4 lang-container shrink-0">
             <div class="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
                 <button onclick="setLanguage('pl')" id="lang-pl" class="flex-1 px-3 py-1 rounded-md text-xs font-bold transition-all bg-white text-emerald-600 shadow-sm">PL</button>
                 <button onclick="setLanguage('en')" id="lang-en" class="flex-1 px-3 py-1 rounded-md text-xs font-bold transition-all text-slate-400 hover:text-slate-600">EN</button>
@@ -125,31 +140,55 @@
         </div>
 
         <!-- Navigation -->
-        <nav class="flex-grow p-4 space-y-2">
-            <p class="nav-text text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 mb-2" id="label-projects">Projekty</p>
+        <nav class="p-4 space-y-1 shrink-0">
+            <p class="nav-text text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 mb-2" id="label-projects">Projekty</p>
 
-            <button onclick="switchView('sipoc')" class="nav-link w-full flex items-center gap-4 p-3 rounded-xl text-slate-500 hover:bg-emerald-50 hover:text-emerald-700" id="btn-sipoc">
-                <i class="fas fa-project-diagram w-6 shrink-0"></i>
-                <span class="nav-text font-bold text-sm" id="nav-sipoc">SIPOC Generator</span>
+            <button onclick="switchView('sipoc')" class="nav-link w-full flex items-center gap-3 p-2 rounded-xl text-slate-500 hover:bg-emerald-50 hover:text-emerald-700" id="btn-sipoc">
+                <i class="fas fa-project-diagram w-5 shrink-0 text-center text-sm"></i>
+                <span class="nav-text font-bold text-xs whitespace-nowrap" id="nav-sipoc">SIPOC Generator</span>
             </button>
 
-            <button onclick="switchView('flowchart')" class="nav-link w-full flex items-center gap-4 p-3 rounded-xl text-slate-500 hover:bg-emerald-50 hover:text-emerald-700" id="btn-flowchart">
-                <i class="fas fa-sitemap w-6 shrink-0"></i>
-                <span class="nav-text font-bold text-sm" id="nav-flowchart">Flowchart Maker</span>
+            <button onclick="switchView('flowchart')" class="nav-link w-full flex items-center gap-3 p-2 rounded-xl text-slate-500 hover:bg-emerald-50 hover:text-emerald-700" id="btn-flowchart">
+                <i class="fas fa-sitemap w-5 shrink-0 text-center text-sm"></i>
+                <span class="nav-text font-bold text-xs whitespace-nowrap" id="nav-flowchart">Flowchart Maker</span>
             </button>
 
-            <button onclick="switchView('vsm')" class="nav-link w-full flex items-center gap-4 p-3 rounded-xl text-slate-500 hover:bg-emerald-50 hover:text-emerald-700" id="btn-vsm">
-                <i class="fas fa-chart-line w-6 shrink-0"></i>
-                <span class="nav-text font-bold text-sm" id="nav-vsm">VSM Analysis</span>
+            <button onclick="switchView('vsm')" class="nav-link w-full flex items-center gap-3 p-2 rounded-xl text-slate-500 hover:bg-emerald-50 hover:text-emerald-700" id="btn-vsm">
+                <i class="fas fa-chart-line w-5 shrink-0 text-center text-sm"></i>
+                <span class="nav-text font-bold text-xs whitespace-nowrap" id="nav-vsm">VSM Analysis</span>
             </button>
+            
+            <button onclick="switchView('contact')" class="nav-link w-full flex items-center gap-3 p-2 rounded-xl text-slate-500 hover:bg-emerald-50 hover:text-emerald-700" id="btn-contact">
+                <i class="fas fa-envelope w-5 shrink-0 text-center text-sm"></i>
+                <span class="nav-text font-bold text-xs whitespace-nowrap" id="nav-contact">Kontakt</span>
+            </button>
+
+            <!-- Zapisz/Wczytaj (Przeniesione pod VSM i Kontakt) -->
+            <div class="pt-3 mt-2 border-t border-slate-100 flex flex-col gap-1.5">
+                <button onclick="exportWorkspace()" class="nav-link w-full flex items-center gap-3 p-2 rounded-xl text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors font-bold group">
+                    <i class="fas fa-download w-5 shrink-0 text-center text-sm"></i>
+                    <span class="nav-text text-xs whitespace-nowrap" id="btn-export">Zapisz do pliku</span>
+                </button>
+                
+                <button onclick="document.getElementById('file-upload').click()" class="nav-link w-full flex items-center gap-3 p-2 rounded-xl text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors font-bold group">
+                    <i class="fas fa-upload w-5 shrink-0 text-center text-sm"></i>
+                    <span class="nav-text text-xs whitespace-nowrap" id="btn-import">Wczytaj z pliku</span>
+                </button>
+                <input type="file" id="file-upload" class="hidden" accept=".json" onchange="importWorkspace(event)">
+            </div>
         </nav>
 
-        <!-- Sidebar Footer -->
-        <div class="p-4 border-t border-emerald-50">
-            <button onclick="toggleSidebar()" class="w-full flex items-center gap-4 p-3 rounded-xl text-slate-400 hover:bg-slate-50 transition-colors">
-                <i id="toggle-icon" class="fas fa-angle-double-left w-6 shrink-0"></i>
-                <span class="nav-text font-bold text-sm" id="label-collapse">Zwiń menu</span>
-            </button>
+        <!-- Sidebar Bottom: Ad Space -->
+        <div class="mt-auto flex flex-col shrink-0">
+            <div class="p-4 flex flex-col gap-3 sidebar-extras border-t border-emerald-50">
+                <!-- Ad Space (Powiększone - h-64 to ok. 250px wysokości) -->
+                <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition-all group overflow-hidden relative h-64">
+                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 z-10 group-hover:text-emerald-600" id="ad-label">Miejsce na reklamę</span>
+                    <i class="fas fa-ad text-4xl text-slate-300 mb-2 z-10 group-hover:scale-110 transition-transform group-hover:text-emerald-500"></i>
+                    <span class="text-[10px] text-slate-500 font-medium z-10" id="ad-desc">Twój baner 250x250</span>
+                    <div class="absolute inset-0 bg-gradient-to-tr from-emerald-100/0 to-emerald-100/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </div>
+            </div>
         </div>
     </aside>
 
@@ -157,67 +196,88 @@
     <main class="main-content flex-grow flex flex-col relative overflow-hidden">
         
         <!-- Mobile Header (Visible only on Mobile) -->
-        <div class="md:hidden flex items-center justify-between p-4 bg-white border-b border-emerald-50">
-            <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center bg-slate-50 rounded-lg text-emerald-600">
+        <div class="md:hidden flex items-center justify-between p-4 bg-white/80 backdrop-blur-md border-b border-emerald-50 z-40">
+            <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-emerald-50 rounded-xl text-emerald-600 transition-colors border border-slate-100">
                 <i class="fas fa-bars"></i>
             </button>
             <div class="text-xs font-black text-emerald-700 uppercase tracking-widest">Workspace</div>
-            <button onclick="resetToWelcome()" class="text-slate-400">
+            <button onclick="resetToWelcome()" class="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 rounded-xl text-slate-400 transition-colors border border-slate-100">
                 <i class="fas fa-home"></i>
             </button>
         </div>
 
         <!-- Content Container -->
-        <div class="flex-grow relative overflow-hidden">
+        <div class="flex-grow relative overflow-hidden bg-transparent">
             
             <!-- Welcome Screen -->
             <div id="view-welcome-content" class="absolute inset-0 p-4 md:p-8 overflow-y-auto">
                 <div class="max-w-6xl mx-auto py-8 md:py-12">
                     <div class="text-center mb-12 md:mb-16">
-                        <h1 class="text-2xl md:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
-                            <span id="welcome-title">Witaj w</span> <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-green-600">Workspace</span>
+                        <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-white border border-emerald-200 rounded-full shadow-sm">
+                            <span class="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-[0.2em]" id="system-status">System gotowy</span>
+                        </div>
+                        <h1 class="text-3xl md:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
+                            <span id="welcome-title">Witaj w</span> <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-green-500">Workspace</span>
                         </h1>
-                        <p class="text-slate-500 max-w-xl mx-auto font-medium text-sm md:text-base" id="welcome-desc">Wybierz narzędzie z menu po lewej stronie, aby rozpocząć optymalizację procesu.</p>
+                        <p class="text-slate-500 max-w-xl mx-auto font-medium text-sm md:text-base leading-relaxed" id="welcome-desc">
+                            Wybierz narzędzie z menu po lewej stronie, aby rozpocząć optymalizację procesu. Możesz zapisać lub wczytać swoje projekty w menu bocznym.
+                        </p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                        <button onclick="switchView('sipoc')" class="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-emerald-50 shadow-lg hover:shadow-emerald-900/10 hover:-translate-y-2 transition-all text-left group">
-                            <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-emerald-200">
-                                <i class="fas fa-project-diagram text-white"></i>
+                        <button onclick="switchView('sipoc')" class="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-emerald-50 shadow-xl shadow-emerald-900/5 hover:shadow-emerald-900/15 hover:-translate-y-2 transition-all text-left group">
+                            <div class="w-14 h-14 bg-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform">
+                                <i class="fas fa-project-diagram text-white text-xl"></i>
                             </div>
-                            <h3 class="text-lg font-bold text-slate-800 mb-2">SIPOC</h3>
-                            <p class="text-xs text-slate-500 leading-relaxed mb-6" id="desc-sipoc">Definiowanie granic procesu i kluczowych interesariuszy.</p>
-                            <span class="text-emerald-600 font-bold text-[10px] uppercase tracking-wider group-hover:underline" id="link-sipoc">Uruchom moduł</span>
+                            <h3 class="text-xl font-bold text-slate-800 mb-2">SIPOC</h3>
+                            <p class="text-sm text-slate-500 leading-relaxed mb-8" id="desc-sipoc">Definiowanie granic procesu i kluczowych interesariuszy.</p>
+                            <span class="flex items-center gap-2 text-emerald-600 font-bold text-xs uppercase tracking-wider group-hover:gap-4 transition-all">
+                                <span id="link-sipoc">Uruchom moduł</span> <i class="fas fa-arrow-right"></i>
+                            </span>
                         </button>
 
-                        <button onclick="switchView('flowchart')" class="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-emerald-50 shadow-lg hover:shadow-green-900/10 hover:-translate-y-2 transition-all text-left group">
-                            <div class="w-12 h-12 bg-green-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-green-200">
-                                <i class="fas fa-sitemap text-white"></i>
+                        <button onclick="switchView('flowchart')" class="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-emerald-50 shadow-xl shadow-green-900/5 hover:shadow-green-900/15 hover:-translate-y-2 transition-all text-left group">
+                            <div class="w-14 h-14 bg-green-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-green-200 group-hover:scale-110 transition-transform">
+                                <i class="fas fa-sitemap text-white text-xl"></i>
                             </div>
-                            <h3 class="text-lg font-bold text-slate-800 mb-2">Flowchart</h3>
-                            <p class="text-xs text-slate-500 leading-relaxed mb-6" id="desc-flowchart">Mapowanie logiki i decyzji operacyjnych krok po kroku.</p>
-                            <span class="text-green-700 font-bold text-[10px] uppercase tracking-wider group-hover:underline" id="link-flowchart">Uruchom moduł</span>
+                            <h3 class="text-xl font-bold text-slate-800 mb-2">Flowchart</h3>
+                            <p class="text-sm text-slate-500 leading-relaxed mb-8" id="desc-flowchart">Mapowanie logiki i decyzji operacyjnych krok po kroku.</p>
+                            <span class="flex items-center gap-2 text-green-700 font-bold text-xs uppercase tracking-wider group-hover:gap-4 transition-all">
+                                <span id="link-flowchart">Uruchom moduł</span> <i class="fas fa-arrow-right"></i>
+                            </span>
                         </button>
 
-                        <button onclick="switchView('vsm')" class="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-emerald-50 shadow-lg hover:shadow-teal-900/10 hover:-translate-y-2 transition-all text-left group">
-                            <div class="w-12 h-12 bg-teal-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-teal-200">
-                                <i class="fas fa-chart-line text-white"></i>
+                        <button onclick="switchView('vsm')" class="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-emerald-50 shadow-xl shadow-teal-900/5 hover:shadow-teal-900/15 hover:-translate-y-2 transition-all text-left group">
+                            <div class="w-14 h-14 bg-teal-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-teal-200 group-hover:scale-110 transition-transform">
+                                <i class="fas fa-chart-line text-white text-xl"></i>
                             </div>
-                            <h3 class="text-lg font-bold text-slate-800 mb-2">VSM</h3>
-                            <p class="text-xs text-slate-500 leading-relaxed mb-6" id="desc-vsm">Analiza strumienia wartości i identyfikacja marnotrawstwa.</p>
-                            <span class="text-teal-700 font-bold text-[10px] uppercase tracking-wider group-hover:underline" id="link-vsm">Uruchom moduł</span>
+                            <h3 class="text-xl font-bold text-slate-800 mb-2">VSM</h3>
+                            <p class="text-sm text-slate-500 leading-relaxed mb-8" id="desc-vsm">Analiza strumienia wartości i identyfikacja marnotrawstwa.</p>
+                            <span class="flex items-center gap-2 text-teal-700 font-bold text-xs uppercase tracking-wider group-hover:gap-4 transition-all">
+                                <span id="link-vsm">Uruchom moduł</span> <i class="fas fa-arrow-right"></i>
+                            </span>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Iframe Container -->
-            <div id="iframe-container" class="absolute inset-0 hidden">
-                <iframe id="app-iframe" src="about:blank"></iframe>
+            <!-- Iframe Containers - One for each tool to preserve state when switching! -->
+            <div id="iframe-container" class="absolute inset-0 hidden bg-white">
+                <iframe id="iframe-sipoc" class="w-full h-full hidden" src="about:blank"></iframe>
+                <iframe id="iframe-flowchart" class="w-full h-full hidden" src="about:blank"></iframe>
+                <iframe id="iframe-vsm" class="w-full h-full hidden" src="about:blank"></iframe>
+                <iframe id="iframe-contact" class="w-full h-full hidden" src="about:blank"></iframe>
             </div>
 
         </div>
     </main>
+
+    <!-- Global Toast Notification -->
+    <div id="toast" class="fixed bottom-8 right-8 translate-y-20 opacity-0 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-50 pointer-events-none">
+        <i class="fas fa-info-circle text-emerald-400 text-xl" id="toast-icon"></i>
+        <span id="toast-message" class="text-sm font-bold">Wiadomość</span>
+    </div>
 
     <script>
         const sidebar = document.getElementById('sidebar');
@@ -225,48 +285,92 @@
         const toggleIcon = document.getElementById('toggle-icon');
         const welcomeContent = document.getElementById('view-welcome-content');
         const iframeContainer = document.getElementById('iframe-container');
-        const appIframe = document.getElementById('app-iframe');
+        const toast = document.getElementById('toast');
 
+        // Workspace Data Handling
+        let workspaceData = { sipoc: null, flowchart: null, vsm: null };
+        let exportPending = false;
+
+        // Translations dict
         const i18n = {
             pl: {
                 projects: "Projekty",
                 collapse: "Zwiń menu",
                 welcome: "Witaj w",
-                welcomeDesc: "Wybierz narzędzie z menu po lewej stronie, aby rozpocząć optymalizację procesu.",
+                welcomeDesc: "Wybierz narzędzie z menu po lewej stronie, aby rozpocząć optymalizację procesu. Możesz zapisać lub wczytać swoje projekty w menu bocznym.",
                 run: "Uruchom moduł",
                 sipocTitle: "SIPOC Generator",
                 flowchartTitle: "Flowchart Maker",
                 vsmTitle: "VSM Analysis",
                 sipocDesc: "Definiowanie granic procesu i kluczowych interesariuszy.",
                 flowchartDesc: "Mapowanie logiki i decyzji operacyjnych krok po kroku.",
-                vsmDesc: "Analiza strumienia wartości i identyfikacja marnotrawstwa."
+                vsmDesc: "Analiza strumienia wartości i identyfikacja marnotrawstwa.",
+                contactTitle: "Kontakt",
+                adSpace: "Miejsce na reklamę",
+                adDesc: "Twój baner 250x250",
+                exportFile: "Zapisz do pliku",
+                importFile: "Wczytaj z pliku",
+                statusSaved: "Plik zapisany pomyślnie!",
+                statusLoaded: "Dane wczytane pomyślnie!",
+                sysReady: "System gotowy"
             },
             en: {
                 projects: "Projects",
                 collapse: "Collapse menu",
                 welcome: "Welcome to",
-                welcomeDesc: "Select a tool from the menu on the left to start process optimization.",
+                welcomeDesc: "Select a tool from the menu on the left to start process optimization. You can save or load your projects from the side menu.",
                 run: "Launch module",
                 sipocTitle: "SIPOC Generator",
                 flowchartTitle: "Flowchart Maker",
                 vsmTitle: "VSM Analysis",
                 sipocDesc: "Defining process boundaries and key stakeholders.",
                 flowchartDesc: "Step-by-step mapping of operational logic and decisions.",
-                vsmDesc: "Value stream analysis and waste identification."
+                vsmDesc: "Value stream analysis and waste identification.",
+                contactTitle: "Contact",
+                adSpace: "Ad Space",
+                adDesc: "Your banner 250x250",
+                exportFile: "Save to file",
+                importFile: "Load from file",
+                statusSaved: "File saved successfully!",
+                statusLoaded: "Data loaded successfully!",
+                sysReady: "System ready"
             }
         };
 
-        let currentLang = 'pl';
+        // Initialize from local storage
+        let currentLang = localStorage.getItem('appLang') || 'pl';
+
+        window.onload = () => {
+            setLanguage(currentLang);
+            
+            // Resume last active view if exists
+            const savedView = localStorage.getItem('activeView');
+            if (savedView && ['sipoc', 'flowchart', 'vsm', 'contact'].includes(savedView)) {
+                switchView(savedView);
+            }
+        };
+
+        // Listen for export data coming from iframes
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.action === 'exportData') {
+                workspaceData[event.data.source] = event.data.data;
+                checkExportReady();
+            }
+        });
 
         function setLanguage(lang) {
             currentLang = lang;
+            localStorage.setItem('appLang', lang); 
+            
+            // UI Toggle Styles
             document.getElementById('lang-pl').className = lang === 'pl' 
                 ? "flex-1 px-3 py-1 rounded-md text-xs font-bold transition-all bg-white text-emerald-600 shadow-sm"
-                : "flex-1 px-3 py-1 rounded-md text-xs font-bold transition-all text-slate-400 hover:text-slate-600";
+                : "flex-1 px-3 py-1 rounded-md text-xs font-bold transition-all text-slate-400 hover:text-slate-600 hover:bg-slate-200/50";
             document.getElementById('lang-en').className = lang === 'en' 
                 ? "flex-1 px-3 py-1 rounded-md text-xs font-bold transition-all bg-white text-emerald-600 shadow-sm"
-                : "flex-1 px-3 py-1 rounded-md text-xs font-bold transition-all text-slate-400 hover:text-slate-600";
+                : "flex-1 px-3 py-1 rounded-md text-xs font-bold transition-all text-slate-400 hover:text-slate-600 hover:bg-slate-200/50";
 
+            // Update DOM texts
             document.getElementById('label-projects').innerText = i18n[lang].projects;
             document.getElementById('label-collapse').innerText = i18n[lang].collapse;
             document.getElementById('welcome-title').innerText = i18n[lang].welcome;
@@ -274,10 +378,26 @@
             document.getElementById('nav-sipoc').innerText = i18n[lang].sipocTitle;
             document.getElementById('nav-flowchart').innerText = i18n[lang].flowchartTitle;
             document.getElementById('nav-vsm').innerText = i18n[lang].vsmTitle;
+            document.getElementById('nav-contact').innerText = i18n[lang].contactTitle;
             document.getElementById('desc-sipoc').innerText = i18n[lang].sipocDesc;
             document.getElementById('desc-flowchart').innerText = i18n[lang].flowchartDesc;
             document.getElementById('desc-vsm').innerText = i18n[lang].vsmDesc;
+            document.getElementById('ad-label').innerText = i18n[lang].adSpace;
+            document.getElementById('ad-desc').innerText = i18n[lang].adDesc;
+            
+            document.getElementById('btn-export').innerText = i18n[lang].exportFile;
+            document.getElementById('btn-import').innerText = i18n[lang].importFile;
+            document.getElementById('system-status').innerText = i18n[lang].sysReady;
+            
             ['link-sipoc', 'link-flowchart', 'link-vsm'].forEach(id => document.getElementById(id).innerText = i18n[lang].run);
+
+            // Broadcast Language change
+            ['sipoc', 'flowchart', 'vsm', 'contact'].forEach(v => {
+                const frame = document.getElementById(`iframe-${v}`);
+                if (frame && frame.contentWindow) {
+                    frame.contentWindow.postMessage({ action: 'setLanguage', lang: lang }, '*');
+                }
+            });
         }
 
         function toggleSidebar() {
@@ -301,11 +421,20 @@
 
             welcomeContent.classList.add('hidden');
             iframeContainer.classList.remove('hidden');
-            
-            // Użycie relatywnej ścieżki dla GitHub Pages
-            appIframe.src = `./${view}.html`;
+            localStorage.setItem('activeView', view);
 
-            // Zamknij sidebar na mobile po wyborze
+            ['sipoc', 'flowchart', 'vsm', 'contact'].forEach(v => {
+                const frame = document.getElementById(`iframe-${v}`);
+                if (v === view) {
+                    frame.classList.remove('hidden');
+                    if (frame.src === 'about:blank' || frame.src.endsWith('about:blank')) {
+                        frame.src = `./${view}.html?lang=${currentLang}`;
+                    }
+                } else {
+                    frame.classList.add('hidden');
+                }
+            });
+
             if (window.innerWidth < 768) {
                 sidebar.classList.remove('mobile-open');
                 overlay.classList.remove('active');
@@ -316,11 +445,142 @@
             document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
             welcomeContent.classList.remove('hidden');
             iframeContainer.classList.add('hidden');
-            appIframe.src = "about:blank";
+            
+            ['sipoc', 'flowchart', 'vsm', 'contact'].forEach(v => {
+                document.getElementById(`iframe-${v}`).classList.add('hidden');
+            });
+            
+            localStorage.removeItem('activeView');
+
             if (window.innerWidth < 768) {
                 sidebar.classList.remove('mobile-open');
                 overlay.classList.remove('active');
             }
+        }
+
+        // --- EXPORT TO EXTERNAL FILE ---
+        function exportWorkspace() {
+            exportPending = true;
+            workspaceData = { sipoc: null, flowchart: null, vsm: null };
+            
+            // Ask all frames to send their data
+            ['sipoc', 'flowchart', 'vsm'].forEach(v => {
+                const frame = document.getElementById(`iframe-${v}`);
+                if (frame && frame.contentWindow && !frame.src.endsWith('about:blank')) {
+                    frame.contentWindow.postMessage({ action: 'requestExport' }, '*');
+                } else {
+                    workspaceData[v] = {}; // empty if never opened
+                }
+            });
+
+            // Wait briefly for responses (frames process postMessage asynchronously)
+            setTimeout(() => {
+                if (exportPending) triggerDownload();
+            }, 800);
+        }
+
+        function checkExportReady() {
+            if (exportPending && workspaceData.sipoc !== null && workspaceData.flowchart !== null && workspaceData.vsm !== null) {
+                triggerDownload();
+            }
+        }
+
+        async function triggerDownload() {
+            exportPending = false;
+            const dataStr = JSON.stringify({
+                app: "Lean Six Sigma Mapping Workspace",
+                version: "1.0",
+                timestamp: new Date().toISOString(),
+                data: workspaceData
+            }, null, 2);
+            
+            const defaultFileName = `lean_workspace_${new Date().toISOString().split('T')[0]}.json`;
+
+            try {
+                // Nowoczesna metoda zapisu (otwiera okno dialogowe "Zapisz jako...")
+                if (window.showSaveFilePicker) {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: defaultFileName,
+                        types: [{
+                            description: 'JSON Workspace File',
+                            accept: {'application/json': ['.json']},
+                        }],
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(dataStr);
+                    await writable.close();
+                    
+                    showToast(i18n[currentLang].statusSaved, 'fa-check-circle', 'text-emerald-400');
+                } else {
+                    // Fallback dla starszych przeglądarek
+                    const blob = new Blob([dataStr], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = defaultFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    showToast(i18n[currentLang].statusSaved, 'fa-check-circle', 'text-emerald-400');
+                }
+            } catch (err) {
+                // Ignoruj błąd jeśli użytkownik po prostu anulował okno zapisu
+                if (err.name !== 'AbortError') {
+                    console.error('Błąd podczas zapisu pliku:', err);
+                    showToast("Błąd zapisu / Save error", 'fa-exclamation-triangle', 'text-red-400');
+                }
+            }
+        }
+
+        // --- IMPORT FROM EXTERNAL FILE ---
+        function importWorkspace(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed.data) {
+                        ['sipoc', 'flowchart', 'vsm'].forEach(v => {
+                            if (parsed.data[v] && Object.keys(parsed.data[v]).length > 0) {
+                                const frame = document.getElementById(`iframe-${v}`);
+                                // If frame hasn't been loaded yet, load it first
+                                if (frame.src === 'about:blank' || frame.src.endsWith('about:blank')) {
+                                    frame.src = `./${v}.html?lang=${currentLang}`;
+                                    frame.onload = () => {
+                                        frame.contentWindow.postMessage({ action: 'importData', data: parsed.data[v] }, '*');
+                                    };
+                                } else {
+                                    frame.contentWindow.postMessage({ action: 'importData', data: parsed.data[v] }, '*');
+                                }
+                            }
+                        });
+                        showToast(i18n[currentLang].statusLoaded, 'fa-check-circle', 'text-emerald-400');
+                    } else {
+                        throw new Error("Invalid format");
+                    }
+                } catch (err) {
+                    showToast("Błąd pliku / File error", 'fa-exclamation-triangle', 'text-red-400');
+                }
+                event.target.value = ''; // Reset input to allow re-uploading the same file
+            };
+            reader.readAsText(file);
+        }
+
+        function showToast(msg, iconClass, colorClass) {
+            document.getElementById('toast-message').innerText = msg;
+            
+            const icon = document.getElementById('toast-icon');
+            icon.className = `fas ${iconClass} ${colorClass} text-xl`;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
         }
     </script>
 </body>
