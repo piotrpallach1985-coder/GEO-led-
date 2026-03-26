@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kreator Schematów - SIPOC</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        .canvas-grid {
+            background-color: #ffffff;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 0);
+            background-size: 10px 10px;
+            background-position: -5px -5px;
+        }
+
+        .shape-node {
+            position: absolute;
+            font-size: 14px;
+            color: #1e293b;
+            cursor: move;
+            user-select: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: box-shadow 0.3s, outline 0.1s, transform 0.3s, opacity 0.3s, filter 0.3s;
+            outline: 2px solid transparent;
+            min-width: 40px;
+            min-height: 40px;
+            background-color: white;
+            touch-action: none;
+        }
+
+        /* Zielony motyw zaznaczenia */
+        .shape-node.selected {
+            outline: 2px solid #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 50 !important;
+        }
+
+        /* WARSTWY - EFEKTY AUTORSKIE */
+        .highlight-author {
+            outline: 3px solid #10b981 !important;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5) !important;
+            transform: scale(1.03);
+            z-index: 60 !important;
+        }
+        .dimmed-author {
+            opacity: 0.20 !important;
+            filter: grayscale(100%);
+            pointer-events: none;
+        }
+
+        /* Domyślne style kształtów */
+        .shape-process { background-color: #ecfdf5; border: 2px solid #10b981; border-radius: 4px; }
+        .shape-terminal { background-color: #f0fdf4; border: 2px solid #22c55e; border-radius: 999px; }
+        .shape-circle { background-color: #ffffff; border: 2px solid #64748b; border-radius: 50%; }
+        
+        .shape-decision { background-color: transparent; border: none; box-shadow: none; }
+        .shape-decision.selected { outline: 2px dashed #10b981; }
+
+        .shape-data { background-color: transparent; border: none; box-shadow: none; }
+        .shape-data.selected { outline: 2px dashed #10b981; }
+
+        .shape-text { background-color: transparent; border: 1px dashed transparent; box-shadow: none; }
+        .shape-text.selected { border: 1px dashed #94a3b8; box-shadow: none; outline: none; z-index: 50 !important; }
+
+        .shape-desc { background-color: #ffffff; border: 1px dashed #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .shape-desc.selected { border: 1px dashed #10b981; outline: 1px solid #10b981; }
+
+        .node-text-container {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; align-items: center; justify-content: center;
+            padding: 8px; box-sizing: border-box;
+            z-index: 10; pointer-events: none;
+        }
+        .node-text { 
+            width: 100%; outline: none; word-wrap: break-word; line-height: 1.2; 
+            font-weight: 500; text-align: center; pointer-events: auto;
+            user-select: text; -webkit-user-select: text;
+        }
+        .node-text:empty:before { content: "Tekst..."; color: #94a3b8; }
+
+        .shape-desc .node-text-container { align-items: flex-start; justify-content: flex-start; padding: 10px; }
+        .shape-desc .node-text { text-align: left; }
+
+        .export-mode .shape-node:not(.shape-desc) .node-text { position: relative; top: -8px; }
+
+        /* Kotwice w kolorze zielonym */
+        .anchor-point {
+            position: absolute; width: 24px; height: 24px; background-color: #fff; border: 2px solid #10b981; border-radius: 50%;
+            display: none; cursor: crosshair; z-index: 100; touch-action: none;
+        }
+        .shape-node.selected .anchor-point { display: block; }
+        
+        .anchor-top { top: -12px; left: calc(50% - 12px); }
+        .anchor-bottom { bottom: -12px; left: calc(50% - 12px); }
+        .anchor-left { left: -12px; top: calc(50% - 12px); }
+        .anchor-right { right: -12px; top: calc(50% - 12px); }
+
+        /* Linie zaznaczone na zielono */
+        .edge-path { fill: none; stroke: #64748b; stroke-width: 2.5; transition: stroke 0.2s; pointer-events: stroke; cursor: pointer; touch-action: none; }
+        .edge-path.selected { stroke: #10b981 !important; stroke-width: 4; } 
+        .edge-path.ok { stroke: #22c55e !important; }
+        .edge-path.nok { stroke: #ef4444 !important; }
+        
+        .edge-path.dashed { stroke-dasharray: 6, 6; }
+        .edge-path.dotted { stroke-dasharray: 2, 5; }
+
+        .edge-label {
+            position: absolute; padding: 2px 6px; background-color: white; border: 1px solid #cbd5e1; border-radius: 6px;
+            font-size: 11px; font-weight: 800; transform: translate(-50%, -50%); z-index: 20; pointer-events: auto; cursor: pointer;
+        }
+        .edge-label.ok { color: #16a34a; border-color: #bbf7d0; background-color: #f0fdf4; }
+        .edge-label.nok { color: #dc2626; border-color: #fecaca; background-color: #fef2f2; }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        
+        .color-btn { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.1s; }
+        .color-btn:hover { transform: scale(1.15); }
+        
+        /* Klasy dla aktywnej zakładki */
+        .tab-btn { transition: all 0.2s; }
+        .tab-active { color: #10b981; border-bottom-color: #10b981; }
+        .tab-inactive { color: #64748b; border-bottom-color: transparent; }
+        .tab-inactive:hover { color: #334155; }
+
+        /* Style dla wydruku (window.print) */
+        @media print {
+            body * { visibility: hidden; }
+            #canvas-board, #canvas-board * { visibility: visible !important; }
+            #canvas-board {
+                position: absolute;
+                left: 0; top: 0;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                background-image: none !important;
+                transform: scale(1) !important;
+            }
+            .shape-node.selected { outline: none; box-shadow: none; }
+            .anchor-point { display: none !important; }
+        }
+    </style>
+</head>
+<body class="flex flex-col h-[100dvh] select-none">
+
+    <!-- GÓRNE ZAKŁADKI -->
+    <nav class="bg-white px-4 pt-4 border-b border-slate-200 flex gap-6 shrink-0 z-20 overflow-x-auto hide-scrollbar">
+        <button id="tab-btn-diagram" class="tab-btn tab-active flex items-center gap-2 pb-2 border-b-2 font-bold whitespace-nowrap" onclick="switchTab('diagram')">
+            <i data-lucide="edit" class="w-4 h-4"></i> <span data-i18n="tabDiag">Diagram</span>
+        </button>
+        <button id="tab-btn-tutorial" class="tab-btn tab-inactive flex items-center gap-2 pb-2 border-b-2 font-bold whitespace-nowrap" onclick="switchTab('tutorial')">
+            <i data-lucide="graduation-cap" class="w-4 h-4"></i> <span data-i18n="tabTut">SAMOUCZEK</span>
+        </button>
+        <button id="tab-btn-manual" class="tab-btn tab-inactive flex items-center gap-2 pb-2 border-b-2 font-bold whitespace-nowrap" onclick="switchTab('manual')">
+            <i data-lucide="book" class="w-4 h-4"></i> <span data-i18n="tabMan">INSTRUKCJA OBSŁUGI</span>
+        </button>
+        
+        <!-- Przycisk Zmiany Języka w prawym rogu -->
+        <div class="ml-auto flex items-center pb-2">
+            <button id="btn-lang" class="px-2 py-1 text-xs font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 rounded border border-slate-300 transition-colors" title="Zmień język / Change language">EN</button>
+        </div>
+    </nav>
+
+    <!-- ZAKŁADKA 2: SAMOUCZEK -->
+    <div id="view-tutorial" class="hidden flex-1 p-4 sm:p-8 overflow-auto bg-slate-50">
+        <div class="max-w-4xl mx-auto bg-white p-6 sm:p-10 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+                <i data-lucide="graduation-cap" class="w-8 h-8 text-emerald-500"></i> Samouczek
+            </h2>
+            <div class="text-slate-600 space-y-6 leading-relaxed">
+                <p class="text-lg font-medium text-slate-700">Oto krótki i konkretny samouczek, który przeprowadzi Cię od pustej kartki do gotowej mapy procesu.</p>
+
+                <section>
+                    <h3 class="text-xl font-bold text-slate-800 mb-3 border-b pb-2 border-slate-100">Część 1: Co to właściwie jest Flowchart?</h3>
+                    <p class="mb-3"><strong>Flowchart (schemat blokowy)</strong> to graficzny język opisywania procesów. Zamiast pisać pięciostronicową instrukcję, rysujesz ścieżkę, którą podąża praca. W świecie Lean Six Sigma flowchart jest jak „zdjęcie RTG” – pozwala zobaczyć złamania i nieprawidłowości wewnątrz organizacji.</p>
+                    <h4 class="font-bold text-slate-700 mt-4 mb-2">Po co go robić?</h4>
+                    <ul class="list-disc pl-6 space-y-2">
+                        <li><strong>Wizualizacja:</strong> Ludzki mózg przetwarza obrazy 60 000 razy szybciej niż tekst.</li>
+                        <li><strong>Standard:</strong> Każdy widzi ten sam proces (koniec z domysłami typu „wydawało mi się, że to robi dział X”).</li>
+                        <li><strong>Analiza:</strong> Łatwiej wskazać, gdzie tracimy czas lub pieniądze.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3 class="text-xl font-bold text-slate-800 mb-3 border-b pb-2 border-slate-100">Część 2: Alfabet Flowchartu (Symbole)</h3>
+                    <p class="mb-3">Zanim zaczniesz rysować, musisz znać podstawowe „klocki”. Używanie standardowych symboli sprawi, że Twoja mapa będzie zrozumiała dla każdego.</p>
+                    <ul class="space-y-4">
+                        <li class="flex items-center gap-4">
+                            <div class="w-12 h-6 border-2 border-green-500 bg-green-50 rounded-full shrink-0 shadow-sm"></div>
+                            <div><strong>Start/Koniec (Owal):</strong> Każdy proces musi mieć jasny początek i punkt końcowy.</div>
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <div class="w-12 h-8 border-2 border-emerald-500 bg-emerald-50 rounded shrink-0 shadow-sm"></div>
+                            <div><strong>Działanie (Prostokąt):</strong> Opisuje konkretną czynność (np. „Wyślij maila”, „Zapakuj paczkę”).</div>
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <div class="w-8 h-8 border-2 border-yellow-500 bg-yellow-50 transform rotate-45 shrink-0 mx-2 shadow-sm"></div>
+                            <div><strong>Decyzja (Romb):</strong> Pytanie, na które odpowiadamy „Tak” lub „Nie”. Tu proces się rozgałęzia.</div>
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="arrow-right" class="w-8 h-8 text-slate-500 shrink-0 ml-2"></i>
+                            <div><strong>Kierunek (Strzałka):</strong> Pokazuje, w którą stronę płynie praca.</div>
+                        </li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2 border-slate-100">Część 3: Jak wykonać Flowchart krok po kroku</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-bold text-emerald-600">Krok 1: Określ granice (Scope)</h4>
+                            <p>Nie próbuj opisać całego funkcjonowania firmy na jednej kartce.</p>
+                            <ul class="list-disc pl-6 mt-1 text-sm text-slate-500">
+                                <li>Gdzie proces się zaczyna? (np. Klient składa zamówienie)</li>
+                                <li>Gdzie proces się kończy? (np. Klient otrzymuje towar)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-emerald-600">Krok 2: Zbierz fakty (Go to Gemba)</h4>
+                            <p>Największy błąd to rysowanie procesu „zza biurka”. Idź tam, gdzie praca się odbywa (w LSS nazywamy to <em>Gemba</em>). Porozmawiaj z ludźmi, którzy faktycznie wykonują te zadania.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-emerald-600">Krok 3: Wypisz główne kroki</h4>
+                            <p>Zanim zaczniesz rysować piękne kształty, wypisz czynności na karteczkach samoprzylepnych (Post-it). Pozwoli Ci to łatwo zmieniać ich kolejność, gdy okaże się, że o czymś zapomniałeś.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-emerald-600">Krok 4: Narysuj schemat</h4>
+                            <ul class="list-disc pl-6 mt-1 text-sm text-slate-500 space-y-1">
+                                <li>Ustaw kroki w kolejności chronologicznej.</li>
+                                <li>Użyj rombów wszędzie tam, gdzie proces może pójść w dwie różne strony (np. „Czy faktura jest poprawna?” -> Tak: Zapłać / Nie: Odeślij do korekty).</li>
+                                <li>Zadbaj o czytelność – strzałki nie powinny się nadmiernie krzyżować.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-emerald-600">Krok 5: Weryfikacja</h4>
+                            <p>Pokaż gotowy schemat komuś, kto bierze udział w tym procesie. Zapytaj: „Czy to naprawdę tak wygląda?”. Zazwyczaj usłyszysz: „W teorii tak, ale w czwartki robimy to inaczej” – to są najcenniejsze uwagi!</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="bg-emerald-50 border border-emerald-200 p-5 rounded-lg mt-6">
+                    <h3 class="text-lg font-bold text-emerald-800 mb-3 flex items-center gap-2">
+                        <i data-lucide="award" class="w-5 h-5"></i> Złote zasady Flowchartingu
+                    </h3>
+                    <ul class="list-disc pl-6 space-y-2 text-emerald-900">
+                        <li><strong>Keep It Simple:</strong> Jeśli proces jest zbyt skomplikowany, podziel go na podprocesy.</li>
+                        <li><strong>Konsekwencja:</strong> Opisuj działania czasownikami (np. „Sprawdź”, „Generuj”, „Zatwierdź”).</li>
+                        <li><strong>Prawda ponad ideał:</strong> Rysuj to, co się <em>dzieje</em>, a nie to, co <em>powinno</em> się dziać według instrukcji (tzw. mapa <strong>As-Is</strong>).</li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- ZAKŁADKA 3: INSTRUKCJA OBSŁUGI -->
+    <div id="view-manual" class="hidden flex-1 p-8 overflow-auto bg-slate-50">
+        <div class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+                <i data-lucide="book" class="w-6 h-6 text-emerald-500"></i> Instrukcja Obsługi
+            </h2>
+            <ul class="space-y-4 text-slate-600">
+                <li class="flex gap-3"><i data-lucide="plus-circle" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Dodawanie elementów:</b> Przeciągnij i upuść (lub po prostu kliknij) wybrany kształt z menu po lewej stronie, aby dodać go do planszy roboczej.</div></li>
+                <li class="flex gap-3"><i data-lucide="zoom-in" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Powiększanie i przesuwanie:</b> Użyj kółka myszy z wciśniętym <code>Ctrl</code> do przybliżania. Na ekranach dotykowych uszczypnij dwoma palcami. Aby przesunąć planszę, łap za puste pole.</div></li>
+                <li class="flex gap-3"><i data-lucide="link" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Łączenie bloków:</b> Zaznacz blok klikając go, a następnie przeciągnij linię z jednej z niebieskich kropek (punktów zaczepienia) do innego bloku. Linie omijają figury automatycznie!</div></li>
+                <li class="flex gap-3"><i data-lucide="layers" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Warstwy i Twórcy:</b> Na górnym pasku użyj przycisku "Warstwy", aby filtrować diagram po autorze i uwydatnić poszczególne części procesu.</div></li>
+                <li class="flex gap-3"><i data-lucide="type" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Edycja Tekstu:</b> Kliknij dwukrotnie w blok, aby zmienić tekst. Rozmiar klocka automatycznie dopasuje się do objętości tekstu.</div></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ZAKŁADKA 1: DIAGRAM -->
+    <div id="view-diagram" class="flex flex-col flex-1 overflow-hidden relative">
+        
+        <!-- NAGŁÓWEK TYTUŁOWY DIAGRAMU -->
+        <div class="px-4 sm:px-6 py-4 bg-white shrink-0 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-end gap-2">
+            <div>
+                <input type="text" id="project-title" value="Projekt Optymalizacji Procesu" class="text-2xl sm:text-3xl font-extrabold text-slate-800 bg-transparent border-b-2 border-transparent hover:border-slate-200 focus:border-emerald-500 outline-none w-full sm:w-[600px] mb-1 transition-colors">
+                <div class="flex items-center gap-1.5 text-slate-500">
+                    <i data-lucide="check-circle-2" class="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500"></i>
+                    <input type="text" id="project-subtitle" value="Flowchart" class="text-sm sm:text-base font-medium bg-transparent border-b border-transparent hover:border-slate-200 focus:border-emerald-500 outline-none w-48 sm:w-64 transition-colors">
+                    <span id="autosave-indicator" class="hidden text-[10px] font-bold text-emerald-600 ml-4 border px-2 py-0.5 border-emerald-200 bg-emerald-50 rounded" data-i18n="saved">Zapisano pomyślnie!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- GÓRNY PASEK NARZĘDZI (Tylko dla diagramu) -->
+        <header class="bg-white border-b border-slate-200 h-12 flex items-center px-2 sm:px-4 z-20 shadow-sm shrink-0 w-full overflow-x-auto hide-scrollbar gap-1.5 sm:gap-2">
+            
+            <!-- Globalny Twórca / Warstwa -->
+            <div class="flex items-center bg-emerald-50 p-1 rounded-lg border border-emerald-100 shadow-inner shrink-0" title="Aktywna warstwa (przypisana do nowych kafelków)">
+                <i data-lucide="layers" class="w-4 h-4 text-emerald-500 ml-1"></i>
+                <input type="text" id="global-author" value="Ja" list="existing-authors-list" class="bg-transparent text-xs w-24 sm:w-32 px-2 outline-none text-emerald-800 font-bold" placeholder="Twórca / Warstwa">
+                <datalist id="existing-authors-list"></datalist>
+            </div>
+
+            <div class="w-px h-6 bg-slate-200 mx-0.5 shrink-0"></div>
+
+            <!-- Cofanie / Ponawianie (Undo/Redo) -->
+            <button id="btn-undo" class="p-1 sm:px-2 sm:py-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed shrink-0" title="Cofnij (Ctrl+Z)" disabled>
+                <i data-lucide="undo-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+            </button>
+            <button id="btn-redo" class="p-1 sm:px-2 sm:py-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed shrink-0" title="Ponów (Ctrl+Y)" disabled>
+                <i data-lucide="redo-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+            </button>
+
+            <div class="w-px h-6 bg-slate-200 mx-0.5 shrink-0"></div>
+
+            <!-- Zoom -->
+            <div class="flex items-center bg-slate-50 p-1 rounded-lg border border-slate-200 shadow-inner shrink-0">
+                <button id="btn-zoom-out" class="p-1 hover:bg-white rounded text-slate-600 transition-all"><i data-lucide="zoom-out" class="w-3 h-3 sm:w-4 sm:h-4"></i></button>
+                <span id="zoom-level" class="text-[10px] sm:text-[11px] font-bold text-slate-600 w-8 sm:w-10 text-center">100%</span>
+                <button id="btn-zoom-in" class="p-1 hover:bg-white rounded text-slate-600 transition-all"><i data-lucide="zoom-in" class="w-3 h-3 sm:w-4 sm:h-4"></i></button>
+                <div class="w-px h-4 bg-slate-300 mx-1"></div>
+                <button id="btn-center-view" class="p-1 hover:bg-white rounded text-slate-600 transition-all" title="Wyśrodkuj widok"><i data-lucide="crosshair" class="w-3 h-3 sm:w-4 sm:h-4"></i></button>
+            </div>
+
+            <button id="btn-duplicate" class="p-1.5 sm:px-2 sm:py-1.5 text-xs sm:text-sm font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-300 rounded flex items-center gap-1 shadow-sm transition-all shrink-0" title="Kopiuj zaznaczony (Ctrl+C/V)">
+                <i data-lucide="copy" class="w-4 h-4"></i> <span data-i18n="copy" class="hidden md:inline">Kopiuj</span>
+            </button>
+            <button id="btn-delete" class="p-1.5 sm:px-2 sm:py-1.5 text-xs sm:text-sm font-bold bg-red-100 text-red-700 hover:bg-red-200 border border-red-300 rounded flex items-center gap-1 shadow-sm transition-all shrink-0" title="Usuń element">
+                <i data-lucide="trash-2" class="w-4 h-4"></i> <span data-i18n="del" class="hidden md:inline">Usuń</span>
+            </button>
+            
+            <div class="w-px h-6 bg-slate-200 mx-0.5 shrink-0"></div>
+            
+            <button id="btn-load" class="px-2 py-1.5 text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 rounded flex items-center gap-1 shadow-sm transition-all shrink-0" title="Wczytaj projekt">
+                <i data-lucide="folder-open" class="w-4 h-4"></i> <span data-i18n="loadBtn" class="hidden sm:inline">Wczytaj</span>
+            </button>
+            <button id="btn-save" class="px-2 py-1.5 text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 rounded flex items-center gap-1 shadow-sm transition-all shrink-0" title="Zapisz projekt (Nadpisz)">
+                <i data-lucide="save" class="w-4 h-4"></i> <span data-i18n="saveBtn" class="hidden sm:inline">Zapisz</span>
+            </button>
+            <button id="btn-save-as" class="px-2 py-1.5 text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 rounded flex items-center gap-1 shadow-sm transition-all shrink-0" title="Zapisz jako...">
+                <i data-lucide="download" class="w-4 h-4"></i> <span data-i18n="saveAsBtn" class="hidden lg:inline">Zapisz jako</span>
+            </button>
+            
+            <div class="ml-auto flex items-center gap-2 shrink-0">
+                <!-- Eksporty -->
+                <button id="btn-export-png" class="px-2 py-1.5 sm:px-3 text-xs sm:text-sm bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded shadow-sm shrink-0">PNG</button>
+                <button id="btn-export-pdf" class="px-2 py-1.5 sm:px-3 text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-sm shrink-0 flex gap-1 items-center"><i data-lucide="printer" class="w-4 h-4"></i> <span data-i18n="print">Drukuj</span></button>
+            </div>
+        </header>
+
+        <div class="flex flex-1 overflow-hidden relative">
+            <!-- Sidebar (Biblioteka Kształtów) -->
+            <aside class="w-full sm:w-56 bg-slate-50 border-r border-slate-200 flex flex-col z-10 shadow-sm shrink-0">
+                <div class="p-3 border-b border-slate-200 bg-slate-100 flex justify-between items-center hidden sm:flex">
+                    <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider" data-i18n="lib">Biblioteka</h2>
+                    <button id="btn-clear" class="text-slate-400 hover:text-red-500" title="Wyczyść planszę"><i data-lucide="file-x" class="w-4 h-4"></i></button>
+                </div>
+                
+                <div class="p-2 sm:p-4 flex flex-row sm:flex-col gap-3 sm:gap-4 overflow-x-auto sm:overflow-y-auto flex-none sm:flex-1 hide-scrollbar items-center sm:items-stretch bg-slate-50">
+                    <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2" draggable="true" ondragstart="handleDragStart(event, 'terminal')" onclick="addShapeCenter('terminal')">
+                        <div class="w-20 h-8 sm:w-24 sm:h-10 border-2 border-green-500 rounded-full flex items-center justify-center text-[9px] sm:text-[10px] font-bold bg-green-50" data-i18n="start">Start/Koniec</div>
+                    </div>
+                    <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2" draggable="true" ondragstart="handleDragStart(event, 'process')" onclick="addShapeCenter('process')">
+                        <div class="w-20 h-10 sm:w-24 sm:h-14 border-2 border-emerald-500 rounded flex items-center justify-center text-[9px] sm:text-[10px] font-bold bg-emerald-50" data-i18n="process">Proces</div>
+                    </div>
+                    <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2" draggable="true" ondragstart="handleDragStart(event, 'decision')" onclick="addShapeCenter('decision')">
+                        <div class="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center text-[8px] sm:text-[10px] font-bold relative">
+                            <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,2 98,50 50,98 2,50" fill="#fefce8" stroke="#eab308" stroke-width="2" /></svg>
+                            <span class="z-10" data-i18n="dec">Decyzja</span>
+                        </div>
+                    </div>
+                    <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2" draggable="true" ondragstart="handleDragStart(event, 'data')" onclick="addShapeCenter('data')">
+                        <div class="w-20 h-10 sm:w-24 sm:h-14 flex items-center justify-center text-[9px] sm:text-[10px] font-bold relative">
+                            <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="15,2 98,2 85,98 2,98" fill="#faf5ff" stroke="#a855f7" stroke-width="2" /></svg>
+                            <span class="z-10" data-i18n="io">We/Wy</span>
+                        </div>
+                    </div>
+                    <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2" draggable="true" ondragstart="handleDragStart(event, 'circle')" onclick="addShapeCenter('circle')">
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 border-2 border-slate-500 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold bg-white" data-i18n="circleBtn">A</div>
+                    </div>
+                    <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2" draggable="true" ondragstart="handleDragStart(event, 'text')" onclick="addShapeCenter('text')">
+                        <div class="w-16 h-8 sm:w-20 sm:h-8 border border-dashed border-slate-400 rounded flex items-center justify-center text-[9px] sm:text-[10px] font-bold bg-transparent" data-i18n="text">Tekst</div>
+                    </div>
+                    <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2" draggable="true" ondragstart="handleDragStart(event, 'desc')" onclick="addShapeCenter('desc')">
+                        <div class="w-24 h-10 sm:w-full border border-slate-300 bg-white rounded p-1 sm:p-2 text-[8px] sm:text-[9px] text-slate-400 border-dashed flex items-start" data-i18n="desc">Pole opisowe...</div>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="flex-1 relative overflow-auto bg-slate-200" id="workspace" style="touch-action: pan-x pan-y;">
+                
+                <!-- Panel Twórców (Floating - jak było wcześniej) -->
+                <div id="authors-panel" class="absolute top-4 left-4 z-40 bg-white/95 backdrop-blur shadow-lg rounded-xl p-3 border border-slate-200 hidden min-w-[140px] transition-all">
+                    <h3 class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                        <i data-lucide="users" class="w-3 h-3"></i> <span data-i18n="authorsLabel">Warstwy / Twórcy</span>
+                    </h3>
+                    <ul id="authors-list" class="space-y-1.5"></ul>
+                </div>
+
+                <div id="canvas-board" class="canvas-grid relative w-[2500px] h-[2500px] bg-white shadow-xl m-4 sm:m-8" style="transform-origin: 0 0;" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
+                    <svg id="edges-layer" class="absolute inset-0 w-full h-full pointer-events-none z-0">
+                        <defs>
+                            <marker id="arrowhead" markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="12" refX="0" refY="6" orient="auto"><polygon points="0 0, 16 6, 0 12" fill="#64748b" /></marker>
+                            <marker id="arrowhead-selected" markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="12" refX="0" refY="6" orient="auto"><polygon points="0 0, 16 6, 0 12" fill="#10b981" /></marker>
+                            <marker id="arrowhead-ok" markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="12" refX="0" refY="6" orient="auto"><polygon points="0 0, 16 6, 0 12" fill="#22c55e" /></marker>
+                            <marker id="arrowhead-nok" markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="12" refX="0" refY="6" orient="auto"><polygon points="0 0, 16 6, 0 12" fill="#ef4444" /></marker>
+                        </defs>
+                        <path id="temp-edge" class="edge-path hidden" stroke-dasharray="5,5" marker-end="url(#arrowhead)"></path>
+                        <circle id="edge-handle-from" class="hidden" r="8" fill="#fff" stroke="#10b981" stroke-width="2" cursor="pointer" pointer-events="all"></circle>
+                        <circle id="edge-handle-to" class="hidden" r="8" fill="#fff" stroke="#10b981" stroke-width="2" cursor="pointer" pointer-events="all"></circle>
+                    </svg>
+                    <div id="nodes-layer" class="absolute inset-0 w-full h-full pointer-events-none z-10"></div>
+                    <div id="labels-layer" class="absolute inset-0 w-full h-full pointer-events-none z-20"></div>
+
+                    <!-- Floating EDGE Toolbar -->
+                    <div id="edge-toolbar" class="hidden absolute bg-white shadow-xl border border-slate-200 rounded-xl p-1.5 flex gap-1 z-50 transform -translate-x-1/2 -translate-y-[120%] pointer-events-auto items-center min-w-max">
+                        <button id="tb-route" class="p-1.5 sm:p-2 text-slate-600 hover:text-emerald-600 rounded-lg"><i data-lucide="git-merge"></i></button>
+                        <button id="tb-dash" class="p-1.5 sm:p-2 text-slate-600 hover:text-emerald-600 rounded-lg"><i data-lucide="minus"></i></button>
+                        <div class="w-px h-6 sm:h-8 bg-slate-200 mx-1"></div>
+                        <button id="tb-label-ok" class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-bold text-green-600 hover:bg-green-50 rounded-lg">OK</button>
+                        <button id="tb-label-nok" class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-bold text-red-600 hover:bg-red-50 border border-transparent rounded-lg">NOK</button>
+                        <button id="tb-label-clear" class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-bold text-slate-400 hover:bg-slate-100 rounded-lg" data-i18n="none">Brak</button>
+                        <div class="w-px h-6 sm:h-8 bg-slate-200 mx-1"></div>
+                        <button id="tb-delete-edge" class="p-1.5 sm:p-2 text-red-500 hover:bg-red-50 rounded-lg"><i data-lucide="trash-2"></i></button>
+                    </div>
+
+                    <!-- Floating NODE Toolbar -->
+                    <div id="node-toolbar" class="hidden absolute bg-white shadow-xl border border-slate-200 rounded-xl p-1.5 flex gap-1 z-50 pointer-events-auto items-center min-w-max">
+                        <button class="px-2 py-1 text-[11px] font-bold text-slate-600 hover:bg-slate-100 rounded transition-colors" onclick="changeNodeFontSize(-1)" title="Pomniejsz tekst">A-</button>
+                        <button class="px-2 py-1 text-[11px] font-bold text-slate-600 hover:bg-slate-100 rounded transition-colors" onclick="changeNodeFontSize(1)" title="Powiększ tekst">A+</button>
+                        <div class="w-px h-5 bg-slate-200 mx-1"></div>
+                        
+                        <div class="flex items-center bg-slate-50 border border-slate-200 rounded px-1" title="Zmień twórcę tego kafelka">
+                            <i data-lucide="user" class="w-3 h-3 text-slate-400"></i>
+                            <input type="text" id="node-author-input" class="bg-transparent text-[10px] w-14 sm:w-20 px-1 outline-none text-slate-600 font-medium" onchange="updateNodeAuthor(this.value)">
+                        </div>
+                        <div class="w-px h-5 bg-slate-200 mx-1"></div>
+
+                        <!-- Kolory -->
+                        <button class="color-btn" style="background: #f1f5f9; border-color: #94a3b8" onclick="setNodeTheme('gray')"></button>
+                        <button class="color-btn" style="background: #dcfce7; border-color: #22c55e" onclick="setNodeTheme('green')"></button>
+                        <button class="color-btn" style="background: #fee2e2; border-color: #ef4444" onclick="setNodeTheme('red')"></button>
+                        <button class="color-btn" style="background: #ffedd5; border-color: #f97316" onclick="setNodeTheme('orange')"></button>
+                        <button class="color-btn" style="background: #dbeafe; border-color: #3b82f6" onclick="setNodeTheme('blue')"></button>
+                        <button class="color-btn" style="background: #f3e8ff; border-color: #a855f7" onclick="setNodeTheme('purple')"></button>
+                        <button class="color-btn" style="background: #fef9c3; border-color: #eab308" onclick="setNodeTheme('yellow')"></button>
+                        <div class="w-px h-5 bg-slate-200 mx-1"></div>
+                        <button class="color-btn flex items-center justify-center bg-white" style="border-color: #cbd5e1" onclick="setNodeTheme('none')"><i data-lucide="ban" class="w-3 h-3 text-slate-400"></i></button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <footer class="bg-slate-100 border-t border-slate-200 h-6 sm:h-8 flex items-center justify-center text-[9px] sm:text-[10px] font-bold text-slate-400 shrink-0 z-20 shadow-inner">
+        Design by Piotr Pallach &copy; 2026
+    </footer>
+
+    <!-- Export Modal -->
+    <div id="export-modal" class="hidden fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[200] p-4">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-96 max-w-full">
+            <h2 class="text-lg font-bold mb-4" id="export-modal-title" data-i18n="printOpt">Opcje Wydruku</h2>
+            <div class="space-y-4">
+                <select id="export-format" class="w-full border rounded-lg p-2 text-sm outline-none focus:border-emerald-500">
+                    <option value="auto" data-i18n="fit">Dopasuj do diagramu</option>
+                    <option value="a4">Standardowe A4</option>
+                    <option value="a3">Duże A3</option>
+                </select>
+                <select id="export-orientation" class="w-full border rounded-lg p-2 text-sm outline-none focus:border-emerald-500" disabled>
+                    <option value="p" data-i18n="port">Pionowa</option>
+                    <option value="l" data-i18n="land">Pozioma</option>
+                </select>
+            </div>
+            <div class="mt-6 flex justify-end gap-2">
+                <button id="btn-export-cancel" class="px-4 py-2 text-sm font-medium hover:bg-slate-100 rounded-lg transition-colors" data-i18n="cancel">Anuluj</button>
+                <button id="btn-export-confirm" class="px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex gap-2 items-center"><i data-lucide="printer" class="w-4 h-4"></i> <span data-i18n="gen">Generuj</span></button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="file-input" class="hidden" accept=".json">
+
+    <script>
+        // --- SŁOWNIK JĘZYKÓW ---
+        const i18n = {
+            pl: {
+                lib: "Biblioteka", start: "Start/Koniec", process: "Proces", dec: "Decyzja", io: "We/Wy",
+                circleBtn: "A", text: "Tekst", desc: "Pole opisowe...", copy: "Kopiuj", del: "Usuń", 
+                none: "Brak", saved: "Zapisano pomyślnie!", autosave: "Autozapisano w tle...",
+                fit: "Dopasuj do diagramu", port: "Pionowa", land: "Pozioma", print: "Drukuj", printOpt: "Opcje Wydruku",
+                cancel: "Anuluj", gen: "Generuj", authorsLabel: "Warstwy",
+                loadBtn: "Wczytaj", saveBtn: "Zapisz", saveAsBtn: "Zapisz jako", undo: "Cofnij", redo: "Ponów",
+                tabDiag: "Diagram", tabTut: "SAMOUCZEK", tabMan: "INSTRUKCJA OBSŁUGI"
+            },
+            en: {
+                lib: "Library", start: "Start/End", process: "Process", dec: "Decision", io: "Data I/O",
+                circleBtn: "A", text: "Text", desc: "Description box...", copy: "Copy", del: "Delete", 
+                none: "None", saved: "Saved successfully!", autosave: "Autosaved in background...",
+                fit: "Fit to diagram", port: "Portrait", land: "Landscape", print: "Print", printOpt: "Print Options",
+                cancel: "Cancel", gen: "Generate", authorsLabel: "Layers",
+                loadBtn: "Load", saveBtn: "Save", saveAsBtn: "Save As", undo: "Undo", redo: "Redo",
+                tabDiag: "Diagram", tabTut: "TUTORIAL", tabMan: "USER MANUAL"
+            }
+        };
+        let currentLang = 'pl';
+
+        function switchLanguage() {
+            currentLang = currentLang === 'pl' ? 'en' : 'pl';
+            document.getElementById('btn-lang').innerText = currentLang === 'pl' ? 'EN' : 'PL';
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                el.innerHTML = i18n[currentLang][el.getAttribute('data-i18n')];
+            });
+            const titleInput = document.getElementById('project-title');
+            if(titleInput.value === "Projekt Optymalizacji Procesu") titleInput.value = "Process Optimization Project";
+            else if (titleInput.value === "Process Optimization Project") titleInput.value = "Projekt Optymalizacji Procesu";
+            
+            const subInput = document.getElementById('project-subtitle');
+            if(subInput.value === "Flowchart") subInput.value = "Flowchart";
+            else if (subInput.value === "Flowchart") subInput.value = "Flowchart";
+
+            const authorInput = document.getElementById('global-author');
+            if(authorInput.value === "Ja") authorInput.value = "Me";
+            else if (authorInput.value === "Me") authorInput.value = "Ja";
+        }
+        document.getElementById('btn-lang').onclick = switchLanguage;
+
+        // --- ZAKŁADKI (TABS) ---
+        function switchTab(tabId) {
+            // Ukryj widoki
+            document.getElementById('view-diagram').classList.add('hidden');
+            document.getElementById('view-tutorial').classList.add('hidden');
+            document.getElementById('view-manual').classList.add('hidden');
+            
+            // Pokaż właściwy
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            if (tabId === 'diagram') {
+                document.getElementById('view-diagram').classList.add('flex');
+                document.getElementById('view-diagram').classList.remove('hidden');
+            }
+            
+            // Zmiana stylów przycisków
+            ['diagram', 'tutorial', 'manual'].forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (t === tabId) {
+                    btn.classList.add('tab-active');
+                    btn.classList.remove('tab-inactive');
+                } else {
+                    btn.classList.add('tab-inactive');
+                    btn.classList.remove('tab-active');
+                }
+            });
+        }
+
+        // --- DEKLARACJE GLOBALNE ---
+        const workspace = document.getElementById('workspace');
+        const canvasBoard = document.getElementById('canvas-board');
+        const nodesLayer = document.getElementById('nodes-layer');
+        const edgesLayer = document.getElementById('edges-layer');
+        const labelsLayer = document.getElementById('labels-layer');
+        const tempEdge = document.getElementById('temp-edge');
+        const edgeToolbar = document.getElementById('edge-toolbar');
+        const nodeToolbar = document.getElementById('node-toolbar');
+        const handleFrom = document.getElementById('edge-handle-from');
+        const handleTo = document.getElementById('edge-handle-to');
+        const projectTitleInput = document.getElementById('project-title');
+        const zoomLevelEl = document.getElementById('zoom-level');
+        const fileInput = document.getElementById('file-input');
+        const exportModal = document.getElementById('export-modal');
+        const exportFormat = document.getElementById('export-format');
+        const exportOrientation = document.getElementById('export-orientation');
+
+        let fileHandles = { json: null, png: null, pdf: null };
+
+        const THEMES = {
+            gray: { bg: '#f1f5f9', border: '#94a3b8' }, green: { bg: '#dcfce7', border: '#22c55e' },
+            red: { bg: '#fee2e2', border: '#ef4444' }, orange: { bg: '#ffedd5', border: '#f97316' },
+            blue: { bg: '#dbeafe', border: '#3b82f6' }, purple: { bg: '#f3e8ff', border: '#a855f7' },
+            yellow: { bg: '#fef9c3', border: '#eab308' }, none: { bg: 'transparent', border: '#cbd5e1' }
+        };
+
+        const state = {
+            nodes: [], edges: [], zoom: 1, 
+            selectedNodeId: null, selectedEdgeId: null,
+            clipboardNode: null, isDraggingNode: false, draggedNodeId: null, dragOffsetX: 0, dragOffsetY: 0,
+            isConnecting: false, connectFromNode: null, connectFromAnchor: null,
+            isReconnecting: false, reconnectEnd: null,
+            initialDragX: null, initialDragY: null 
+        };
+
+        // --- HISTORIA (UNDO/REDO) ---
+        const history = { past: [], future: [] };
+        
+        function saveState() {
+            history.past.push({
+                nodes: JSON.parse(JSON.stringify(state.nodes)),
+                edges: JSON.parse(JSON.stringify(state.edges))
+            });
+            if (history.past.length > 50) history.past.shift();
+            history.future = [];
+            updateUndoRedoButtons();
+        }
+
+        function restoreState(historicState) {
+            state.nodes = JSON.parse(JSON.stringify(historicState.nodes));
+            state.edges = JSON.parse(JSON.stringify(historicState.edges));
+            deselectAll();
+            nodesLayer.innerHTML = '';
+            state.nodes.forEach(n => renderNode(n.id));
+            renderAllEdges();
+            updateAuthorsPanel();
+            updateUndoRedoButtons();
+        }
+
+        function undo() {
+            if (history.past.length === 0 || isEditingText) return;
+            history.future.push({ nodes: JSON.parse(JSON.stringify(state.nodes)), edges: JSON.parse(JSON.stringify(state.edges)) });
+            restoreState(history.past.pop());
+        }
+
+        function redo() {
+            if (history.future.length === 0 || isEditingText) return;
+            history.past.push({ nodes: JSON.parse(JSON.stringify(state.nodes)), edges: JSON.parse(JSON.stringify(state.edges)) });
+            restoreState(history.future.pop());
+        }
+
+        function updateUndoRedoButtons() {
+            document.getElementById('btn-undo').disabled = history.past.length === 0;
+            document.getElementById('btn-redo').disabled = history.future.length === 0;
+        }
+        document.getElementById('btn-undo').onclick = undo;
+        document.getElementById('btn-redo').onclick = redo;
+
+        const GRID_SIZE = 10;
+        const SHAPE_DEFAULTS = {
+            'terminal': { w: 120, h: 50, text: 'Start' }, 'process': { w: 140, h: 80, text: 'Proces' },
+            'decision': { w: 120, h: 120, text: '?' }, 'data': { w: 140, h: 80, text: 'Dane' },
+            'circle': { w: 50, h: 50, text: 'A' }, 'text': { w: 80, h: 30, text: 'Tekst' },
+            'desc': { w: 200, h: 100, text: 'Opis...' }
+        };
+        const ANCHORS = ['top', 'right', 'bottom', 'left'];
+        let isEditingText = false;
+        let lastTapTime = 0;
+
+        function generateId() { return 'id_' + Math.random().toString(36).substr(2, 9); }
+
+        // --- OBSŁUGA ZOOM ---
+        let initialPinchDist = null;
+        let initialPinchZoom = 1;
+
+        function setZoom(val) {
+            state.zoom = Math.max(0.2, Math.min(val, 3));
+            canvasBoard.style.transform = `scale(${state.zoom})`;
+            zoomLevelEl.innerText = Math.round(state.zoom * 100) + '%';
+            positionToolbars();
+        }
+        document.getElementById('btn-zoom-in').onclick = () => setZoom(state.zoom + 0.1);
+        document.getElementById('btn-zoom-out').onclick = () => setZoom(state.zoom - 0.1);
+
+        document.getElementById('btn-center-view').onclick = () => {
+            if (state.nodes.length === 0) return;
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            state.nodes.forEach(n => {
+                minX = Math.min(minX, n.x); minY = Math.min(minY, n.y);
+                maxX = Math.max(maxX, n.x + n.width); maxY = Math.max(maxY, n.y + n.height);
+            });
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+            
+            const ws = document.getElementById('workspace');
+            ws.scrollTo({
+                left: (centerX * state.zoom) - (ws.clientWidth / 2),
+                top: (centerY * state.zoom) - (ws.clientHeight / 2),
+                behavior: 'smooth'
+            });
+        };
+
+        workspace.addEventListener('wheel', (e) => {
+            if (e.ctrlKey) { e.preventDefault(); setZoom(state.zoom * (e.deltaY > 0 ? 0.9 : 1.1)); }
+        }, { passive: false });
+
+        workspace.addEventListener('touchstart', (e) => {
+            if (e.touches && e.touches.length === 2) {
+                initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                initialPinchZoom = state.zoom;
+            }
+        }, {passive: false});
+
+        function getCoords(e) {
+            const rect = canvasBoard.getBoundingClientRect();
+            let clientX, clientY;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX; clientY = e.touches[0].clientY;
+            } else if (e.changedTouches && e.changedTouches.length > 0) {
+                clientX = e.changedTouches[0].clientX; clientY = e.changedTouches[0].clientY;
+            } else {
+                clientX = e.clientX; clientY = e.clientY;
+            }
+            return { x: (clientX - rect.left) / state.zoom, y: (clientY - rect.top) / state.zoom };
+        }
+
+        // --- TWÓRCY I WARSTWY (HOVER I DATALIST) ---
+        function updateAuthorsPanel() {
+            const authors = [...new Set(state.nodes.map(n => n.author).filter(Boolean))];
+            const panel = document.getElementById('authors-panel');
+            const list = document.getElementById('authors-list');
+            const datalist = document.getElementById('existing-authors-list');
+            
+            list.innerHTML = '';
+            if(datalist) datalist.innerHTML = '';
+            
+            if (authors.length === 0) { panel.classList.add('hidden'); return; }
+            panel.classList.remove('hidden');
+
+            authors.forEach(auth => {
+                // Dodawanie do listy podpowiedzi na górnym pasku
+                if(datalist) {
+                    const opt = document.createElement('option');
+                    opt.value = auth;
+                    datalist.appendChild(opt);
+                }
+
+                // Element listy pływającej
+                const li = document.createElement('li');
+                li.className = 'text-[10px] sm:text-xs font-bold text-slate-600 py-1.5 px-2 rounded-lg hover:bg-emerald-50 hover:text-emerald-700 cursor-pointer transition-colors flex items-center gap-2 border border-transparent hover:border-emerald-100';
+                li.innerHTML = `<div class="w-2 h-2 rounded-full bg-emerald-500 shadow-sm"></div> <span class="truncate max-w-[80px] sm:max-w-[100px]">${auth}</span>`;
+                
+                const highlightOn = () => {
+                    document.querySelectorAll('.shape-node').forEach(el => {
+                        if (el.dataset.author === auth) {
+                            el.classList.add('highlight-author'); el.classList.remove('dimmed-author');
+                        } else {
+                            el.classList.add('dimmed-author'); el.classList.remove('highlight-author');
+                        }
+                    });
+                };
+                const highlightOff = () => {
+                    document.querySelectorAll('.shape-node').forEach(el => {
+                        el.classList.remove('highlight-author', 'dimmed-author');
+                    });
+                };
+                
+                li.addEventListener('mouseenter', highlightOn);
+                li.addEventListener('mouseleave', highlightOff);
+                li.addEventListener('touchstart', highlightOn, {passive: true});
+                li.addEventListener('touchend', highlightOff, {passive: true});
+                
+                list.appendChild(li);
+            });
+            lucide.createIcons();
+        }
+
+        window.updateNodeAuthor = (val) => {
+            if(!state.selectedNodeId) return;
+            saveState();
+            const n = state.nodes.find(v => v.id === state.selectedNodeId);
+            if(n) { n.author = val.trim() || 'Nieznany'; renderNode(n.id); updateAuthorsPanel(); }
+        };
+
+        // --- AUTO-POWIĘKSZANIE KSZTAŁTÓW ---
+        function adjustNodeSize(id, textEl) {
+            const node = state.nodes.find(n => n.id === id);
+            if (!node || node.type === 'circle') return;
+
+            const clone = textEl.cloneNode(true);
+            clone.style.position = 'absolute'; clone.style.visibility = 'hidden';
+            clone.style.width = 'max-content'; clone.style.height = 'max-content';
+            document.body.appendChild(clone);
+            
+            const padX = node.type === 'decision' ? 70 : 30;
+            const padY = node.type === 'decision' ? 70 : 30;
+            
+            const natW = clone.offsetWidth + padX;
+            const natH = clone.offsetHeight + padY;
+            document.body.removeChild(clone);
+
+            const minW = SHAPE_DEFAULTS[node.type].w;
+            const minH = SHAPE_DEFAULTS[node.type].h;
+
+            const newW = Math.max(minW, Math.ceil(natW / GRID_SIZE) * GRID_SIZE);
+            const newH = Math.max(minH, Math.ceil(natH / GRID_SIZE) * GRID_SIZE);
+
+            if (node.width !== newW || node.height !== newH) {
+                node.width = newW; node.height = newH;
+                const el = document.getElementById(id);
+                el.style.width = node.width + 'px'; el.style.height = node.height + 'px';
+                renderAllEdges();
+                positionToolbars();
+            }
+        }
+
+        // --- KSZTAŁTY I TEKST ---
+        window.handleDragStart = (e, type) => { e.dataTransfer.setData('shapeType', type); };
+        window.handleDragOver = (e) => { e.preventDefault(); };
+        window.handleDrop = (e) => {
+            e.preventDefault();
+            const type = e.dataTransfer.getData('shapeType');
+            if (!SHAPE_DEFAULTS[type]) return;
+            const pt = getCoords(e);
+            addNode(type, pt.x - SHAPE_DEFAULTS[type].w/2, pt.y - SHAPE_DEFAULTS[type].h/2);
+        };
+        
+        window.addShapeCenter = (type) => {
+            const x = (workspace.scrollLeft + workspace.clientWidth/2)/state.zoom - SHAPE_DEFAULTS[type].w/2;
+            const y = (workspace.scrollTop + workspace.clientHeight/2)/state.zoom - SHAPE_DEFAULTS[type].h/2;
+            addNode(type, x, y);
+        };
+
+        function addNode(type, x, y) {
+            saveState();
+            const authorName = document.getElementById('global-author').value.trim() || 'Nieznany';
+            const node = { 
+                id: generateId(), type, text: SHAPE_DEFAULTS[type].text,
+                x: Math.round(x/GRID_SIZE)*GRID_SIZE, y: Math.round(y/GRID_SIZE)*GRID_SIZE,
+                width: SHAPE_DEFAULTS[type].w, height: SHAPE_DEFAULTS[type].h,
+                theme: 'default', fontSize: 14, author: authorName
+            };
+            state.nodes.push(node);
+            renderNode(node.id);
+            selectNode(node.id);
+            updateAuthorsPanel();
+        }
+
+        window.setNodeTheme = (colorKey) => {
+            if(!state.selectedNodeId) return;
+            saveState();
+            const n = state.nodes.find(v => v.id === state.selectedNodeId);
+            if(n) { n.theme = colorKey; renderNode(n.id); }
+        };
+
+        window.changeNodeFontSize = (delta) => {
+            if(!state.selectedNodeId) return;
+            saveState();
+            const n = state.nodes.find(v => v.id === state.selectedNodeId);
+            if(n) {
+                n.fontSize = (n.fontSize || 14) + delta;
+                if (n.fontSize < 8) n.fontSize = 8;
+                if (n.fontSize > 72) n.fontSize = 72;
+                renderNode(n.id);
+                const textEl = document.getElementById(n.id).querySelector('.node-text');
+                adjustNodeSize(n.id, textEl);
+            }
+        };
+
+        function renderNode(id) {
+            const node = state.nodes.find(n => n.id === id);
+            let el = document.getElementById(id);
+            if (!el) {
+                el = document.createElement('div'); el.id = id; el.className = `shape-node shape-${node.type} pointer-events-auto`;
+                if (node.type === 'decision') el.innerHTML = `<svg class="shape-svg absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,2 98,50 50,98 2,50" fill="#fefce8" stroke="#eab308" stroke-width="2" /></svg>`;
+                else if (node.type === 'data') el.innerHTML = `<svg class="shape-svg absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="15,2 98,2 85,98 2,98" fill="#faf5ff" stroke="#a855f7" stroke-width="2" /></svg>`;
+                
+                const container = document.createElement('div'); container.className = 'node-text-container';
+                const text = document.createElement('div'); text.className = 'node-text'; text.contentEditable = false; 
+                
+                const startEdit = (e) => { 
+                    e.stopPropagation(); isEditingText=true; text.contentEditable=true; text.focus(); 
+                    document.execCommand('selectAll', false, null); 
+                };
+
+                text.addEventListener('dblclick', startEdit);
+                text.addEventListener('touchend', (e) => {
+                    const currentTime = new Date().getTime();
+                    if (currentTime - lastTapTime < 400 && currentTime - lastTapTime > 0) {
+                        e.stopPropagation(); isEditingText=true; text.contentEditable=true; text.focus(); 
+                        setTimeout(() => { try { const range = document.createRange(); range.selectNodeContents(text); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); } catch(err) {} }, 50);
+                    }
+                    lastTapTime = currentTime;
+                });
+
+                text.addEventListener('input', () => adjustNodeSize(id, text));
+
+                text.addEventListener('blur', () => { 
+                    isEditingText=false; text.contentEditable=false; 
+                    if (node.text !== text.innerHTML) {
+                        saveState(); 
+                        node.text = text.innerHTML; 
+                        adjustNodeSize(id, text);
+                    }
+                });
+                
+                const preventIfEditing = (e) => { if (isEditingText) e.stopPropagation(); };
+                text.addEventListener('mousedown', preventIfEditing);
+                text.addEventListener('touchstart', preventIfEditing, {passive: false});
+
+                container.appendChild(text); el.appendChild(container);
+                
+                ANCHORS.forEach(pos => {
+                    const a = document.createElement('div'); a.className=`anchor-point anchor-${pos}`;
+                    const start = (e) => { e.stopPropagation(); e.preventDefault(); state.isConnecting=true; state.connectFromNode=id; state.connectFromAnchor=pos; };
+                    a.addEventListener('mousedown', start); a.addEventListener('touchstart', start, {passive: false});
+                    el.appendChild(a);
+                });
+
+                const onNodeDown = (e) => {
+                    if (e.target.classList.contains('anchor-point') || isEditingText) return;
+                    selectNode(id); state.isDraggingNode = true; state.draggedNodeId = id;
+                    const pt = getCoords(e); 
+                    state.dragOffsetX = pt.x - node.x; state.dragOffsetY = pt.y - node.y;
+                    state.initialDragX = node.x; state.initialDragY = node.y;
+                };
+                el.addEventListener('mousedown', onNodeDown);
+                el.addEventListener('touchstart', onNodeDown, {passive: false});
+                nodesLayer.appendChild(el);
+            }
+            
+            // Theming
+            if (node.theme && THEMES[node.theme]) {
+                const cols = THEMES[node.theme];
+                const svg = el.querySelector('.shape-svg polygon');
+                if (svg) {
+                    svg.setAttribute('fill', cols.bg); svg.setAttribute('stroke', cols.border);
+                    el.style.backgroundColor = 'transparent'; el.style.borderColor = 'transparent';
+                } else if(node.type !== 'text') {
+                    el.style.backgroundColor = cols.bg; el.style.borderColor = cols.border;
+                }
+            } else {
+                const svg = el.querySelector('.shape-svg polygon');
+                if (svg) {
+                    svg.setAttribute('fill', node.type==='decision' ? '#fefce8' : '#faf5ff');
+                    svg.setAttribute('stroke', node.type==='decision' ? '#eab308' : '#a855f7');
+                } else { el.style.backgroundColor = ''; el.style.borderColor = ''; }
+            }
+
+            const textEl = el.querySelector('.node-text');
+            if (textEl) {
+                if(!isEditingText) textEl.innerHTML = node.text;
+                textEl.style.fontSize = (node.fontSize || 14) + 'px';
+            }
+
+            el.dataset.author = node.author || 'Nieznany';
+            el.style.left = node.x + 'px'; el.style.top = node.y + 'px';
+            el.style.width = node.width + 'px'; el.style.height = node.height + 'px';
+        }
+
+        // --- LINIE I ALGORYTM (ROUTING) ---
+        function getAnchorPos(nodeId, anchor) {
+            const n = state.nodes.find(v => v.id === nodeId);
+            if (!n) return null;
+            let x = n.x, y = n.y;
+            if (anchor === 'top') { x += n.width/2; } else if (anchor === 'bottom') { x += n.width/2; y += n.height; }
+            else if (anchor === 'left') { y += n.height/2; } else { x += n.width; y += n.height/2; }
+            return {x, y};
+        }
+
+        function calculateBezierPath(start, end, startDir, endDir) {
+            const dx = Math.abs(end.x - start.x); const dy = Math.abs(end.y - start.y);
+            const curve = Math.max(40, Math.min(dx, dy) / 1.5);
+            let cp1x = start.x, cp1y = start.y, cp2x = end.x, cp2y = end.y;
+            if (startDir === 'top') cp1y -= curve; else if (startDir === 'bottom') cp1y += curve;
+            else if (startDir === 'left') cp1x -= curve; else if (startDir === 'right') cp1x += curve;
+            if (endDir === 'top') cp2y -= curve; else if (endDir === 'bottom') cp2y += curve;
+            else if (endDir === 'left') cp2x -= curve; else if (endDir === 'right') cp2x += curve;
+            return { d: `M ${start.x} ${start.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${end.x} ${end.y}`, mid: { x: 0.125 * start.x + 0.375 * cp1x + 0.375 * cp2x + 0.125 * end.x, y: 0.125 * start.y + 0.375 * cp1y + 0.375 * cp2y + 0.125 * end.y } };
+        }
+
+        function calculateBasicOrthogonalPath(start, end, startDir, endDir) {
+            const OFF = 30; 
+            const getOff = (p, d) => d==='top'?{x:p.x,y:p.y-OFF}:d==='bottom'?{x:p.x,y:p.y+OFF}:d==='left'?{x:p.x-OFF,y:p.y}:{x:p.x+OFF,y:p.y};
+            const c1 = getOff(start, startDir), c2 = getOff(end, endDir);
+            let pts = [start, c1];
+            if (startDir==='top'||startDir==='bottom') { if (endDir==='top'||endDir==='bottom') { pts.push({x: c1.x, y: (c1.y+c2.y)/2}, {x: c2.x, y: (c1.y+c2.y)/2}); } else pts.push({x: c1.x, y: c2.y}); } else { if (endDir==='left'||endDir==='right') { pts.push({x: (c1.x+c2.x)/2, y: c1.y}, {x: (c1.x+c2.x)/2, y: c2.y}); } else pts.push({x: c2.x, y: c1.y}); }
+            pts.push(c2, end);
+            pts = pts.filter((p, i, a) => i === 0 || Math.abs(p.x - a[i-1].x) > 1 || Math.abs(p.y - a[i-1].y) > 1);
+            const d = `M ${pts[0].x} ${pts[0].y} ` + pts.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
+            let midIdx = Math.floor(pts.length / 2);
+            let mid = pts.length % 2 === 0 ? { x: (pts[midIdx].x + pts[midIdx-1].x)/2, y: (pts[midIdx].y + pts[midIdx-1].y)/2 } : pts[midIdx];
+            return { d, mid };
+        }
+
+        function calculateOrthogonalPathWithObstacles(start, end, startDir, endDir, obstacles = []) {
+            if (!obstacles || obstacles.length === 0) return calculateBasicOrthogonalPath(start, end, startDir, endDir);
+            const OFF = 30; 
+            const getOff = (p, d) => d==='top'?{x:p.x,y:p.y-OFF}:d==='bottom'?{x:p.x,y:p.y+OFF}:d==='left'?{x:p.x-OFF,y:p.y}:{x:p.x+OFF,y:p.y};
+            const c1 = getOff(start, startDir), c2 = getOff(end, endDir);
+            let xs = new Set([start.x, c1.x, c2.x, end.x]); let ys = new Set([start.y, c1.y, c2.y, end.y]);
+            obstacles.forEach(o => { xs.add(o.l); xs.add(o.r); ys.add(o.t); ys.add(o.b); xs.add(o.l - OFF); xs.add(o.r + OFF); ys.add(o.t - OFF); ys.add(o.b + OFF); });
+            let minX = Math.min(...xs)-OFF*2, maxX = Math.max(...xs)+OFF*2, minY = Math.min(...ys)-OFF*2, maxY = Math.max(...ys)+OFF*2;
+            xs.add(minX); xs.add(maxX); ys.add(minY); ys.add(maxY);
+            const xArr = Array.from(xs).sort((a,b) => a-b); const yArr = Array.from(ys).sort((a,b) => a-b);
+            const isIntersecting = (x1, y1, x2, y2) => { const mx = Math.min(x1, x2), M = Math.max(x1, x2), my = Math.min(y1, y2), My = Math.max(y1, y2); for(let o of obstacles) { if(y1 === y2 && y1 > o.t && y1 < o.b && mx < o.r && M > o.l) return true; if(x1 === x2 && x1 > o.l && x1 < o.r && my < o.b && My > o.t) return true; } return false; };
+            let startI = xArr.indexOf(c1.x), startJ = yArr.indexOf(c1.y); let endI = xArr.indexOf(c2.x), endJ = yArr.indexOf(c2.y);
+            if(startI === -1 || startJ === -1 || endI === -1 || endJ === -1) return calculateBasicOrthogonalPath(start, end, startDir, endDir);
+            let open = [{i: startI, j: startJ, g: 0, dir: startDir, path: [{x: start.x, y: start.y}, {x: c1.x, y: c1.y}]}]; let closed = new Set(); let finalPath = null;
+            for (let iter = 0; iter < 5000 && open.length > 0; iter++) {
+                open.sort((a, b) => (a.g + Math.hypot(xArr[a.i]-c2.x, yArr[a.j]-c2.y)) - (b.g + Math.hypot(xArr[b.i]-c2.x, yArr[b.j]-c2.y)));
+                let curr = open.shift(); let key = curr.i + ',' + curr.j + ',' + curr.dir; 
+                if (closed.has(key)) continue; closed.add(key);
+                if (curr.i === endI && curr.j === endJ) { finalPath = curr.path; break; }
+                [{di:1, dj:0, dir:'right'}, {di:-1, dj:0, dir:'left'}, {di:0, dj:1, dir:'bottom'}, {di:0, dj:-1, dir:'top'}].forEach(n => {
+                    let ni = curr.i + n.di, nj = curr.j + n.dj;
+                    if (ni >= 0 && ni < xArr.length && nj >= 0 && nj < yArr.length) {
+                        let nx = xArr[ni], ny = yArr[nj];
+                        if (!isIntersecting(xArr[curr.i], yArr[curr.j], nx, ny)) {
+                            let dist = Math.hypot(nx - xArr[curr.i], ny - yArr[curr.j]); 
+                            let g = curr.g + dist; 
+                            if (curr.dir !== n.dir) g += 200; 
+                            open.push({i: ni, j: nj, g: g, dir: n.dir, path: [...curr.path, {x: nx, y: ny}]});
+                        }
+                    }
+                });
+            }
+            if (!finalPath) return calculateBasicOrthogonalPath(start, end, startDir, endDir);
+            finalPath.push({x: end.x, y: end.y});
+            let clean = [finalPath[0]];
+            for (let i = 1; i < finalPath.length - 1; i++) { let p = clean[clean.length-1], curr = finalPath[i], nxt = finalPath[i+1]; if ((p.x === curr.x && curr.x === nxt.x) || (p.y === curr.y && curr.y === nxt.y)) continue; clean.push(curr); }
+            clean.push(finalPath[finalPath.length-1]);
+            let d = `M ${clean[0].x} ${clean[0].y} ` + clean.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
+            let midIdx = Math.floor(clean.length / 2); let mid = clean.length % 2 === 0 ? { x: (clean[midIdx].x + clean[midIdx-1].x)/2, y: (clean[midIdx].y + clean[midIdx-1].y)/2 } : clean[midIdx];
+            return { d, mid };
+        }
+
+        function getPathData(start, end, startDir, endDir, routeType, obstacles = []) {
+            if (routeType === 'bezier') return calculateBezierPath(start, end, startDir, endDir);
+            return calculateOrthogonalPathWithObstacles(start, end, startDir, endDir, obstacles);
+        }
+
+        function createEdge(fromId, fromAnchor, toId, toAnchor) {
+            const exists = state.edges.some(e => e.fromNode === fromId && e.toNode === toId && e.fromAnchor === fromAnchor && e.toAnchor === toAnchor);
+            if (exists) return;
+            saveState();
+            const id = 'edge_' + generateId();
+            state.edges.push({ id, fromNode: fromId, fromAnchor, toNode: toId, toAnchor, style: 'solid', route: 'orthogonal', label: '' });
+            renderAllEdges(); selectEdge(id);
+        }
+
+        function renderAllEdges() {
+            edgesLayer.querySelectorAll('g.edge-group').forEach(g => g.remove());
+            labelsLayer.innerHTML = '';
+            
+            state.edges.forEach(edge => {
+                const p1 = getAnchorPos(edge.fromNode, edge.fromAnchor);
+                const p2 = getAnchorPos(edge.toNode, edge.toAnchor);
+                if(!p1 || !p2) return;
+
+                const arrowOffset = 16;
+                const p2_path = { x: p2.x, y: p2.y };
+                if (edge.toAnchor === 'top') p2_path.y -= arrowOffset;
+                else if (edge.toAnchor === 'bottom') p2_path.y += arrowOffset;
+                else if (edge.toAnchor === 'left') p2_path.x -= arrowOffset;
+                else if (edge.toAnchor === 'right') p2_path.x += arrowOffset;
+
+                const obstacles = state.nodes.filter(n => n.id !== edge.fromNode && n.id !== edge.toNode).map(n => ({
+                    l: n.x - 20, r: n.x + n.width + 20, t: n.y - 20, b: n.y + n.height + 20
+                }));
+
+                const pathData = getPathData(p1, p2_path, edge.fromAnchor, edge.toAnchor, edge.route || 'orthogonal', obstacles);
+                edge._mid = pathData.mid;
+                
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); g.setAttribute('class', 'edge-group');
+                const halo = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                halo.setAttribute('d', pathData.d); halo.setAttribute('fill', 'none'); halo.setAttribute('stroke', '#ffffff'); halo.setAttribute('stroke-width', '10'); halo.setAttribute('class', 'pointer-events-none');
+                
+                let cl = 'edge-path pointer-events-auto'; let mId = 'arrowhead';
+                if(edge.style === 'dashed') cl += ' dashed'; else if(edge.style === 'dotted') cl += ' dotted';
+
+                if(state.selectedEdgeId===edge.id) { cl += ' selected'; mId = 'arrowhead-selected'; }
+                else if(edge.label==='OK') { cl += ' ok'; mId = 'arrowhead-ok'; } else if(edge.label==='NOK') { cl += ' nok'; mId = 'arrowhead-nok'; }
+                
+                const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                p.setAttribute('d', pathData.d); p.setAttribute('class', cl); p.setAttribute('marker-end', `url(#${mId})`);
+                p.onmousedown = (e) => { e.stopPropagation(); selectEdge(edge.id); };
+                p.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); selectEdge(edge.id); }, {passive: false});
+                
+                // Niewidzialna, szeroka ścieżka do łatwego klikania (rozwiązuje problem kropkowanych linii)
+                const hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                hitArea.setAttribute('d', pathData.d);
+                hitArea.setAttribute('fill', 'none'); hitArea.setAttribute('stroke', 'transparent'); hitArea.setAttribute('stroke-width', '24');
+                hitArea.setAttribute('class', 'pointer-events-auto cursor-pointer');
+                hitArea.onmousedown = (e) => { e.stopPropagation(); selectEdge(edge.id); };
+                hitArea.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); selectEdge(edge.id); }, {passive: false});
+
+                g.appendChild(halo); g.appendChild(p); g.appendChild(hitArea); edgesLayer.insertBefore(g, tempEdge);
+
+                if (edge.label) {
+                    const lbl = document.createElement('div'); lbl.className = `edge-label ${edge.label.toLowerCase()}`;
+                    lbl.style.left = pathData.mid.x + 'px'; lbl.style.top = pathData.mid.y + 'px'; lbl.innerText = edge.label;
+                    lbl.onmousedown = (e) => { e.stopPropagation(); selectEdge(edge.id); };
+                    lbl.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); selectEdge(edge.id); }, {passive: false});
+                    labelsLayer.appendChild(lbl);
+                }
+
+                if (state.selectedEdgeId === edge.id && !state.isReconnecting) {
+                    handleFrom.setAttribute('cx', p1.x); handleFrom.setAttribute('cy', p1.y); handleFrom.classList.remove('hidden');
+                    handleTo.setAttribute('cx', p2.x); handleTo.setAttribute('cy', p2.y); handleTo.classList.remove('hidden');
+                }
+            });
+            if(!state.selectedEdgeId || state.isReconnecting) {
+                handleFrom.classList.add('hidden'); handleTo.classList.add('hidden');
+            }
+            positionToolbars();
+        }
+
+        // --- AKCJE I ZDARZENIA ---
+        function selectNode(id) { 
+            deselectAll(); state.selectedNodeId = id; document.getElementById(id)?.classList.add('selected'); 
+            positionToolbars();
+        }
+        function selectEdge(id) { 
+            deselectAll(); state.selectedEdgeId = id; renderAllEdges(); 
+        }
+        function deselectAll() {
+            if(state.selectedNodeId) document.getElementById(state.selectedNodeId)?.classList.remove('selected');
+            state.selectedNodeId = null; state.selectedEdgeId = null; 
+            edgeToolbar.classList.add('hidden'); nodeToolbar.classList.add('hidden');
+            renderAllEdges();
+            if (isEditingText && document.activeElement) document.activeElement.blur();
+        }
+
+        function positionToolbars() {
+            if (state.selectedNodeId && !isEditingText) {
+                const n = state.nodes.find(v => v.id === state.selectedNodeId);
+                if (n) {
+                    nodeToolbar.style.left = n.x + 'px';
+                    nodeToolbar.style.top = (n.y + n.height + 10) + 'px';
+                    document.getElementById('node-author-input').value = n.author || '';
+                    nodeToolbar.classList.remove('hidden');
+                }
+            } else { nodeToolbar.classList.add('hidden'); }
+
+            if (state.selectedEdgeId && !state.isReconnecting) {
+                const e = state.edges.find(v => v.id === state.selectedEdgeId);
+                if (e && e._mid) {
+                    edgeToolbar.style.left = e._mid.x + 'px';
+                    edgeToolbar.style.top = e._mid.y + 'px';
+                    edgeToolbar.classList.remove('hidden');
+                }
+            } else { edgeToolbar.classList.add('hidden'); }
+        }
+
+        const onBoardDown = (e) => {
+            if (!e.target.closest('.shape-node') && !e.target.closest('.edge-path') && !e.target.closest('.edge-label') && !e.target.closest('#edge-toolbar') && !e.target.closest('#node-toolbar')) {
+                deselectAll();
+            }
+        };
+        canvasBoard.addEventListener('mousedown', onBoardDown);
+        canvasBoard.addEventListener('touchstart', onBoardDown, {passive: true}); 
+
+        function deleteSelected() {
+            if (isEditingText) return;
+            if (state.selectedNodeId || state.selectedEdgeId) saveState();
+
+            if (state.selectedNodeId) {
+                const id = state.selectedNodeId;
+                state.nodes = state.nodes.filter(n => n.id !== id);
+                state.edges = state.edges.filter(e => e.fromNode !== id && e.toNode !== id);
+                document.getElementById(id)?.remove();
+                updateAuthorsPanel();
+            } else if (state.selectedEdgeId) {
+                state.edges = state.edges.filter(e => e.id !== state.selectedEdgeId);
+            }
+            deselectAll();
+        }
+
+        document.getElementById('btn-duplicate').onclick = () => {
+            if (!state.selectedNodeId || isEditingText) return;
+            saveState();
+            const n = state.nodes.find(v => v.id === state.selectedNodeId);
+            const newNode = { ...n, id: generateId(), x: n.x + 20, y: n.y + 20 };
+            state.nodes.push(newNode); renderNode(newNode.id); selectNode(newNode.id); updateAuthorsPanel();
+        };
+        document.getElementById('btn-delete').onclick = deleteSelected;
+        document.getElementById('tb-delete-edge').onclick = deleteSelected;
+        document.getElementById('btn-clear').onclick = () => { 
+            if(confirm('Wyczyścić planszę?')) { 
+                saveState(); state.nodes=[]; state.edges=[]; nodesLayer.innerHTML=''; 
+                renderAllEdges(); fileHandles.json=null; updateAuthorsPanel(); 
+            } 
+        };
+
+        const executeEdgeAction = (action) => {
+            const e = state.edges.find(ev => ev.id === state.selectedEdgeId);
+            if(e) { saveState(); action(e); renderAllEdges(); }
+        }
+
+        document.getElementById('tb-route').onclick = () => executeEdgeAction(e => e.route = e.route === 'bezier' ? 'orthogonal' : 'bezier');
+        document.getElementById('tb-dash').onclick = () => executeEdgeAction(e => e.style = (e.style === 'solid' || !e.style) ? 'dashed' : (e.style === 'dashed' ? 'dotted' : 'solid'));
+        document.getElementById('tb-label-ok').onclick = () => executeEdgeAction(e => e.label = 'OK');
+        document.getElementById('tb-label-nok').onclick = () => executeEdgeAction(e => e.label = 'NOK');
+        document.getElementById('tb-label-clear').onclick = () => executeEdgeAction(e => e.label = '');
+
+        const handleReconnFrom = (e) => { e.stopPropagation(); e.preventDefault(); state.isReconnecting = true; state.reconnectEnd = 'from'; };
+        const handleReconnTo = (e) => { e.stopPropagation(); e.preventDefault(); state.isReconnecting = true; state.reconnectEnd = 'to'; };
+        handleFrom.addEventListener('mousedown', handleReconnFrom); handleFrom.addEventListener('touchstart', handleReconnFrom, {passive: false});
+        handleTo.addEventListener('mousedown', handleReconnTo); handleTo.addEventListener('touchstart', handleReconnTo, {passive: false});
+
+        function getGlobalClosestAnchor(mx, my) {
+            let closest = null; let minDist = 80; // Wzrost promienia namierzania dla wygody
+            state.nodes.forEach(node => {
+                ANCHORS.forEach(pos => {
+                    const aPos = getAnchorPos(node.id, pos);
+                    const dist = Math.hypot(mx - aPos.x, my - aPos.y);
+                    if (dist < minDist) { minDist = dist; closest = { nodeId: node.id, pos: pos, abs: aPos }; }
+                });
+            });
+            return closest;
+        }
+
+        const handleGlobalMove = (e) => {
+            if (e.type === 'touchmove' && e.touches && e.touches.length === 2) {
+                if (initialPinchDist) {
+                    e.preventDefault();
+                    const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                    setZoom(initialPinchZoom * (dist / initialPinchDist));
+                }
+                return;
+            }
+
+            if (e.type === 'touchmove' && (state.isDraggingNode || state.isConnecting || state.isReconnecting)) {
+                e.preventDefault(); 
+            }
+            const pt = getCoords(e);
+            let mx = pt.x, my = pt.y;
+
+            if (state.isDraggingNode && state.draggedNodeId) {
+                const n = state.nodes.find(v => v.id === state.draggedNodeId);
+                n.x = Math.round((pt.x - state.dragOffsetX)/GRID_SIZE)*GRID_SIZE;
+                n.y = Math.round((pt.y - state.dragOffsetY)/GRID_SIZE)*GRID_SIZE;
+                renderNode(n.id); renderAllEdges(); positionToolbars();
+            }
+            if (state.isConnecting && state.connectFromNode) {
+                tempEdge.classList.remove('hidden');
+                const startPos = getAnchorPos(state.connectFromNode, state.connectFromAnchor);
+                let p2_path = {x: mx, y: my}, targetDir = 'top';
+                const closest = getGlobalClosestAnchor(mx, my);
+                if (closest) {
+                    p2_path = {x: closest.abs.x, y: closest.abs.y}; targetDir = closest.pos;
+                    const arrowOffset = 16;
+                    if (targetDir === 'top') p2_path.y -= arrowOffset; else if (targetDir === 'bottom') p2_path.y += arrowOffset;
+                    else if (targetDir === 'left') p2_path.x -= arrowOffset; else if (targetDir === 'right') p2_path.x += arrowOffset;
+                }
+                const obstacles = state.nodes.filter(n => n.id !== state.connectFromNode).map(n => ({l: n.x - 20, r: n.x + n.width + 20, t: n.y - 20, b: n.y + n.height + 20}));
+                const pathData = getPathData(startPos, p2_path, state.connectFromAnchor, targetDir, 'orthogonal', obstacles);
+                tempEdge.setAttribute('d', pathData.d);
+            }
+
+            if (state.isReconnecting && state.selectedEdgeId) {
+                const edge = state.edges.find(e => e.id === state.selectedEdgeId);
+                let targetX = mx, targetY = my, targetDir = 'top', snapped = false;
+                const closest = getGlobalClosestAnchor(mx, my);
+                if (closest) { targetX = closest.abs.x; targetY = closest.abs.y; targetDir = closest.pos; snapped = true; }
+                let d = ''; const arrowOffset = 16; const rType = edge.route || 'orthogonal';
+                const obstacles = state.nodes.filter(n => n.id !== edge.fromNode && n.id !== edge.toNode).map(n => ({l: n.x - 20, r: n.x + n.width + 20, t: n.y - 20, b: n.y + n.height + 20}));
+
+                if (state.reconnectEnd === 'from') {
+                    const p2 = getAnchorPos(edge.toNode, edge.toAnchor); const p2_path = { x: p2.x, y: p2.y };
+                    if (edge.toAnchor === 'top') p2_path.y -= arrowOffset; else if (edge.toAnchor === 'bottom') p2_path.y += arrowOffset;
+                    else if (edge.toAnchor === 'left') p2_path.x -= arrowOffset; else if (edge.toAnchor === 'right') p2_path.x += arrowOffset;
+                    d = getPathData({x: targetX, y: targetY}, p2_path, targetDir, edge.toAnchor, rType, obstacles).d;
+                } else {
+                    const p1 = getAnchorPos(edge.fromNode, edge.fromAnchor); const p2_path = { x: targetX, y: targetY };
+                    if (snapped) {
+                        if (targetDir === 'top') p2_path.y -= arrowOffset; else if (targetDir === 'bottom') p2_path.y += arrowOffset;
+                        else if (targetDir === 'left') p2_path.x -= arrowOffset; else if (targetDir === 'right') p2_path.x += arrowOffset;
+                    }
+                    d = getPathData(p1, p2_path, edge.fromAnchor, targetDir, rType, obstacles).d;
+                }
+                tempEdge.setAttribute('d', d); tempEdge.classList.remove('hidden');
+                edgeToolbar.classList.add('hidden'); handleFrom.classList.add('hidden'); handleTo.classList.add('hidden');
+                const origPathGroup = document.getElementById(edge.id)?.parentElement;
+                if (origPathGroup) origPathGroup.style.opacity = '0.2';
+            }
+        };
+
+        const handleGlobalUp = (e) => {
+            if (e.touches && e.touches.length < 2) initialPinchDist = null;
+
+            if (state.isDraggingNode) {
+                const n = state.nodes.find(v => v.id === state.draggedNodeId);
+                if(n && (n.x !== state.initialDragX || n.y !== state.initialDragY)) {
+                    const currX = n.x, currY = n.y;
+                    n.x = state.initialDragX; n.y = state.initialDragY;
+                    saveState();
+                    n.x = currX; n.y = currY;
+                }
+                state.isDraggingNode=false; state.draggedNodeId=null; 
+            }
+            if (state.isConnecting) {
+                state.isConnecting=false; tempEdge.classList.add('hidden');
+                const pt = getCoords(e);
+                const closest = getGlobalClosestAnchor(pt.x, pt.y);
+                if(closest && closest.nodeId !== state.connectFromNode) {
+                    createEdge(state.connectFromNode, state.connectFromAnchor, closest.nodeId, closest.pos);
+                }
+            }
+            if (state.isReconnecting) {
+                state.isReconnecting = false; tempEdge.classList.add('hidden');
+                const pt = getCoords(e);
+                const closest = getGlobalClosestAnchor(pt.x, pt.y);
+                const edge = state.edges.find(ev => ev.id === state.selectedEdgeId);
+                
+                if (closest && edge && (state.reconnectEnd === 'from' ? (edge.fromNode !== closest.nodeId || edge.fromAnchor !== closest.pos) : (edge.toNode !== closest.nodeId || edge.toAnchor !== closest.pos))) {
+                    const cF = edge.fromNode, cFa = edge.fromAnchor, cT = edge.toNode, cTa = edge.toAnchor;
+                    if (state.reconnectEnd === 'from') { edge.fromNode = closest.nodeId; edge.fromAnchor = closest.pos; } 
+                    else { edge.toNode = closest.nodeId; edge.toAnchor = closest.pos; }
+                    
+                    const newF = edge.fromNode, newFa = edge.fromAnchor, newT = edge.toNode, newTa = edge.toAnchor;
+                    edge.fromNode = cF; edge.fromAnchor = cFa; edge.toNode = cT; edge.toAnchor = cTa;
+                    saveState();
+                    edge.fromNode = newF; edge.fromAnchor = newFa; edge.toNode = newT; edge.toAnchor = newTa;
+                }
+                const origPathGroup = document.getElementById(state.selectedEdgeId)?.parentElement;
+                if (origPathGroup) origPathGroup.style.opacity = '1';
+                renderAllEdges();
+            }
+        };
+
+        window.addEventListener('mousemove', handleGlobalMove, {passive: false});
+        window.addEventListener('touchmove', handleGlobalMove, {passive: false});
+        window.addEventListener('mouseup', handleGlobalUp);
+        window.addEventListener('touchend', handleGlobalUp);
+
+        window.addEventListener('keydown', (e) => { 
+            if(document.activeElement.tagName === "INPUT" || document.activeElement.contentEditable === "true") return;
+            
+            // Undo / Redo skróty
+            if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); return; }
+            if (e.ctrlKey && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) { e.preventDefault(); redo(); return; }
+
+            if (e.key === 'Delete' || e.key === 'Backspace') { deleteSelected(); e.preventDefault(); }
+            if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) { 
+                if (state.selectedNodeId) state.clipboardNode = JSON.parse(JSON.stringify(state.nodes.find(n => n.id === state.selectedNodeId)));
+                e.preventDefault(); 
+            }
+            if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) { 
+                if (state.clipboardNode) { 
+                    saveState();
+                    const c=state.clipboardNode; 
+                    addNode(c.type, Math.round((c.x+20)/GRID_SIZE)*GRID_SIZE, Math.round((c.y+20)/GRID_SIZE)*GRID_SIZE); 
+                    const lastAdded = state.nodes[state.nodes.length-1];
+                    lastAdded.width = c.width; lastAdded.height = c.height; lastAdded.text = c.text; lastAdded.theme = c.theme; lastAdded.fontSize = c.fontSize;
+                    renderNode(lastAdded.id);
+                }
+                e.preventDefault(); 
+            }
+        });
+
+        // --- ZAPIS (SAVE / OVERWRITE) ---
+        function showSavedIndicator(msg) {
+            const ind = document.getElementById('autosave-indicator');
+            ind.innerText = msg; ind.classList.remove('hidden');
+            setTimeout(() => ind.classList.add('hidden'), 3000);
+        }
+
+        async function writeToFile(fileHandle, contents) {
+            const writable = await fileHandle.createWritable();
+            await writable.write(contents);
+            await writable.close();
+        }
+
+        function fallbackDownload(data, filename) {
+            const blob = new Blob([data], {type: "application/json"});
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = filename; 
+            a.click();
+        }
+
+        document.getElementById('btn-save').onclick = async () => {
+            deselectAll(); 
+            const title = projectTitleInput.value.trim() || 'Schemat';
+            const data = JSON.stringify({ title, nodes: state.nodes, edges: state.edges }, null, 2);
+            
+            if (fileHandles.json) {
+                try {
+                    await writeToFile(fileHandles.json, data);
+                    showSavedIndicator(i18n[currentLang].saved);
+                } catch(e) {
+                    document.getElementById('btn-save-as').click();
+                }
+            } else {
+                document.getElementById('btn-save-as').click();
+            }
+        };
+
+        document.getElementById('btn-save-as').onclick = async () => {
+            deselectAll();
+            const title = projectTitleInput.value.trim() || 'Schemat';
+            const data = JSON.stringify({ title, nodes: state.nodes, edges: state.edges }, null, 2);
+            
+            try {
+                if (window.showSaveFilePicker) {
+                    fileHandles.json = await window.showSaveFilePicker({
+                        suggestedName: title + ".json",
+                        types: [{ description: 'Plik Projektu JSON', accept: { 'application/json': ['.json'] } }]
+                    });
+                    await writeToFile(fileHandles.json, data);
+                    showSavedIndicator(i18n[currentLang].saved);
+                } else {
+                    fallbackDownload(data, title + ".json");
+                    showSavedIndicator(i18n[currentLang].saved);
+                }
+            } catch(err) {
+                if(err.name !== 'AbortError') fallbackDownload(data, title + ".json");
+            }
+        };
+
+        setInterval(async () => {
+            if (fileHandles.json && state.nodes.length > 0) {
+                try {
+                    if ((await fileHandles.json.queryPermission({ mode: 'readwrite' })) === 'granted') {
+                        const title = projectTitleInput.value.trim() || 'Schemat';
+                        const data = JSON.stringify({ title, nodes: state.nodes, edges: state.edges }, null, 2);
+                        await writeToFile(fileHandles.json, data);
+                        showSavedIndicator(i18n[currentLang].autosave);
+                    }
+                } catch (e) {}
+            }
+        }, 180000);
+
+        // --- WCZYTYWANIE ---
+        document.getElementById('btn-load').onclick = async () => {
+            if (window.showOpenFilePicker) {
+                try {
+                    const [handle] = await window.showOpenFilePicker({ types: [{ description: 'Plik projektu JSON', accept: {'application/json': ['.json']} }] });
+                    fileHandles.json = handle;
+                    const file = await handle.getFile();
+                    loadProjectData(await file.text());
+                } catch(e) { if(e.name !== 'AbortError') fileInput.click(); }
+            } else {
+                fileInput.click();
+            }
+        };
+        fileInput.onchange = (e) => {
+            if(!e.target.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => loadProjectData(ev.target.result);
+            reader.readAsText(e.target.files[0]);
+            e.target.value = '';
+        };
+
+        function loadProjectData(jsonString) {
+            try {
+                const data = JSON.parse(jsonString);
+                if (data && Array.isArray(data.nodes) && Array.isArray(data.edges)) {
+                    saveState();
+                    if(data.title) projectTitleInput.value = data.title;
+                    state.nodes = data.nodes; state.edges = data.edges; state.selectedNodeId = null; state.selectedEdgeId = null;
+                    nodesLayer.innerHTML = ''; state.nodes.forEach(n => renderNode(n.id)); renderAllEdges();
+                    updateAuthorsPanel();
+                }
+            } catch (err) { alert("Błąd odczytu pliku z projektem!"); }
+        }
+
+        // --- EXPORTY ---
+        exportFormat.addEventListener('change', (e) => { exportOrientation.disabled = (e.target.value === 'auto'); });
+        
+        // Zmiana działania wydruku na natywny window.print()
+        document.getElementById('btn-export-pdf').onclick = () => {
+            deselectAll();
+            
+            // Dopasuj obszar roboczy przed wydrukiem, aby zmieścił układ
+            let minX = Infinity, minY = Infinity;
+            state.nodes.forEach(n => { 
+                minX = Math.min(minX, n.x); minY = Math.min(minY, n.y); 
+            });
+            if (minX === Infinity) return alert(currentLang==='pl'?'Plansza jest pusta!':'Canvas is empty!');
+
+            const pad = 20;
+            const shiftX = minX - pad;
+            const shiftY = minY - pad;
+
+            // Chwilowe przesunięcie canvasu do wydruku (lewy górny róg)
+            canvasBoard.style.marginLeft = `-${Math.max(0, shiftX)}px`;
+            canvasBoard.style.marginTop = `-${Math.max(0, shiftY)}px`;
+
+            setTimeout(() => {
+                window.print();
+                // Przywrócenie pierwotnego położenia
+                canvasBoard.style.marginLeft = '';
+                canvasBoard.style.marginTop = '';
+            }, 300);
+        };
+
+        document.getElementById('btn-export-png').onclick = () => openExportModal('png');
+        document.getElementById('btn-export-cancel').onclick = () => exportModal.classList.add('hidden');
+
+        let currentExportType = '';
+        function openExportModal(type) {
+            currentExportType = type; 
+            document.getElementById('export-modal-title').innerText = currentLang==='pl'?'Zapisz jako PNG':'Save as PNG'; 
+            exportModal.classList.remove('hidden'); 
+        }
+
+        document.getElementById('btn-export-confirm').onclick = () => { 
+            exportModal.classList.add('hidden'); 
+            processExport(currentExportType, exportFormat.value, exportOrientation.value); 
+        };
+
+        async function saveExport(blob, defaultName, fileType, acceptOptions) {
+            try {
+                if (window.showSaveFilePicker) {
+                    const handle = await window.showSaveFilePicker({ suggestedName: defaultName, types: [acceptOptions] });
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                    return true;
+                }
+            } catch (err) { if (err.name === 'AbortError') return false; }
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = defaultName;
+            a.click(); URL.revokeObjectURL(a.href); return true;
+        }
+
+        function processExport(format, pageSize, orientation) {
+            deselectAll(); 
+            const prevZoom = state.zoom; 
+            setZoom(1);
+
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            if (state.nodes.length === 0) { setZoom(prevZoom); return alert(currentLang==='pl'?'Plansza jest pusta!':'Canvas is empty!'); }
+
+            state.nodes.forEach(n => { 
+                minX = Math.min(minX, n.x); minY = Math.min(minY, n.y); 
+                maxX = Math.max(maxX, n.x + n.width); maxY = Math.max(maxY, n.y + n.height); 
+            });
+
+            edgesLayer.querySelectorAll('.edge-path').forEach(path => {
+                try { const bbox = path.getBBox(); if (bbox.width > 0 || bbox.height > 0) { minX = Math.min(minX, bbox.x); minY = Math.min(minY, bbox.y); maxX = Math.max(maxX, bbox.x + bbox.width); maxY = Math.max(maxY, bbox.y + bbox.height); } } catch(e) {}
+            });
+
+            const pad = 40;
+            const captureMinX = Math.max(0, minX - pad); const captureMinY = Math.max(0, minY - pad);
+            const w = (maxX + pad) - captureMinX; const h = (maxY + pad) - captureMinY;
+
+            canvasBoard.classList.add('export-mode');
+            
+            const exportScale = 1.2;
+
+            setTimeout(() => {
+                html2canvas(canvasBoard, { x: captureMinX, y: captureMinY, width: w, height: h, backgroundColor: '#ffffff', scale: exportScale }).then(async canvas => {
+                    const titleStr = projectTitleInput.value.trim() || 'Schemat';
+                    await generatePNG(canvas, titleStr, pageSize, orientation);
+                    
+                    canvasBoard.classList.remove('export-mode'); setZoom(prevZoom);
+                }).catch(err => {
+                    console.error(err); canvasBoard.classList.remove('export-mode'); setZoom(prevZoom);
+                });
+            }, 400); 
+        }
+
+        async function generatePNG(canvas, title, pageSize, orientation) {
+            const finalCanvas = document.createElement('canvas'); const ctx = finalCanvas.getContext('2d');
+            let fw, fh; const titleHeight = 100;
+            if (pageSize === 'auto') {
+                fw = Math.max(canvas.width, 600); fh = canvas.height + titleHeight; finalCanvas.width = fw; finalCanvas.height = fh;
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, fw, fh); ctx.font = 'bold 36px sans-serif'; ctx.fillStyle = '#1e293b'; 
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(title, fw / 2, titleHeight / 2); ctx.drawImage(canvas, (fw - canvas.width)/2, titleHeight);
+            } else {
+                const isA4 = pageSize === 'a4'; fw = isA4 ? 1588 : 2246; fh = isA4 ? 2246 : 3176; if (orientation === 'l') [fw, fh] = [fh, fw];
+                finalCanvas.width = fw; finalCanvas.height = fh; ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, fw, fh); 
+                ctx.font = 'bold 48px sans-serif'; ctx.fillStyle = '#1e293b'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(title, fw / 2, 80);
+                const maxW = fw - 100, maxH = fh - 180, imgRatio = canvas.width / canvas.height; let renderW = maxW, renderH = maxW / imgRatio; 
+                if (renderH > maxH) { renderH = maxH; renderW = maxH * imgRatio; } ctx.drawImage(canvas, (fw - renderW) / 2, 130 + (maxH - renderH) / 2, renderW, renderH);
+            }
+            finalCanvas.toBlob(async (blob) => { await saveExport(blob, `${title}.png`, 'png', { description: 'Obraz PNG', accept: { 'image/png': ['.png'] } }); }, 'image/png');
+        }
+
+        window.onload = () => { lucide.createIcons(); };
+    </script>
+</body>
+</html>

@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagram SIPOC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .category-card {
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+        .category-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .item-input:focus {
+            outline: none;
+        }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        @media print {
+            @page {
+                size: A4 portrait; /* Zmieniono na wydruk w pionie */
+                margin: 5mm;
+            }
+            .no-print { display: none !important; }
+            body { background: white; padding: 0; margin: 0; }
+            #app { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            #editor-view { display: block !important; }
+            #tutorial-view { display: none !important; }
+            #instructions-view { display: none !important; }
+            main.grid {
+                display: grid !important;
+                grid-template-columns: repeat(5, 1fr) !important;
+                gap: 4px !important; /* Mniejsze przerwy, by zmieścić w pionie */
+                width: 100% !important;
+            }
+            .category-card { 
+                min-height: auto !important; 
+                height: auto !important;
+                border: 1px solid #e2e8f0 !important; 
+                page-break-inside: avoid;
+                transform: none !important;
+            }
+            input, textarea { border: none !important; background: transparent !important; }
+            
+            /* Dodatkowe pomniejszenia dla wydruku pionowego */
+            .text-sm { font-size: 11px !important; }
+            .text-xs { font-size: 9px !important; }
+            .p-1\.5 { padding: 4px !important; }
+        }
+
+        /* Stylizacja treści samouczka - ZIELONY MOTYW */
+        .prose h2 { font-weight: 800; font-size: 1.75rem; margin-top: 2.5rem; margin-bottom: 1.25rem; color: #0f172a; border-left: 4px solid #16a34a; padding-left: 1rem; }
+        .prose h3 { font-weight: 700; font-size: 1.25rem; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #1e293b; }
+        .prose p { margin-bottom: 1.25rem; color: #334155; line-height: 1.7; text-align: justify; }
+        .prose ul { list-style: none; padding: 0; margin-bottom: 1.5rem; }
+        .prose ul li { position: relative; padding-left: 1.5rem; margin-bottom: 0.75rem; color: #334155; }
+        .prose ul li::before { content: "→"; position: absolute; left: 0; color: #16a34a; font-weight: bold; }
+        .prose .summary-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 1rem; padding: 2rem; margin-top: 3rem; }
+        .prose hr { border: 0; border-top: 1px solid #e2e8f0; margin: 2rem 0; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans leading-normal relative min-h-screen">
+
+    <div id="app" class="max-w-[1600px] mx-auto p-4 md:p-8 pb-20">
+        <!-- Navigation Tabs -->
+        <nav class="flex gap-2 mb-6 no-print overflow-x-auto pb-2">
+            <button onclick="switchTab('editor')" id="btn-editor" class="flex items-center gap-2 px-6 py-2 rounded-t-lg font-bold transition-all border-b-2 border-green-600 bg-white text-green-600 shadow-sm whitespace-nowrap">
+                <i class="fas fa-edit"></i> Diagram
+            </button>
+            <button onclick="switchTab('tutorial')" id="btn-tutorial" class="flex items-center gap-2 px-6 py-2 rounded-t-lg font-bold transition-all border-b-2 border-transparent text-slate-500 hover:bg-slate-100 whitespace-nowrap">
+                <i class="fas fa-graduation-cap"></i> SAMOUCZEK
+            </button>
+            <button onclick="switchTab('instructions')" id="btn-instructions" class="flex items-center gap-2 px-6 py-2 rounded-t-lg font-bold transition-all border-b-2 border-transparent text-slate-500 hover:bg-slate-100 whitespace-nowrap">
+                <i class="fas fa-book"></i> INSTRUKCJA OBSŁUGI
+            </button>
+        </nav>
+
+        <!-- EDITOR VIEW -->
+        <div id="editor-view" class="tab-content active">
+            <!-- Header -->
+            <header class="mb-6 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                <div class="flex-grow max-w-2xl">
+                    <input type="text" id="project-name" value="Projekt Optymalizacji Procesu" 
+                        class="text-2xl md:text-3xl font-bold bg-transparent border-b-2 border-transparent hover:border-slate-300 focus:border-green-500 focus:outline-none transition-colors w-full">
+                    <div class="flex items-center gap-2 text-slate-500 text-sm mt-1 font-medium">
+                        <i class="fas fa-check-circle text-green-500"></i>
+                        <span>Mapa SIPOC</span>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2 no-print shrink-0">
+                    <button onclick="window.print()" class="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-lg shadow-sm hover:bg-slate-50 transition-all font-semibold text-slate-700">
+                        <i class="fas fa-print text-green-500"></i> Drukuj
+                    </button>
+                    <input type="file" id="import-file" accept=".json" class="hidden" onchange="importData(event)">
+                    <button onclick="document.getElementById('import-file').click()" class="flex items-center gap-2 bg-slate-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-slate-700 transition-all font-semibold">
+                        <i class="fas fa-folder-open"></i> Wczytaj
+                    </button>
+                    <button onclick="exportData()" class="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-green-700 transition-all font-semibold">
+                        <i class="fas fa-save"></i> Zapisz jako JSON
+                    </button>
+                </div>
+            </header>
+
+            <!-- SIPOC Grid -->
+            <main class="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-6">
+                <!-- S - Suppliers -->
+                <section onmouseenter="showTooltip('suppliers')" class="category-card bg-white rounded-xl shadow-sm border-t-4 border-teal-500 overflow-hidden flex flex-col">
+                    <div class="p-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <div class="flex items-center gap-2 font-bold text-slate-700 text-sm">
+                            <div class="w-6 h-6 rounded bg-teal-100 text-teal-600 flex items-center justify-center"><i class="fas fa-truck text-xs"></i></div>
+                            <span>S - Dostawcy</span>
+                        </div>
+                        <button onclick="addRow()" class="no-print p-1.5 hover:bg-white rounded-md text-slate-400 hover:text-teal-600 hover:shadow-sm transition-all"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="suppliers-list" class="flex-grow p-2 space-y-2 overflow-y-auto"></div>
+                </section>
+                
+                <!-- I - Inputs -->
+                <section onmouseenter="showTooltip('inputs')" class="category-card bg-white rounded-xl shadow-sm border-t-4 border-emerald-500 overflow-hidden flex flex-col">
+                    <div class="p-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <div class="flex items-center gap-2 font-bold text-slate-700 text-sm">
+                            <div class="w-6 h-6 rounded bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fas fa-sign-in-alt text-xs"></i></div>
+                            <span>I - Wejścia</span>
+                        </div>
+                        <button onclick="addRow()" class="no-print p-1.5 hover:bg-white rounded-md text-slate-400 hover:text-emerald-600 hover:shadow-sm transition-all"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="inputs-list" class="flex-grow p-2 space-y-2 overflow-y-auto"></div>
+                </section>
+                
+                <!-- P - Process -->
+                <section onmouseenter="showTooltip('process')" class="category-card bg-white rounded-xl shadow-sm border-t-4 border-green-500 overflow-hidden flex flex-col">
+                    <div class="p-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <div class="flex items-center gap-2 font-bold text-slate-700 text-sm">
+                            <div class="w-6 h-6 rounded bg-green-100 text-green-600 flex items-center justify-center"><i class="fas fa-random text-xs"></i></div>
+                            <span>P - Proces</span>
+                        </div>
+                        <button onclick="addRow()" class="no-print p-1.5 hover:bg-white rounded-md text-slate-400 hover:text-green-600 hover:shadow-sm transition-all"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="process-list" class="flex-grow p-2 space-y-2 overflow-y-auto"></div>
+                </section>
+                
+                <!-- O - Outputs -->
+                <section onmouseenter="showTooltip('outputs')" class="category-card bg-white rounded-xl shadow-sm border-t-4 border-lime-500 overflow-hidden flex flex-col">
+                    <div class="p-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <div class="flex items-center gap-2 font-bold text-slate-700 text-sm">
+                            <div class="w-6 h-6 rounded bg-lime-100 text-lime-700 flex items-center justify-center"><i class="fas fa-sign-out-alt text-xs"></i></div>
+                            <span>O - Wyjścia</span>
+                        </div>
+                        <button onclick="addRow()" class="no-print p-1.5 hover:bg-white rounded-md text-slate-400 hover:text-lime-600 hover:shadow-sm transition-all"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="outputs-list" class="flex-grow p-2 space-y-2 overflow-y-auto"></div>
+                </section>
+                
+                <!-- C - Customers -->
+                <section onmouseenter="showTooltip('customers')" class="category-card bg-white rounded-xl shadow-sm border-t-4 border-cyan-500 overflow-hidden flex flex-col">
+                    <div class="p-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <div class="flex items-center gap-2 font-bold text-slate-700 text-sm">
+                            <div class="w-6 h-6 rounded bg-cyan-100 text-cyan-600 flex items-center justify-center"><i class="fas fa-user-friends text-xs"></i></div>
+                            <span>C - Klienci</span>
+                        </div>
+                        <button onclick="addRow()" class="no-print p-1.5 hover:bg-white rounded-md text-slate-400 hover:text-cyan-600 hover:shadow-sm transition-all"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="customers-list" class="flex-grow p-2 space-y-2 overflow-y-auto"></div>
+                </section>
+            </main>
+
+            <!-- Dynamic Tooltip -->
+            <div id="tooltip-panel" class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm no-print flex gap-5 transition-all border-l-8 border-l-green-500 min-h-[120px] items-center">
+                <div id="tooltip-icon" class="text-green-500 text-3xl"><i class="fas fa-lightbulb"></i></div>
+                <div>
+                    <h4 id="tooltip-title" class="font-bold text-slate-800 text-base mb-1">Ekspert SIPOC podpowiada:</h4>
+                    <p id="tooltip-text" class="text-slate-600 text-sm leading-relaxed">Najedź myszką na jedną z sekcji powyżej, aby otrzymać wskazówki dotyczące jej uzupełniania.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TUTORIAL VIEW -->
+        <div id="tutorial-view" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 md:p-12 max-w-5xl mx-auto prose">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 pb-6 border-b border-slate-100 gap-4">
+                    <div>
+                        <h1 class="text-3xl md:text-4xl font-black text-slate-900 mb-2">Kompendium Wiedzy SIPOC</h1>
+                        <p class="text-slate-500 font-medium">Pełny tekst dokumentu instruktażowego</p>
+                    </div>
+                    <button onclick="switchTab('editor')" class="bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition-all shadow-md flex items-center gap-2 shrink-0">
+                        <i class="fas fa-arrow-left"></i> Wróć do Diagramu
+                    </button>
+                </div>
+
+                <h3>Spis treści</h3>
+                <ol class="mb-8">
+                    <li>1. Elementy, z których składa się diagram SIPOC</li>
+                    <li>2. Jak przygotować SIPOC krok po kroku</li>
+                    <li>3. Dlaczego SIPOC jest kluczowy w Lean Management</li>
+                    <li>4. Rola w fazie Define z metody DMAIC</li>
+                    <li>5. Najczęstsze błędy popełniane podczas tworzenia SIPOC</li>
+                    <li>6. Jak wykorzystać SIPOC w codziennej pracy operacyjnej</li>
+                    <li>7. Podsumowanie</li>
+                </ol>
+
+                <p>SIPOC diagram to jedno z najbardziej fundamentalnych narzędzi stosowanych w Lean Management oraz w projektach Six Sigma. Jego siła wynika z prostoty: pozwala uporządkować kluczowe informacje o procesie na jednej, przejrzystej planszy. Ułatwia zrozumienie granic procesu, jego wejść i wyjść, a także tego, kto jest dostawcą, a kto odbiorcą. W praktyce przemysłowej SIPOC pełni rolę wspólnego języka, dzięki któremu inżynierowie, operatorzy, liderzy produkcji i zespoły projektowe mogą zobaczyć proces z lotu ptaka jeszcze zanim przejdą do szczegółowych analiz.</p>
+                <p>To narzędzie często wykorzystuje się na początku projektów DMAIC, ale nie jest ograniczone tylko do Six Sigma. SIPOC świetnie sprawdza się również jako szybka mapa referencyjna podczas warsztatów Kaizen, wdrażania standardów pracy, analiz ryzyka czy wdrożenia nowych pracowników. W wielu firmach stanowi obowiązkowy załącznik do dokumentacji procesu, ponieważ wymusza jasne określenie, gdzie proces się zaczyna, a gdzie kończy. Co ważne – jego opracowanie zajmuje niewiele czasu, a wartość informacyjna jest bardzo duża.</p>
+                <p>W praktyce, gdy organizacja ma problemy z niejasnymi odpowiedzialnościami, reklamacjami jakościowymi lub brakiem transparentności w przepływach, już samo stworzenie SIPOC potrafi ujawnić kluczowe luki. To właśnie prostota i uniwersalność sprawiają, że SIPOC jest narzędziem, które nigdy się nie starzeje, mimo zmieniających się metod zarządzania i technologii wspierających procesy.</p>
+
+                <h2>Elementy, z których składa się diagram SIPOC</h2>
+                <p>SIPOC to akronim od pięciu podstawowych kategorii: Suppliers, Inputs, Process, Outputs, Customers. Każdy z tych elementów pełni swoją specyficzną rolę i razem tworzą strukturę, która pozwala uchwycić sedno działania procesu. Chociaż na pierwszy rzut oka przypomina prostą tabelę, jej wypełnienie wymaga przemyślenia przepływu wartości i odpowiedzialności.</p>
+                <p>Pierwszym elementem są dostawcy (Suppliers) – czyli wszystkie podmioty, które dostarczają wejścia potrzebne do wykonania procesu. Mogą to być zewnętrzni kontrahenci, inne działy, ale również systemy informatyczne czy nawet operatorzy. To wskazuje, że proces zaczyna się nie w momencie, kiedy my go wykonujemy, ale kiedy ktoś dostarcza nam dane lub materiały.</p>
+                <p>Wejścia (Inputs) to wszystko, co jest konieczne do realizacji procesu: materiały, instrukcje, dane, narzędzia, wymagania jakościowe. W praktyce przemysłowej często okazuje się, że to właśnie w tej kolumnie ujawniają się powtarzalne problemy – na przykład niepełne specyfikacje, braki materiałowe czy niejasne kryteria jakości.</p>
+                <p>Proces (Process) to zazwyczaj 4–7 kluczowych kroków, stanowiących esencję tego, co dzieje się między wejściem a wyjściem. W diagramie SIPOC nie opisujemy szczegółowych instrukcji pracy, lecz kroki na poziomie makro – tak, aby każdy zespół mógł zrozumieć całościowy przepływ.</p>
+                <p>Wyjścia (Outputs) to produkty, półprodukty, informacje lub usługi, które proces generuje. Dobrą praktyką jest wskazanie również ich kluczowych parametrów lub wymagań jakościowych, ponieważ to one determinują satysfakcję klientów.</p>
+                <p>Ostatni element to klienci (Customers). Mogą to być klienci zewnętrzni lub wewnętrzni, w zależności od rodzaju procesu. Ich perspektywa jest kluczowa, ponieważ to właśnie potrzeby klientów określają, czy proces jest efektywny i czy generuje wartość.</p>
+
+                <h2>Jak przygotować SIPOC krok po kroku</h2>
+                <p>Przygotowanie SIPOC wydaje się proste, ale w praktyce jego jakość zależy od tego, jak dobrze zespół rozumie proces. Najlepiej jest tworzyć go wspólnie – z udziałem przedstawicieli produkcji, jakości, logistyki, inżynierii procesu i liderów. Każdy z tych działów ma inną perspektywę i może wnieść unikalne informacje, które zapobiegają pominięciu kluczowych elementów.</p>
+                <p>Pierwszy krok to jasne określenie granicy procesu: gdzie proces się zaczyna, a gdzie kończy. Bez tego zespół będzie wciągał do mapy elementy, które nie należą do analizowanego obszaru, co spowoduje chaos i brak przejrzystości. Granice procesu powinny być zaakceptowane przez wszystkich.</p>
+                <p>Następnie warto zacząć od kolumny Process, określając 4–7 kroków wysokopoziomowych. Zbyt duża szczegółowość sprawi, że SIPOC straci swoją funkcję mapy przeglądowej; zbyt mała – że nie odda specyfiki przepływu. Dobrym punktem odniesienia jest perspektywa operatora, który wykonuje kluczowe czynności.</p>
+                <p>Dopiero później przechodzi się do wypełnienia Outputs, Customers, a następnie Inputs i Suppliers. Ta kolejność nie jest przypadkowa – pozwala zachować logikę przepływu, unikając typowego błędu, jakim jest wpisywanie dostawców, zanim ustalimy, czego faktycznie potrzebuje proces.</p>
+                <p>Na koniec zespół powinien jeszcze raz przejrzeć SIPOC i ocenić, czy wszystkie informacje są kompletne oraz jednoznaczne. Jeśli diagram jest zbyt ogólny, nie wniesie wartości. Jeśli natomiast jest zbyt szczegółowa, utrudni szybkie zrozumienie procesu przez osoby spoza zespołu.</p>
+
+                <h2>Dlaczego SIPOC jest kluczowy w Lean Management</h2>
+                <p>W organizacjach, które stosują Lean, priorytetem jest eliminacja marnotrawstwa i budowanie stabilnych, przewidywalnych procesów. SIPOC wpisuje się w ten cel, ponieważ pozwala szybko zidentyfikować kluczowe źródła problemów – zwłaszcza tych związanych z jakością wejść, zmianami w wymaganiach lub niejasnymi odpowiedzialnościami. Ponadto SIPOC stanowi świetne narzędzie komunikacyjne, ułatwiając dyskusję między działami i pomagając unikać typowych nieporozumień.</p>
+                <p>Jednym z powodów, dla których SIPOC jest tak skuteczny, jest to, że wymusza myślenie o procesie w kontekście przepływu wartości. Wiele zespołów koncentruje się wyłącznie na czynnościach, które wykonują, nie analizując, dla kogo i dlaczego je wykonują. SIPOC sprawia, że proces nie jest analizowany w izolacji, ale w relacji z klientem końcowym.</p>
+                <p>Ponadto narzędzie to wspiera standaryzację – a ta jest fundamentem Lean. Kiedy zespół tworzy SIPOC dla danego procesu, tworzy tym samym szkielet, który ułatwia rozwój instrukcji pracy, analizę FMEA, mapowanie strumienia wartości czy identyfikację potencjalnych usprawnień. Jest to szczególnie ważne w środowiskach o dużej zmienności lub w zespołach o wysokiej rotacji pracowników.</p>
+                <p>SIPOC pomaga również w identyfikacji krytycznych punktów, w których powstają błędy. Wiele organizacji odkrywa, że problemy jakościowe wynikają nie z samego procesu, lecz z jakości wejść, które do niego trafiają. Ten wgląd jest często przełomowy – i właśnie dzięki temu SIPOC od lat jest narzędziem pierwszego wyboru dla praktyków Lean.</p>
+
+                <h2>Rola w fazie Define z metody DMAIC</h2>
+                <p>W metodologii DMAIC, stosowanej w Six Sigma, SIPOC jest jednym z podstawowych narzędzi używanych w fazie Define. Jego zadaniem jest precyzyjne zdefiniowanie procesu, zanim zespół przejdzie do analizy danych, pomiarów czy identyfikacji przyczyn problemu. SIPOC daje kontekst dla dalszej pracy projektowej, wskazując, gdzie należy skoncentrować pomiary i jakie zmienne mogą wpływać na wyniki.</p>
+                <p>W praktyce oznacza to, że bez dobrze przygotowanego SIPOC projekt Six Sigma ma większe ryzyko błądzenia i koncentrowania się na błędnych aspektach procesu. Dlatego doświadczeni Black Beltowie zawsze zaczynają od zmapowania procesu w formie SIPOC, nawet jeśli wydaje się, że problem jest doskonale znany.</p>
+                <p>Jednym z istotnych elementów w projektach Six Sigma jest identyfikacja tzw. CTQ (Critical To Quality) – krytycznych charakterystyk ważnych dla klienta. SIPOC stanowi fundament do ich identyfikacji, ponieważ opisuje zarówno klientów, jak i oczekiwane wyjścia z procesu. To sprawia, że cały projekt może być prowadzony z perspektywy klienta, a nie wewnętrznych założeń zespołu.</p>
+                <p>Dodatkowo SIPOC pomaga określić zakres projektu i upewnić się, że nie obejmuje on zbyt szerokiego obszaru. Wielu liderów projektów popełnia błąd, próbując rozwiązać problem w całym procesie, zamiast skupić się na jego konkretnej części. SIPOC pozwala wizualnie ustalić, gdzie znajduje się analizowany fragment, co znacznie ułatwia zarządzanie projektem.</p>
+
+                <h2>Najczęstsze błędy popełniane podczas tworzenia SIPOC</h2>
+                <p>Chociaż SIPOC jest narzędziem prostym, zespoły często popełniają powtarzalne błędy, które zmniejszają jego wartość. Pierwszym z nich jest tworzenie zbyt szczegółowego SIPOC, który przestaje być mapą wysokopoziomową, a staje się instrukcją pracy. Takie podejście utrudnia strategiczne spojrzenie na proces i komplikuje komunikację.</p>
+                <p>Drugim częstym błędem jest pomijanie klientów wewnętrznych. Zespoły często wpisują tylko klientów zewnętrznych, zapominając, że to właśnie odbiorcy wewnętrzni są najczęściej źródłem informacji zwrotnych i problemów jakościowych. Brak ich perspektywy sprawia, że SIPOC staje się niepełny.</p>
+                <p>Innym problemem jest zbyt ogólne definiowanie wejść, na przykład wpisywanie „materiały” zamiast „materiał X o specyfikacji Y”. W efekcie mapa nie pomaga w analizie przyczyn problemów, ponieważ nie pokazuje istotnych parametrów wejściowych. To samo dotyczy zbyt ogólnych opisów wyjść, które nie uwzględniają wymagań jakościowych.</p>
+                <p>Wreszcie częstym błędem jest tworzenie SIPOC bez udziału osób wykonujących pracę. Taka mapa jest zwykle teoretyczna i oderwana od realiów produkcyjnych. Operatorzy i technicy mogą wnieść kluczowe informacje, których nie znajdziemy w dokumentacji.</p>
+
+                <h2>Jak wykorzystać SIPOC w codziennej pracy operacyjnej</h2>
+                <p>SIPOC to nie tylko dokument projektowy – może być używany w codziennym zarządzaniu procesami. W wielu firmach wykorzystywany jest podczas szkoleń nowych pracowników jako szybka mapa orientacyjna, która pozwala zrozumieć kontekst pracy. Jest również podstawą do analiz przyczyn źródłowych, ponieważ jasno pokazuje, które elementy wejść lub wyjść mogą generować problemy.</p>
+                <p>W środowiskach produkcyjnych diagram SIPOC stanowi fundament dla bardziej zaawansowanych narzędzi lean, takich jak FMEA, VSM czy diagram Ishikawy. Dzięki zarysowaniu kluczowych elementów procesu zespoły mogą szybciej identyfikować potencjalne punkty ryzyka i wdrażać działania zapobiegawcze.</p>
+                <p>W firmach usługowych SIPOC diagram pomaga porządkować przepływy informacji, co jest szczególnie ważne w procesach z udziałem wielu systemów IT. Ułatwia identyfikację błędów wynikających z niekompletnych danych lub niewłaściwego przekazywania informacji między działami.</p>
+
+                <div class="summary-box">
+                    <h2 style="border:none; margin-top:0;">Podsumowanie</h2>
+                    <p>SIPOC to jedno z najbardziej uniwersalnych i praktycznych narzędzi Lean i Six Sigma. Mimo prostoty, jego zastosowanie pozwala uporządkować proces, zrozumieć wymagania klientów, zidentyfikować kluczowe wejścia i ustalić granice procesu. Właśnie dlatego SIPOC jest fundamentem analiz procesowych, warsztatów problem-solving oraz projektów DMAIC. Jego siła tkwi w tym, że zapewnia wspólny język dla całej organizacji – od operatorów, przez inżynierów, aż po menedżerów wyższego szczebla.</p>
+                    <p>W dobrze wdrożonym środowisku Lean SIPOC nie jest jednorazowym dokumentem, ale żywym narzędziem wykorzystywanym do szkolenia, wprowadzania zmian i ciągłego doskonalenia. Pomaga zrozumieć proces, zanim zaczniemy go mierzyć, analizować lub optymalizować. Dlatego każdy praktyk Lean powinien mieć je w swoim zestawie podstawowych narzędzi.</p>
+                </div>
+            </div>
+            <div class="h-16"></div>
+        </div>
+
+        <!-- INSTRUCTIONS VIEW -->
+        <div id="instructions-view" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 md:p-12 max-w-5xl mx-auto prose">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 pb-6 border-b border-slate-100 gap-4">
+                    <div>
+                        <h1 class="text-3xl md:text-4xl font-black text-slate-900 mb-2">Instrukcja Obsługi</h1>
+                        <p class="text-slate-500 font-medium">Jak korzystać z Generatora Diagramów SIPOC</p>
+                    </div>
+                    <button onclick="switchTab('editor')" class="bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition-all shadow-md flex items-center gap-2 shrink-0">
+                        <i class="fas fa-arrow-left"></i> Wróć do Diagramu
+                    </button>
+                </div>
+
+                <h2>Podstawy korzystania z aplikacji</h2>
+                <p>Generator SIPOC to narzędzie działające całkowicie w Twojej przeglądarce. Pozwala na szybkie budowanie map procesu metodą szybkiej edycji. Twoje dane nie są wysyłane na żaden serwer – wszystko dzieje się lokalnie na Twoim urządzeniu.</p>
+
+                <h3>1. Dodawanie wierszy (kroków)</h3>
+                <ul>
+                    <li>Kliknij przycisk z ikoną <strong><i class="fas fa-plus text-green-500"></i> (Plus)</strong> w nagłówku dowolnej kolumny.</li>
+                    <li>Zostanie dodany nowy, pusty wiersz we wszystkich 5 kolumnach jednocześnie, utrzymując równe ułożenie.</li>
+                </ul>
+
+                <h3>2. Edycja wpisów</h3>
+                <ul>
+                    <li><strong>Nazwa główna:</strong> Kliknij górne pole tekstowe w bloczku (domyślnie "Nazwa..."), aby wpisać hasło. Używaj krótkich i zwięzłych słów kluczowych.</li>
+                    <li><strong>Szczegóły / Specyfikacja:</strong> Dolne, większe pole w bloczku służy do wpisania dodatkowych szczegółów. Pole to automatycznie powiększy się, dostosowując wysokość całego wiersza!</li>
+                    <li>Zmiany zapamiętywane są automatycznie na ekranie w czasie rzeczywistym.</li>
+                </ul>
+
+                <h3>3. Usuwanie wierszy</h3>
+                <ul>
+                    <li>Najedź kursorem myszy na dowolny bloczek w wierszu, który chcesz usunąć.</li>
+                    <li>W jego prawym górnym rogu pojawi się mały, okrągły przycisk <strong><i class="fas fa-times text-red-500"></i></strong>. Kliknij go, aby skasować CAŁY wiersz ze wszystkich kolumn.</li>
+                </ul>
+
+                <h3>4. Zapisywanie pracy (Eksport)</h3>
+                <ul>
+                    <li>Kliknij przycisk <strong><i class="fas fa-save"></i> Zapisz jako JSON</strong> w głównym menu (prawy górny róg w widoku Generatora).</li>
+                    <li>Aplikacja otworzy systemowe okno wyboru miejsca zapisu pliku. Wybierz folder i zapisz. Plik ma rozszerzenie <code>.json</code>.</li>
+                    <li>Zapisany plik zawiera pełną kopię Twojej mapy (wraz z tytułem projektu).</li>
+                </ul>
+
+                <h3>5. Wczytywanie mapy (Import)</h3>
+                <ul>
+                    <li>Aby wrócić do wcześniej zapisanego projektu, kliknij przycisk <strong><i class="fas fa-folder-open"></i> Wczytaj</strong>.</li>
+                    <li>Wybierz plik z rozszerzeniem <code>.json</code> ze swojego komputera. Aplikacja natychmiast załaduje diagram.</li>
+                </ul>
+
+                <h3>6. Drukowanie i generowanie PDF</h3>
+                <ul>
+                    <li>Gotowy diagram możesz łatwo wydrukować lub zapisać jako PDF. Kliknij przycisk <strong><i class="fas fa-print"></i> Drukuj w pionie</strong>.</li>
+                    <li>Aplikacja wywoła okno drukowania przeglądarki. Aby zapisać plik jako PDF, w oknie drukowania zmień docelową drukarkę na "Zapisz jako PDF" (lub "Microsoft Print to PDF").</li>
+                    <li>System automatycznie ukrywa wszystkie zbędne elementy (przyciski, podpowiedzi) podczas drukowania i optymalizuje format do układu A4 w pionie.</li>
+                </ul>
+
+                <hr>
+                <div class="summary-box">
+                    <h3 style="margin-top:0;">Wskazówka: Nazwa Projektu</h3>
+                    <p>Zawsze warto zacząć pracę od wpisania nazwy procesu/projektu w głównym polu na samej górze (domyślnie "Projekt Optymalizacji Procesu"). Ta nazwa zostanie domyślnie zasugerowana jako nazwa pliku podczas zapisu JSON, a także pojawi się wyeksponowana na Twoim wydruku!</p>
+                </div>
+            </div>
+            <div class="h-16"></div>
+        </div>
+
+        <!-- Stopka -->
+        <footer class="text-center text-slate-400 text-sm mt-8 pb-4 no-print">
+            Design by Piotr Pallach &copy; 2026
+        </footer>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        let state = { suppliers: [], inputs: [], process: [], outputs: [], customers: [] };
+
+        const expertAdvice = {
+            suppliers: "Dostawcy to nie tylko zewnętrzne firmy. Wewnątrz organizacji Twoim dostawcą jest każdy dział, który przekazuje Ci materiały lub informacje potrzebne do startu.",
+            inputs: "Skup się na jakości wejść. Jeśli dane wejściowe są błędne, proces nigdy nie wygeneruje poprawnego wyjścia (zasada GIGO - Garbage In, Garbage Out).",
+            process: "Trzymaj się wysokiego poziomu. Jeśli masz więcej niż 7 kroków, prawdopodobnie wchodzisz w zbyt duże szczegóły. Skup się na esencji transformacji.",
+            outputs: "Wyjście to Twoja obietnica dla klienta. Powinno być mierzalne i posiadać jasno określone kryteria akceptacji.",
+            customers: "Klient jest sędzią jakości. Pytaj: 'Czego ten konkretny odbiorca potrzebuje od mojego procesu, aby mógł wykonać swoją pracę?'"
+        };
+
+        // Custom Notification Function replacing alert()
+        function showNotification(message, isError = false) {
+            const container = document.getElementById('notification-container');
+            const notif = document.createElement('div');
+            
+            // Base styles + dynamic background color
+            const bgColor = isError ? 'bg-red-500' : 'bg-green-500';
+            const icon = isError ? '<i class="fas fa-exclamation-circle"></i>' : '<i class="fas fa-check-circle"></i>';
+            
+            notif.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg font-medium transition-all duration-300 transform translate-y-10 opacity-0 flex items-center gap-3`;
+            notif.innerHTML = `${icon} <span>${message}</span>`;
+            
+            container.appendChild(notif);
+            
+            // Trigger animation
+            requestAnimationFrame(() => {
+                notif.classList.remove('translate-y-10', 'opacity-0');
+            });
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notif.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => notif.remove(), 300);
+            }, 3000);
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`${tab}-view`).classList.add('active');
+            
+            const tabs = ['editor', 'tutorial', 'instructions'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`btn-${t}`);
+                if (!btn) return;
+                
+                if (t === tab) {
+                    btn.className = "flex items-center gap-2 px-6 py-2 rounded-t-lg font-bold transition-all border-b-2 border-green-600 bg-white text-green-600 shadow-sm whitespace-nowrap";
+                } else {
+                    btn.className = "flex items-center gap-2 px-6 py-2 rounded-t-lg font-bold transition-all border-b-2 border-transparent text-slate-500 hover:bg-slate-100 whitespace-nowrap";
+                }
+            });
+        }
+
+        function showTooltip(key) {
+            const panel = document.getElementById('tooltip-panel');
+            const title = document.getElementById('tooltip-title');
+            const text = document.getElementById('tooltip-text');
+            const icon = document.getElementById('tooltip-icon');
+            
+            const labels = { suppliers: "S - Dostawcy", inputs: "I - Wejścia", process: "P - Proces", outputs: "O - Wyjścia", customers: "C - Klienci" };
+            const themes = { suppliers: "teal", inputs: "emerald", process: "green", outputs: "lime", customers: "cyan" };
+            
+            title.innerText = `Porada dla: ${labels[key]}`;
+            text.innerText = expertAdvice[key];
+            panel.style.borderLeftColor = `var(--tw-border-opacity, 1) ${
+                themes[key] === 'teal' ? '#14b8a6' : 
+                (themes[key] === 'emerald' ? '#10b981' : 
+                (themes[key] === 'green' ? '#22c55e' : 
+                (themes[key] === 'lime' ? '#84cc16' : '#06b6d4')))
+            }`;
+            icon.className = `text-${themes[key]}-500 text-3xl`;
+        }
+
+        function normalizeState() {
+            let maxLen = 0;
+            const cats = ['suppliers', 'inputs', 'process', 'outputs', 'customers'];
+            cats.forEach(c => { if (state[c].length > maxLen) maxLen = state[c].length; });
+            
+            for (let i = 0; i < maxLen; i++) {
+                let rowId = null;
+                cats.forEach(c => { if (state[c][i] && state[c][i].id) rowId = state[c][i].id; });
+                if (!rowId) rowId = Date.now() + Math.random();
+                
+                cats.forEach(c => {
+                    if (!state[c][i]) state[c].push({ id: rowId, text: '', desc: '' });
+                    else state[c][i].id = rowId;
+                });
+            }
+        }
+
+        function addRow() {
+            const rowId = Date.now() + Math.random();
+            ['suppliers', 'inputs', 'process', 'outputs', 'customers'].forEach(c => {
+                state[c].push({ id: rowId, text: '', desc: '' });
+            });
+            render();
+        }
+
+        function removeRow(rowId) {
+            ['suppliers', 'inputs', 'process', 'outputs', 'customers'].forEach(c => {
+                state[c] = state[c].filter(i => i.id !== rowId);
+            });
+            render();
+        }
+
+        window.updateItem = function(cat, id, field, val) {
+            const item = state[cat].find(i => i.id === id);
+            if (item) item[field] = val;
+        }
+
+        window.autoResize = function(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+            syncHeights();
+        }
+
+        window.syncHeights = function() {
+            const cats = ['suppliers', 'inputs', 'process', 'outputs', 'customers'];
+            const rowCount = state.process.length;
+            
+            for (let i = 0; i < rowCount; i++) {
+                let maxHeight = 0;
+                const elements = cats.map(cat => {
+                    const list = document.getElementById(`${cat}-list`);
+                    return list ? list.children[i] : null;
+                });
+                
+                // Reset heights
+                elements.forEach(el => {
+                    if (el) {
+                        el.style.height = 'auto';
+                        el.style.minHeight = '0px';
+                    }
+                });
+                
+                // Calculate max height for this row
+                elements.forEach(el => {
+                    if (el && el.offsetHeight > maxHeight) {
+                        maxHeight = el.offsetHeight;
+                    }
+                });
+                
+                // Apply max height
+                elements.forEach(el => {
+                    if (el) el.style.minHeight = `${maxHeight}px`;
+                });
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            syncHeights();
+        });
+
+        function render() {
+            normalizeState();
+            const cats = ['suppliers', 'inputs', 'process', 'outputs', 'customers'];
+            cats.forEach(cat => {
+                const list = document.getElementById(`${cat}-list`);
+                list.innerHTML = '';
+                state[cat].forEach((item, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'group relative bg-white border border-slate-100 rounded-md p-1.5 shadow-sm mb-2 hover:border-slate-300 transition-colors focus-within:ring-2 focus-within:ring-green-100 focus-within:border-green-400 flex flex-col';
+                    
+                    const stepLabel = cat === 'process' 
+                        ? `<span class="text-[9px] font-black text-green-600 uppercase tracking-tighter block leading-none mb-0.5">KROK ${index + 1}</span>` 
+                        : `<span class="text-[9px] font-black text-transparent uppercase tracking-tighter block leading-none mb-0.5 select-none" aria-hidden="true">KROK ${index + 1}</span>`;
+                        
+                    div.innerHTML = `
+                        <button onclick="removeRow(${item.id})" title="Usuń cały wiersz" class="no-print absolute -top-1.5 -right-1.5 bg-white border border-slate-200 p-1.5 rounded-full text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all z-10 shadow-sm focus:opacity-100 leading-none">
+                            <i class="fas fa-times text-[10px]"></i>
+                        </button>
+                        ${stepLabel}
+                        <input type="text" class="item-input w-full font-bold text-sm bg-transparent text-slate-700 placeholder-slate-300 leading-none focus:outline-none mb-1" placeholder="Nazwa..." value="${item.text.replace(/"/g, '&quot;')}" oninput="window.updateItem('${cat}', ${item.id}, 'text', this.value)">
+                        <textarea class="w-full text-[11px] text-slate-500 focus:outline-none bg-transparent resize-none leading-tight border-t border-slate-100 pt-1 mt-auto placeholder-slate-300 overflow-hidden" style="min-height: 28px;" placeholder="Szczegóły..." oninput="window.updateItem('${cat}', ${item.id}, 'desc', this.value); window.autoResize(this)">${item.desc.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+                    `;
+                    list.appendChild(div);
+                });
+            });
+
+            // Initial auto-resize and sync after DOM update
+            setTimeout(() => {
+                document.querySelectorAll('textarea').forEach(ta => {
+                    ta.style.height = 'auto';
+                    ta.style.height = ta.scrollHeight + 'px';
+                });
+                syncHeights();
+            }, 0);
+        }
+
+        async function exportData() {
+            const projectName = document.getElementById('project-name').value || "Projekt";
+            const dataToSave = { project: projectName, version: "2.1", data: state };
+            const jsonString = JSON.stringify(dataToSave, null, 2);
+            const defaultFileName = `SIPOC_${projectName.replace(/\s+/g, '_')}.json`;
+
+            if (window.showSaveFilePicker) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: defaultFileName,
+                        types: [{
+                            description: 'Plik JSON SIPOC',
+                            accept: {'application/json': ['.json']},
+                        }],
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(jsonString);
+                    await writable.close();
+                    showNotification("Projekt został pomyślnie zapisany.");
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error('Błąd File System API:', err);
+                        fallbackExport(jsonString, defaultFileName);
+                    }
+                }
+            } else {
+                fallbackExport(jsonString, defaultFileName);
+            }
+        }
+
+        function fallbackExport(content, fileName) {
+            const blob = new Blob([content], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(url);
+            showNotification("Projekt został pobrany.");
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (importedData && importedData.data) {
+                        state = importedData.data;
+                        if (importedData.project) {
+                            document.getElementById('project-name').value = importedData.project;
+                        }
+                        render(); // Normalization and syncing happens inside render()
+                        showNotification("Dane projektu zostały załadowane!");
+                    } else {
+                        showNotification("Nieprawidłowy format pliku SIPOC.", true);
+                    }
+                } catch (err) {
+                    showNotification("Wystąpił błąd podczas odczytu pliku JSON.", true);
+                    console.error(err);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input
+        }
+
+        window.onload = () => {
+            addRow(); // Dodajemy pierwszy wiersz na start
+        };
+    </script>
+</body>
+</html>
