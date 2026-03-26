@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VSM</title>
+    <title>VSM Module</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -11,7 +11,6 @@
         .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #10b981; }
         
-        /* Wymuszenie zachowania na ekranach dotykowych */
         .no-select { user-select: none; -webkit-user-select: none; touch-action: none; }
         input, [contenteditable="true"] { touch-action: auto; }
         
@@ -21,11 +20,16 @@
 
         /* Ustawienia dla druku */
         @media print {
-            #main-header, #left-toolbar, #sidebar-overlay, #connect-tooltip, .print-hide, .vsm-node button, .resize-handles {
+            #left-toolbar, #sidebar-overlay, #connect-tooltip, .print-hide, .vsm-drag-btn, .vsm-delete-btn, .resize-handles, #undo-redo-panel {
                 display: none !important;
             }
-            body { background: white !important; margin: 0; padding: 0; }
-            #workspace { background: none !important; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
+            body { background: white !important; margin: 0; padding: 0; display: block; }
+            
+            #main-header { position: static !important; border-bottom: none !important; padding: 0 0 10px 0 !important; margin-bottom: 10px; }
+            #map-title { color: black !important; font-size: 20px !important; }
+            .bg-\\[\\#e6fcf5\\] { background: transparent !important; border: none !important; padding: 0 !important; box-shadow: none !important; }
+            
+            #workspace { background: none !important; width: 100vw; height: auto; position: static; }
             .vsm-node { border: 1px solid #94a3b8 !important; box-shadow: none !important; }
             @page { size: landscape; margin: 0.5cm; }
         }
@@ -33,57 +37,43 @@
 </head>
 <body class="flex flex-col h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
 
-    <input type="file" id="file-upload" class="hidden" accept=".json" onchange="loadMap(event)">
-
     <!-- NAGŁÓWEK -->
-    <header id="main-header" class="bg-white text-slate-800 shadow-sm flex-none border-b border-slate-200 z-40 relative pt-2">
-        <div class="max-w-full mx-auto px-3 sm:px-6 lg:px-8">
-            <div class="flex flex-wrap items-center justify-between min-h-[4rem] gap-y-2 pb-1">
+    <header id="main-header" class="bg-white flex-none z-40 relative pt-2 md:pt-3 px-4 md:px-8 border-b border-slate-200">
+        <div class="max-w-full mx-auto">
+            
+            <div class="mb-1.5 md:mb-2 flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+                <button onclick="toggleSidebar()" class="md:hidden self-start p-1.5 bg-slate-100 text-slate-600 rounded hover:bg-slate-200 transition-colors shrink-0 print-hide">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
                 
-                <!-- TYTUŁ I HAMBURGER MENU -->
-                <div class="flex items-center w-full md:w-auto">
-                    <button onclick="toggleSidebar()" class="md:hidden p-2 bg-slate-100 text-slate-600 rounded mr-3 hover:bg-slate-200 transition-colors">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                    </button>
-                    <div class="flex flex-col justify-center flex-1">
-                        <input type="text" id="map-title" class="font-extrabold text-xl md:text-2xl tracking-tight text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-emerald-500 outline-none transition-colors w-full" value="VSM" title="Zmień tytuł mapy" />
-                        <div class="flex items-center gap-1 text-emerald-500 mt-0.5 w-full">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="flex-shrink-0"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
-                            <input type="text" id="map-subtitle" class="text-xs md:text-sm font-medium bg-transparent border-b border-transparent hover:border-emerald-200 focus:border-emerald-500 outline-none text-slate-600 focus:text-slate-800 transition-colors w-full" value="Projekt Optymalizacji Procesu" title="Zmień podtytuł" />
-                        </div>
+                <div class="w-full max-w-xl">
+                    <div class="text-[9px] font-extrabold text-emerald-600 uppercase tracking-[0.15em] mb-0.5" id="lbl-map-type">MAPA VSM</div>
+                    <div class="bg-[#e6fcf5] border border-[#a7f3d0] rounded-lg p-1.5 w-full shadow-sm transition-colors">
+                        <input type="text" id="map-title" class="font-extrabold text-sm md:text-base text-emerald-950 bg-transparent outline-none w-full placeholder-emerald-700/50" value="Projekt Optymalizacji Procesu" title="Zmień tytuł mapy" />
                     </div>
                 </div>
-                
-                <!-- ZAKŁADKI NAWIGACJI -->
-                <nav class="flex space-x-1 overflow-x-auto scrollbar-thin w-full md:w-auto order-last md:order-none" id="main-tabs">
-                    <button onclick="switchTab('vsm')" id="tab-vsm" class="flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 font-bold transition-all duration-200 text-xs md:text-sm bg-white text-emerald-600 border-b-2 border-emerald-600 whitespace-nowrap">
+            </div>
+
+            <div class="flex flex-wrap md:flex-nowrap items-end justify-between gap-2">
+                <nav class="flex space-x-1 md:space-x-2 overflow-x-auto scrollbar-thin w-full md:w-auto print-hide" id="main-tabs">
+                    <button onclick="switchTab('vsm')" id="tab-vsm" class="flex items-center gap-2 px-3 py-2 font-bold transition-all duration-200 text-xs md:text-sm bg-white text-emerald-600 border-b-[3px] border-emerald-500 whitespace-nowrap">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        <span class="uppercase">Diagram</span>
+                        <span class="uppercase tracking-wide" id="lbl-tab-diagram">Diagram</span>
                     </button>
-                    <button onclick="switchTab('tutorial')" id="tab-tutorial" class="flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 font-medium transition-all duration-200 text-xs md:text-sm text-slate-500 hover:text-emerald-600 border-b-2 border-transparent whitespace-nowrap">
+                    <button onclick="switchTab('tutorial')" id="tab-tutorial" class="flex items-center gap-2 px-3 py-2 font-bold transition-all duration-200 text-xs md:text-sm text-slate-400 hover:text-emerald-600 border-b-[3px] border-transparent whitespace-nowrap">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                        <span class="uppercase tracking-wide">Samouczek</span>
+                        <span class="uppercase tracking-wide" id="lbl-tab-tutorial">Samouczek</span>
                     </button>
-                    <button onclick="switchTab('instruction')" id="tab-instruction" class="flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 font-medium transition-all duration-200 text-xs md:text-sm text-slate-500 hover:text-emerald-600 border-b-2 border-transparent whitespace-nowrap">
+                    <button onclick="switchTab('instruction')" id="tab-instruction" class="flex items-center gap-2 px-3 py-2 font-bold transition-all duration-200 text-xs md:text-sm text-slate-400 hover:text-emerald-600 border-b-[3px] border-transparent whitespace-nowrap">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path></svg>
-                        <span class="uppercase tracking-wide hidden sm:inline">Instrukcja Obsługi</span>
-                        <span class="uppercase tracking-wide sm:hidden">Instrukcja</span>
+                        <span class="uppercase tracking-wide" id="lbl-tab-instruction">Instrukcja Obsługi</span>
                     </button>
                 </nav>
 
-                <!-- PASEK AKCJI -->
-                <div class="flex gap-2 w-full md:w-auto justify-end md:pb-2">
-                    <button onclick="document.getElementById('file-upload').click()" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-bold transition-colors shadow-sm">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                        <span class="hidden md:inline">Wczytaj</span>
-                    </button>
-                    <button onclick="saveMap()" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs font-bold transition-colors shadow-sm">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                        <span class="hidden md:inline">Zapisz</span>
-                    </button>
-                    <button onclick="window.print()" class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-bold transition-colors shadow-sm">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                        <span class="hidden md:inline">Drukuj</span>
+                <div class="pb-1.5 pl-2 w-full md:w-auto flex justify-end shrink-0 print-hide">
+                    <button onclick="window.print()" class="flex items-center justify-center gap-1.5 px-4 py-1.5 bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 rounded-lg text-xs font-bold transition-colors shadow-sm w-full md:w-auto">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        <span id="lbl-btn-print">Drukuj</span>
                     </button>
                 </div>
             </div>
@@ -92,18 +82,16 @@
 
     <main class="flex-1 overflow-hidden relative flex">
         
-        <!-- NAKŁADKA DLA MENU MOBILNEGO -->
         <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden" onclick="toggleSidebar()"></div>
 
         <!-- ZAKŁADKA 1: OBSZAR ROBOCZY VSM -->
         <div id="view-vsm" class="flex h-full w-full relative">
             
-            <!-- PASEK NARZĘDZI (LEWY) - Responsywny -->
             <div id="left-toolbar" class="w-64 bg-white border-r border-slate-200 flex flex-col shadow-xl z-30 absolute md:relative h-full transform -translate-x-full md:translate-x-0 transition-transform duration-300">
                 <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                     <div>
-                        <h2 class="font-bold text-slate-800 mb-0.5 text-sm">Narzędzia VSM</h2>
-                        <p class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Biblioteka Kształtów</p>
+                        <h2 class="font-bold text-slate-800 mb-0.5 text-sm" id="lbl-tools-title">Narzędzia VSM</h2>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold" id="lbl-tools-subtitle">Biblioteka Kształtów</p>
                     </div>
                     <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-slate-600">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -113,23 +101,29 @@
                 <div class="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin">
                     <button onclick="addNode('supplier'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
                         <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M17 18h1"></path><path d="M12 18h1"></path><path d="M7 18h1"></path></svg></div>
-                        <span class="text-[11px] font-bold text-slate-700">Dostawca / Klient</span>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-supplier">Dostawca / Klient</span>
                     </button>
                     <button onclick="addNode('process'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
                         <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"></rect></svg></div>
-                        <span class="text-[11px] font-bold text-slate-700">Proces</span>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-process">Proces</span>
                     </button>
                     <button onclick="addNode('data'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
                         <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5V19A9 3 0 0 0 21 19V5"></path><path d="M3 12A9 3 0 0 0 21 12"></path></svg></div>
-                        <span class="text-[11px] font-bold text-slate-700">Skrzynka Danych</span>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-data">Skrzynka Danych</span>
                     </button>
                     <button onclick="addNode('inventory'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
                         <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path></svg></div>
-                        <span class="text-[11px] font-bold text-slate-700">Zapasy</span>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-inventory">Zapasy</span>
+                    </button>
+                    <button onclick="addNode('transport-int'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
+                        <div class="text-emerald-600">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2 12h10l2-8H7"></path><circle cx="9" cy="20" r="2"></circle><circle cx="16" cy="20" r="2"></circle></svg>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-transport-int">Transport Wew.</span>
                     </button>
                     <button onclick="addNode('transport'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
                         <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"></path><path d="M14 9h4l4 4v5c0 .6-.4 1-1 1h-2"></path><circle cx="7" cy="18" r="2"></circle><path d="M15 18H9"></path><circle cx="17" cy="18" r="2"></circle></svg></div>
-                        <span class="text-[11px] font-bold text-slate-700">Transport</span>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-transport">Transport Zewn.</span>
                     </button>
 
                     <div class="my-2 border-t border-slate-100 pt-2"></div>
@@ -137,13 +131,13 @@
                         <div class="w-5 h-4 relative flex items-center justify-center">
                             <svg width="24" height="12" viewBox="0 0 80 40"><defs><pattern id="stripes-btn" width="12" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(20)"><rect width="6" height="40" fill="#334155"/><rect x="6" width="6" height="40" fill="#fff"/></pattern></defs><polygon points="0,10 50,10 50,0 80,20 50,40 50,30 0,30" fill="url(#stripes-btn)" stroke="#334155" stroke-width="2"/></svg>
                         </div>
-                        <span class="text-[11px] font-bold text-slate-700">Gruba Strzałka (B-C)</span>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-thick-push">Gruba Strzałka (B-C)</span>
                     </button>
                     <button onclick="addNode('arrow-thick-pull'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-200 hover:border-slate-300 transition-colors shadow-sm">
                         <div class="w-5 h-4 relative flex items-center justify-center">
                             <svg width="24" height="12" viewBox="0 0 80 40"><polygon points="0,10 50,10 50,0 80,20 50,40 50,30 0,30" fill="transparent" stroke="#334155" stroke-width="2"/></svg>
                         </div>
-                        <span class="text-[11px] font-bold text-slate-700">Gruba Strzałka (Przezro.)</span>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-thick-pull">Gruba Strzałka (Przezro.)</span>
                     </button>
                     
                     <button onclick="addNode('kaizen'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-yellow-50 text-slate-700 rounded border border-slate-200 hover:border-yellow-300 transition-colors shadow-sm">
@@ -152,35 +146,35 @@
                                 <polygon points="50,0 60,20 95,15 75,35 95,55 60,50 50,70 40,50 5,55 25,35 5,15 40,20" />
                             </svg>
                         </div>
-                        <span class="text-[11px] font-bold text-slate-700">Chmura Kaizen</span>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-kaizen">Chmura Kaizen</span>
                     </button>
 
                     <button onclick="addNode('text'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-200 hover:border-slate-300 transition-colors shadow-sm">
                         <div class="text-slate-500"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div>
-                        <span class="text-[11px] font-bold text-slate-700">Pole Tekstowe</span>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-text">Pole Tekstowe</span>
                     </button>
                     
                     <div class="my-2 border-t border-slate-100 pt-2"></div>
-                    <h3 class="text-[10px] font-semibold text-slate-400 uppercase mb-2 px-1">Tryby interakcji</h3>
+                    <h3 class="text-[10px] font-semibold text-slate-400 uppercase mb-2 px-1" id="lbl-interact-title">Tryby interakcji</h3>
                     
                     <button id="btn-mode-select" onclick="setMode('select'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 rounded transition-colors border text-sm bg-emerald-50 border-emerald-400 text-emerald-800 font-bold">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path><path d="M13 13l6 6"></path></svg>
-                        <span class="text-xs">Zaznacz / Przesuń</span>
+                        <span class="text-xs" id="mode-select">Zaznacz / Przesuń</span>
                     </button>
                     <button id="btn-mode-connect-straight" onclick="setMode('connect-straight'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 rounded transition-colors border text-sm bg-white border-slate-200 text-slate-600 hover:bg-slate-50 mt-1 font-medium">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
-                        <span class="text-xs">Połącz (Prosta)</span>
+                        <span class="text-xs" id="mode-straight">Połącz (Prosta)</span>
                     </button>
                     <button id="btn-mode-connect-zigzag" onclick="setMode('connect-zigzag'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 rounded transition-colors border text-sm bg-white border-slate-200 text-slate-600 hover:bg-slate-50 mt-1 font-medium">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-5 4 10 3-5h3"></path><path d="M16 8l4 4-4 4"></path></svg>
-                        <span class="text-xs">Połącz (Zygzak / Info)</span>
+                        <span class="text-xs" id="mode-zigzag">Połącz (Zygzak / Info)</span>
                     </button>
                 </div>
 
                 <div class="p-4 border-t border-slate-200 bg-slate-50">
                     <button onclick="centerView(); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 px-4 rounded-md shadow-sm transition-colors text-sm font-bold tracking-wide">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-                        Środkuj widok
+                        <span id="btn-center-view">Środkuj widok</span>
                     </button>
                 </div>
             </div>
@@ -188,14 +182,34 @@
             <!-- OBSZAR PŁÓTNA -->
             <div id="workspace" class="flex-1 overflow-hidden relative bg-grid bg-white cursor-grab no-select">
                 
+                <!-- COFNIJ / PONÓW -->
+                <div id="undo-redo-panel" class="absolute top-4 left-4 z-20 flex bg-white border border-slate-200 rounded-md shadow-sm print-hide">
+                    <button id="btn-undo" onclick="undo()" class="p-2 text-slate-600 hover:bg-slate-100 transition-colors rounded-l-md border-r border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed" title="Cofnij">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
+                    </button>
+                    <button id="btn-redo" onclick="redo()" class="p-2 text-slate-600 hover:bg-slate-100 transition-colors rounded-r-md disabled:opacity-50 disabled:cursor-not-allowed" title="Ponów">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path></svg>
+                    </button>
+                </div>
+
                 <div id="connect-tooltip" class="hidden absolute top-4 left-1/2 -translate-x-1/2 bg-emerald-700 text-white px-5 py-2.5 rounded-full shadow-lg z-50 text-xs flex items-center gap-2 animate-pulse border border-emerald-600 pointer-events-none font-medium tracking-wide">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                     <span id="connect-tooltip-text">Kliknij element początkowy</span>
-                    <button onclick="setMode('select')" class="ml-3 underline text-emerald-200 hover:text-white pointer-events-auto print-hide">Anuluj</button>
+                    <button onclick="setMode('select')" class="ml-3 underline text-emerald-200 hover:text-white pointer-events-auto print-hide" id="btn-cancel">Anuluj</button>
                 </div>
 
                 <div id="transform-container" class="absolute origin-top-left w-full h-full" style="transform: translate(0px, 0px) scale(1)">
                     <svg id="edges-layer" class="absolute top-0 left-0 overflow-visible pointer-events-none" style="z-index: 0">
+                        <defs>
+                            <marker id="arrowhead-straight" markerWidth="16" markerHeight="12" refX="14" refY="6" orient="auto">
+                                <polygon points="0 0, 16 6, 0 12" fill="#475569" />
+                            </marker>
+                            <marker id="arrowhead-zigzag" markerWidth="16" markerHeight="12" refX="14" refY="6" orient="auto">
+                                <polygon points="0 0, 16 6, 0 12" fill="#10b981" />
+                            </marker>
+                        </defs>
+                        <!-- Prowadnice (Snapping) -->
+                        <g id="guides-layer"></g>
                         <g id="timeline-layer"></g>
                         <g id="edges-group"></g>
                     </svg>
@@ -208,64 +222,370 @@
 
         <!-- ZAKŁADKA 2: SAMOUCZEK -->
         <div id="view-tutorial" class="hidden h-full w-full overflow-y-auto bg-slate-50 p-4 md:p-8">
-            <div class="max-w-4xl mx-auto space-y-6 md:space-y-8 text-slate-700">
-                <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 border-b-2 border-emerald-500 pb-3 inline-block">Samouczek VSM</h1>
-                <section class="bg-white p-4 md:p-6 rounded-xl border-t-4 border-t-emerald-500 shadow-sm">
-                    <h2 class="text-lg md:text-xl font-bold text-slate-800 mb-3">Czym jest VSM?</h2>
-                    <p class="mb-2 leading-relaxed text-sm md:text-base text-slate-600">Mapowanie Strumienia Wartości (VSM) to kluczowe narzędzie w metodyce Lean Management, służące do wizualizacji przepływu materiałów oraz informacji niezbędnych do dostarczenia produktu klientowi.</p>
-                </section>
-                <section>
-                    <h2 class="text-xl font-bold text-slate-800 mb-5">Główne komponenty VSM</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div class="bg-white border border-slate-200 border-t-4 border-t-emerald-500 p-5 rounded-lg flex gap-4 shadow-sm hover:shadow-md transition-shadow">
-                            <div class="bg-emerald-50 p-3 rounded-full h-fit text-emerald-600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path></svg></div>
-                            <div><h3 class="font-bold text-slate-800">Dostawca / Klient</h3><p class="text-sm text-slate-500 mt-1 leading-relaxed">Umieszczani na krańcach mapy. Klient dyktuje takt czasu, a dostawca podaje typ i ilość surowców.</p></div>
-                        </div>
-                        <div class="bg-white border border-slate-200 border-t-4 border-t-emerald-500 p-5 rounded-lg flex gap-4 shadow-sm hover:shadow-md transition-shadow">
-                            <div class="bg-emerald-50 p-3 rounded-full h-fit text-emerald-600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"></rect></svg></div>
-                            <div><h3 class="font-bold text-slate-800">Proces</h3><p class="text-sm text-slate-500 mt-1 leading-relaxed">Proces produkcyjny lub usługowy reprezentujący krok w strumieniu wartości.</p></div>
-                        </div>
-                        <div class="bg-white border border-slate-200 border-t-4 border-t-emerald-500 p-5 rounded-lg flex gap-4 shadow-sm hover:shadow-md transition-shadow">
-                            <div class="bg-emerald-50 p-3 rounded-full h-fit text-emerald-600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5V19A9 3 0 0 0 21 19V5"></path><path d="M3 12A9 3 0 0 0 21 12"></path></svg></div>
-                            <div><h3 class="font-bold text-slate-800">Skrzynka Danych (Data Box)</h3><p class="text-sm text-slate-500 mt-1 leading-relaxed">Zawiera mierzalne wskaźniki: C/T (Cycle Time), C/O (Changeover Time), Dostępność (Uptime) maszyn itp.</p></div>
-                        </div>
-                        <div class="bg-white border border-slate-200 border-t-4 border-t-emerald-500 p-5 rounded-lg flex gap-4 shadow-sm hover:shadow-md transition-shadow">
-                            <div class="bg-emerald-50 p-3 rounded-full h-fit text-emerald-600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
-                            <div><h3 class="font-bold text-slate-800">Przepływ Informacji (Zygzak)</h3><p class="text-sm text-slate-500 mt-1 leading-relaxed">Błyskawica reprezentuje elektroniczny przepływ informacji (np. zamówienia ERP/MRP).</p></div>
-                        </div>
-                    </div>
-                </section>
-            </div>
+            <div id="content-tutorial" class="max-w-5xl mx-auto text-slate-700"></div>
         </div>
 
         <!-- ZAKŁADKA 3: INSTRUKCJA -->
         <div id="view-instruction" class="hidden h-full w-full overflow-y-auto bg-slate-50 p-4 md:p-8">
-             <div class="max-w-4xl mx-auto space-y-6 md:space-y-8 text-slate-700">
-                <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 border-b-2 border-emerald-500 pb-3 inline-block">Jak korzystać z aplikacji?</h1>
-                <div class="space-y-4 md:space-y-6">
-                    <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
-                        <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">1</div>
-                        <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Telefony i Tablety (Gesty)</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Możesz przesuwać mapę palcem. Aby przybliżyć/oddalić użyj gestu uszczypnięcia dwoma palcami (Pinch-to-zoom). Dotknij obiektu aby go chwycić i przenieść.</div></div>
-                    </div>
-                    <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
-                        <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">2</div>
-                        <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Nazwa Mapy, Wstawianie i Edycja</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Tytuł w lewym górnym rogu jest edytowalny. W panelu bocznym (pod przyciskiem Menu na telefonie) znajdziesz wszystkie narzędzia. Stuknij w tekst na elemencie, by wysunąć klawiaturę i go edytować.</div></div>
-                    </div>
-                    <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
-                        <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">3</div>
-                        <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Usuwanie elementów</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Aby usunąć obiekt, najpierw w niego kliknij. W jego prawym górnym rogu pojawi się czerwona ikona kosza - naciśnij ją. Na komputerze możesz użyć klawisza Delete.</div></div>
-                    </div>
-                </div>
-            </div>
+             <div id="content-instruction" class="max-w-4xl mx-auto space-y-6 md:space-y-8 text-slate-700"></div>
         </div>
 
     </main>
 
     <script>
-        // --- STAN APLIKACJI ---
-        let activeTab = 'vsm';
+        // --- TRANSLACJE (i18n) ---
+        const i18n = {
+            pl: {
+                mapType: "MAPA VSM",
+                tabDiagram: "Diagram",
+                tabTutorial: "Samouczek",
+                tabInstruction: "Instrukcja Obsługi",
+                btnPrint: "Drukuj",
+                toolsTitle: "Narzędzia VSM",
+                toolsSubtitle: "Biblioteka Kształtów",
+                toolSupplier: "Dostawca / Klient",
+                toolProcess: "Proces",
+                toolData: "Skrzynka Danych",
+                toolInventory: "Zapasy",
+                toolTransportInt: "Transport Wew.",
+                toolTransport: "Transport Zewn.",
+                toolThickPush: "Gruba Strzałka (B-C)",
+                toolThickPull: "Gruba Strzałka (Przezro.)",
+                toolKaizen: "Chmura Kaizen",
+                toolText: "Pole Tekstowe",
+                interactTitle: "Tryby interakcji",
+                modeSelect: "Zaznacz / Przesuń",
+                modeLine: "Połącz (Prosta)",
+                modeZigzag: "Połącz (Zygzak / Info)",
+                centerView: "Środkuj widok",
+                timelineTitle: "Linia Czasu Przejścia (Lead Time)",
+                addStage: "Dodaj etap",
+                summaryTitle: "Podsumowanie Sumaryczne",
+                defaultKaizen: "Wpisz problem / pomysł...",
+                defaultText: "Pole tekstowe\n(kliknij dwukrotnie by edytować)",
+                defaultProcess: "P - Proces",
+                tooltipConnectStart: "Kliknij element początkowy",
+                tooltipConnectEnd: "Kliknij cel strzałki",
+                btnCancel: "Anuluj",
+                pceTitle: "Wskaźnik PCE:",
+                titleUndo: "Cofnij",
+                titleRedo: "Ponów",
+                tutorialHTML: `
+                    <div class="mb-8">
+                        <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 border-b-2 border-emerald-500 pb-3 inline-block">Samouczek VSM & PCE</h1>
+                    </div>
+                    
+                    <section class="bg-white p-5 md:p-6 rounded-xl border-t-4 border-t-emerald-500 shadow-sm mb-6">
+                        <h2 class="text-lg md:text-xl font-bold text-slate-800 mb-3">Wprowadzenie do VSM</h2>
+                        <p class="mb-3 leading-relaxed text-sm md:text-base text-slate-600">Value Stream Mapping (VSM) to jedno z najpotężniejszych narzędzi Lean Management. Pozwala nie tylko "zobaczyć" przepływ materiałów i informacji, ale przede wszystkim zidentyfikować, gdzie marnujemy czas i pieniądze.</p>
+                        <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg mt-4">
+                            <h4 class="font-bold text-emerald-800 mb-1 text-sm">Złote zasady:</h4>
+                            <ul class="list-disc list-inside text-sm text-emerald-700 space-y-1">
+                                <li>Nie mapuj wszystkiego. Wybierz jedną grupę produktów o największym wolumenie lub generującą najwięcej problemów.</li>
+                                <li>Udaj się na <b>Gemba</b>. Nie ufaj dokumentacji – zaufaj temu, co widzisz na własne oczy.</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section class="mb-6">
+                        <h2 class="text-xl font-bold text-slate-800 mb-4">Główne komponenty Mapy</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-white border border-slate-200 border-l-4 border-l-emerald-500 p-4 rounded-lg shadow-sm flex flex-col gap-2">
+                                <div class="flex items-center gap-3"><div class="bg-emerald-100 p-2 rounded text-emerald-600"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"></rect></svg></div><h3 class="font-bold text-slate-800">Proces i Data Box</h3></div>
+                                <p class="text-sm text-slate-600">Każdy główny etap (np. Montaż). W ramce danych (Data Box) wpisujemy:<br><b>C/T (Cycle Time)</b>: Co ile schodzi sztuka?<br><b>C/O (Changeover)</b>: Czas przezbrojenia.<br><b>Uptime</b>: Dostępność maszyny.</p>
+                            </div>
+                            <div class="bg-white border border-slate-200 border-l-4 border-l-yellow-500 p-4 rounded-lg shadow-sm flex flex-col gap-2">
+                                <div class="flex items-center gap-3"><div class="bg-yellow-100 p-2 rounded text-yellow-600"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path></svg></div><h3 class="font-bold text-slate-800">Zapasy i Transport</h3></div>
+                                <p class="text-sm text-slate-600">Trójkąty zapasów pokazują ile sztuk zalega. <b>Transport</b> to cichy zabójca wydajności (jedno z 7 Muda). Klient nie płaci za przewożenie towaru wózkiem. Transport ląduje zawsze na górnej osi czasu jako strata.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="bg-white p-5 md:p-6 rounded-xl border-t-4 border-t-blue-500 shadow-sm mb-6">
+                        <h2 class="text-lg md:text-xl font-bold text-slate-800 mb-3">Oś czasu i wskaźnik PCE</h2>
+                        <p class="text-sm md:text-base text-slate-600 mb-4">Na dole mapy rysujemy "schodki", które są sercem VSM. Górne poziomy to czasy oczekiwania (<b>NVA - Non-Value Added</b>). Dolne poziomy to realny czas pracy (<b>VA - Value Added</b>).</p>
+                        
+                        <h3 class="font-bold text-slate-800 mb-2">Process Cycle Efficiency (PCE)</h3>
+                        <p class="text-sm text-slate-600 mb-3">Wskaźnik ten mówi, jaki procent czasu przejścia dodaje wartość produktowi w oczach klienta.</p>
+                        
+                        <div class="bg-slate-800 text-blue-300 font-mono p-4 rounded-lg text-center mb-4 text-sm overflow-x-auto">
+                            PCE = (Suma VAT / Total Lead Time PLT) × 100%
+                        </div>
+                        
+                        <div class="bg-blue-50 p-4 rounded-lg text-sm text-slate-700">
+                            <h4 class="font-bold mb-2">Przykład obliczeniowy:</h4>
+                            <ul class="list-none space-y-1 mb-2">
+                                <li>Łączny czas pracy (VAT) = <b>30 minut</b></li>
+                                <li>Czas leżenia w zapasach = <b>5 dni (7200 minut)</b></li>
+                                <li>Całkowity Lead Time (PLT) = <b>7230 minut</b></li>
+                            </ul>
+                            <p class="font-bold text-blue-800 text-base mt-2">PCE = (30 / 7230) × 100% ≈ 0,41%</p>
+                        </div>
+                    </section>
+
+                    <section class="bg-white p-5 md:p-6 rounded-xl border-t-4 border-t-red-500 shadow-sm">
+                        <h2 class="text-lg md:text-xl font-bold text-slate-800 mb-3">Brutalna prawda o procesach</h2>
+                        <p class="text-sm text-slate-600 mb-4">W tradycyjnych firmach PCE często wynosi poniżej 5%. Oznacza to, że przez 95% czasu produkt po prostu na coś czeka. Gdzie możemy wprowadzić One-Piece Flow? Gdzie zastosować system Pull?</p>
+                        
+                        <div class="overflow-x-auto rounded-lg border border-slate-200">
+                            <table class="min-w-full text-xs md:text-sm text-left text-slate-600">
+                                <thead class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                                    <tr><th class="px-4 py-3">Klasa procesu</th><th class="px-4 py-3">Typowe PCE</th><th class="px-4 py-3 hidden md:table-cell">Charakterystyka</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <tr><td class="px-4 py-3">Tradycyjna produkcja</td><td class="px-4 py-3 font-bold text-red-500">1% – 5%</td><td class="px-4 py-3 hidden md:table-cell">Produkt spędza czas w kolejkach i na transporcie.</td></tr>
+                                    <tr class="bg-slate-50"><td class="px-4 py-3">Procesy biurowe</td><td class="px-4 py-3 font-bold text-red-500">&lt; 1%</td><td class="px-4 py-3 hidden md:table-cell">Dokumenty leżą tygodniami, podczas gdy praca trwa 15 min.</td></tr>
+                                    <tr><td class="px-4 py-3">Procesy "Lean" (cel)</td><td class="px-4 py-3 font-bold text-yellow-600">10% – 15%</td><td class="px-4 py-3 hidden md:table-cell">Dobry poziom dla firm w trakcie transformacji.</td></tr>
+                                    <tr class="bg-slate-50"><td class="px-4 py-3">World Class Mfg</td><td class="px-4 py-3 font-bold text-emerald-600">20% – 30%</td><td class="px-4 py-3 hidden md:table-cell">One-Piece Flow, minimalne zapasy, optymalizacja.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-4">Dlaczego 100% jest niemożliwe? Istnieją czasy technologiczne (schnięcie, chłodzenie), które wydłużają Lead Time, ale technicznie nie dodają wartości manualnej.</p>
+                    </section>
+                `,
+                instructionHTML: `
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 border-b-2 border-emerald-500 pb-3 inline-block">Jak korzystać z aplikacji?</h1>
+                    <div class="space-y-4 md:space-y-6">
+                        <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
+                            <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">1</div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Przesuwanie i Zaznaczanie</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Pojedyncze kliknięcie zaznacza obiekt. W lewym rogu pojawi się uchwyt do łapania i przesuwania (krzyżyk), a w prawym ikona usuwania (kosz). Chroni to przed przypadkowym skasowaniem elementu.</div></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
+                            <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">2</div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Edycja Tekstu (Podwójne kliknięcie)</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Aby pisać na polach tekstowych, <b>kliknij w nie szybko dwa razy</b> (double tap). To zapobiega samoistnemu wysuwaniu się klawiatury na telefonach podczas przeglądania mapy.</div></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
+                            <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">3</div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Delikatne Linie Referencyjne</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Podczas ciągnięcia elementu, program szuka w pobliżu innych obiektów. Jeśli znajdą się w osi, zobaczysz jasnoszarą, subtelną linię podpowiedzi. Element lekko do niej przyciągnie.</div></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
+                            <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">4</div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Cofanie, Transport i PCE</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Linia Czasu posiada uchwyt do swobodnego przesuwania w pionie. Ikona "Transport Wew." jest dodawana do osi jako NVA. Podsumowanie na końcu oblicza % PCE (VA/Total Time). Każdą akcję możesz wycofać używając przycisków w lewym górnym rogu.</div></div>
+                        </div>
+                    </div>
+                `
+            },
+            en: {
+                mapType: "VSM MAP",
+                tabDiagram: "Diagram",
+                tabTutorial: "Tutorial",
+                tabInstruction: "Instructions",
+                btnPrint: "Print",
+                toolsTitle: "VSM Tools",
+                toolsSubtitle: "Shape Library",
+                toolSupplier: "Supplier / Customer",
+                toolProcess: "Process",
+                toolData: "Data Box",
+                toolInventory: "Inventory",
+                toolTransportInt: "Internal Transport",
+                toolTransport: "External Transport",
+                toolThickPush: "Thick Arrow (Push)",
+                toolThickPull: "Thick Arrow (Pull)",
+                toolKaizen: "Kaizen Burst",
+                toolText: "Text Box",
+                interactTitle: "Interaction modes",
+                modeSelect: "Select / Move",
+                modeLine: "Connect (Straight)",
+                modeZigzag: "Connect (Zigzag / Info)",
+                centerView: "Center view",
+                timelineTitle: "Lead Time Timeline",
+                addStage: "Add stage",
+                summaryTitle: "Summary",
+                defaultKaizen: "Enter problem / idea...",
+                defaultText: "Text box\n(double click to edit)",
+                defaultProcess: "P - Process",
+                tooltipConnectStart: "Click starting element",
+                tooltipConnectEnd: "Click target element",
+                btnCancel: "Cancel",
+                pceTitle: "PCE Ratio:",
+                titleUndo: "Undo",
+                titleRedo: "Redo",
+                tutorialHTML: `
+                    <div class="mb-8">
+                        <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 border-b-2 border-emerald-500 pb-3 inline-block">VSM & PCE Tutorial</h1>
+                    </div>
+                    
+                    <section class="bg-white p-5 md:p-6 rounded-xl border-t-4 border-t-emerald-500 shadow-sm mb-6">
+                        <h2 class="text-lg md:text-xl font-bold text-slate-800 mb-3">Introduction to VSM</h2>
+                        <p class="mb-3 leading-relaxed text-sm md:text-base text-slate-600">Value Stream Mapping (VSM) is one of the most powerful Lean Management tools. It not only allows you to "see" the flow of materials and information, but above all, to identify where time and money are wasted.</p>
+                        <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg mt-4">
+                            <h4 class="font-bold text-emerald-800 mb-1 text-sm">Golden rules:</h4>
+                            <ul class="list-disc list-inside text-sm text-emerald-700 space-y-1">
+                                <li>Don't map everything. Choose one product family with the highest volume or generating the most problems.</li>
+                                <li>Go to the <b>Gemba</b>. Do not trust documentation - trust what you see with your own eyes.</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section class="mb-6">
+                        <h2 class="text-xl font-bold text-slate-800 mb-4">Main Map Components</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-white border border-slate-200 border-l-4 border-l-emerald-500 p-4 rounded-lg shadow-sm flex flex-col gap-2">
+                                <div class="flex items-center gap-3"><div class="bg-emerald-100 p-2 rounded text-emerald-600"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"></rect></svg></div><h3 class="font-bold text-slate-800">Process and Data Box</h3></div>
+                                <p class="text-sm text-slate-600">Each main stage (e.g. Assembly). In the Data Box we write:<br><b>C/T (Cycle Time)</b>: How often does a part come off?<br><b>C/O (Changeover)</b>: Setup time.<br><b>Uptime</b>: Machine availability.</p>
+                            </div>
+                            <div class="bg-white border border-slate-200 border-l-4 border-l-yellow-500 p-4 rounded-lg shadow-sm flex flex-col gap-2">
+                                <div class="flex items-center gap-3"><div class="bg-yellow-100 p-2 rounded text-yellow-600"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path></svg></div><h3 class="font-bold text-slate-800">Inventory and Transport</h3></div>
+                                <p class="text-sm text-slate-600">Inventory triangles show how many pieces are piled up. <b>Transport</b> is a silent productivity killer (one of the 7 Mudas). Transport always lands on the upper timeline as waste.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="bg-white p-5 md:p-6 rounded-xl border-t-4 border-t-blue-500 shadow-sm mb-6">
+                        <h2 class="text-lg md:text-xl font-bold text-slate-800 mb-3">Timeline and PCE indicator</h2>
+                        <p class="text-sm md:text-base text-slate-600 mb-4">At the bottom of the map we draw "stairs", which are the heart of VSM. Upper levels are waiting times (<b>NVA - Non-Value Added</b>). Lower levels are real processing times (<b>VA - Value Added</b>).</p>
+                        
+                        <h3 class="font-bold text-slate-800 mb-2">Process Cycle Efficiency (PCE)</h3>
+                        <p class="text-sm text-slate-600 mb-3">This indicator tells us what percentage of the total lead time actually adds value to the product in the eyes of the customer.</p>
+                        
+                        <div class="bg-slate-800 text-blue-300 font-mono p-4 rounded-lg text-center mb-4 text-sm overflow-x-auto">
+                            PCE = (Sum of VAT / Total Lead Time PLT) × 100%
+                        </div>
+                        
+                        <div class="bg-blue-50 p-4 rounded-lg text-sm text-slate-700">
+                            <h4 class="font-bold mb-2">Calculation example:</h4>
+                            <ul class="list-none space-y-1 mb-2">
+                                <li>Total working time (VAT) = <b>30 minutes</b></li>
+                                <li>Time spent in inventory = <b>5 days (7200 minutes)</b></li>
+                                <li>Total Lead Time (PLT) = <b>7230 minutes</b></li>
+                            </ul>
+                            <p class="font-bold text-blue-800 text-base mt-2">PCE = (30 / 7230) × 100% ≈ 0.41%</p>
+                        </div>
+                    </section>
+
+                    <section class="bg-white p-5 md:p-6 rounded-xl border-t-4 border-t-red-500 shadow-sm">
+                        <h2 class="text-lg md:text-xl font-bold text-slate-800 mb-3">The brutal truth about processes</h2>
+                        <p class="text-sm text-slate-600 mb-4">In traditional companies, PCE is often below 5%. This means that 95% of the time, the product is just waiting. Where can we implement One-Piece Flow? Where to use a Pull system?</p>
+                        
+                        <div class="overflow-x-auto rounded-lg border border-slate-200">
+                            <table class="min-w-full text-xs md:text-sm text-left text-slate-600">
+                                <thead class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                                    <tr><th class="px-4 py-3">Process class</th><th class="px-4 py-3">Typical PCE</th><th class="px-4 py-3 hidden md:table-cell">Characteristics</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <tr><td class="px-4 py-3">Traditional mfg</td><td class="px-4 py-3 font-bold text-red-500">1% – 5%</td><td class="px-4 py-3 hidden md:table-cell">Product spends time in queues and transport.</td></tr>
+                                    <tr class="bg-slate-50"><td class="px-4 py-3">Office processes</td><td class="px-4 py-3 font-bold text-red-500">&lt; 1%</td><td class="px-4 py-3 hidden md:table-cell">Documents lie for weeks, actual work is 15 min.</td></tr>
+                                    <tr><td class="px-4 py-3">"Lean" processes (goal)</td><td class="px-4 py-3 font-bold text-yellow-600">10% – 15%</td><td class="px-4 py-3 hidden md:table-cell">Good level for companies during transformation.</td></tr>
+                                    <tr class="bg-slate-50"><td class="px-4 py-3">World Class Mfg</td><td class="px-4 py-3 font-bold text-emerald-600">20% – 30%</td><td class="px-4 py-3 hidden md:table-cell">One-Piece Flow, minimal inventory, optimization.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-4">Why is 100% impossible? There are technological times (drying, cooling) that extend Lead Time but technically don't add manual value.</p>
+                    </section>
+                `,
+                instructionHTML: `
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 border-b-2 border-emerald-500 pb-3 inline-block">How to use the app?</h1>
+                    <div class="space-y-4 md:space-y-6">
+                        <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
+                            <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">1</div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Selecting and Moving</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Single click selects an object. A grab handle (cross) will appear on the left, and a delete button (trash) on the right. Grab the cross to move it.</div></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
+                            <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">2</div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Text Editing (Double Click)</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Text fields are locked to prevent unwanted keyboard popups on mobile. <b>Double click/tap quickly</b> to start typing.</div></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
+                            <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">3</div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Subtle Snapping</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">When dragging, the app will show soft grey dashed lines if the shape aligns with others. It very softly snaps in place for a neat layout.</div></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
+                            <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">4</div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Undo, Transport & PCE</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Timeline has a drag handle to move it vertically. "Internal Transport" adds NVA time to the timeline. The summary automatically calculates the <b>PCE</b> %. You can undo/redo any action using top buttons.</div></div>
+                        </div>
+                    </div>
+                `
+            }
+        };
+
+        let currentLang = 'pl';
+
+        function setLanguage(lang) {
+            if(!i18n[lang]) return;
+            currentLang = lang;
+            const t = i18n[lang];
+
+            document.getElementById('lbl-map-type').innerText = t.mapType;
+            document.getElementById('lbl-tab-diagram').innerText = t.tabDiagram;
+            document.getElementById('lbl-tab-tutorial').innerText = t.tabTutorial;
+            document.getElementById('lbl-tab-instruction').innerText = t.tabInstruction;
+            document.getElementById('lbl-btn-print').innerText = t.btnPrint;
+            
+            document.getElementById('lbl-tools-title').innerText = t.toolsTitle;
+            document.getElementById('lbl-tools-subtitle').innerText = t.toolsSubtitle;
+            document.getElementById('tool-supplier').innerText = t.toolSupplier;
+            document.getElementById('tool-process').innerText = t.toolProcess;
+            document.getElementById('tool-data').innerText = t.toolData;
+            document.getElementById('tool-inventory').innerText = t.toolInventory;
+            document.getElementById('tool-transport-int').innerText = t.toolTransportInt;
+            document.getElementById('tool-transport').innerText = t.toolTransport;
+            document.getElementById('tool-thick-push').innerText = t.toolThickPush;
+            document.getElementById('tool-thick-pull').innerText = t.toolThickPull;
+            document.getElementById('tool-kaizen').innerText = t.toolKaizen;
+            document.getElementById('tool-text').innerText = t.toolText;
+            
+            document.getElementById('lbl-interact-title').innerText = t.interactTitle;
+            document.getElementById('mode-select').innerText = t.modeSelect;
+            document.getElementById('mode-straight').innerText = t.modeLine;
+            document.getElementById('mode-zigzag').innerText = t.modeZigzag;
+            document.getElementById('btn-center-view').innerText = t.centerView;
+            
+            document.getElementById('btn-cancel').innerText = t.btnCancel;
+            if (connectionStart) {
+                document.getElementById('connect-tooltip-text').innerText = t.tooltipConnectEnd;
+            } else {
+                document.getElementById('connect-tooltip-text').innerText = t.tooltipConnectStart;
+            }
+            
+            document.getElementById('btn-undo').title = t.titleUndo;
+            document.getElementById('btn-redo').title = t.titleRedo;
+
+            document.getElementById('content-tutorial').innerHTML = t.tutorialHTML;
+            document.getElementById('content-instruction').innerHTML = t.instructionHTML;
+            
+            renderDynamicTimeline();
+        }
+
+        window.addEventListener('message', function(event) {
+            const msg = event.data;
+            if (!msg || !msg.action) return;
+            
+            if (msg.action === 'setLanguage') {
+                setLanguage(msg.lang);
+            } else if (msg.action === 'requestExport') {
+                const dataToExport = {
+                    title: document.getElementById('map-title').value,
+                    nodes: nodes,
+                    edges: edges,
+                    customTimelineY: customTimelineY
+                };
+                window.parent.postMessage({ action: 'exportData', source: 'vsm', data: dataToExport }, '*');
+            } else if (msg.action === 'importData') {
+                if (msg.data) {
+                    if (msg.data.title !== undefined) document.getElementById('map-title').value = msg.data.title;
+                    if (msg.data.nodes) nodes = msg.data.nodes;
+                    if (msg.data.edges) edges = msg.data.edges;
+                    customTimelineY = msg.data.customTimelineY !== undefined ? msg.data.customTimelineY : null;
+                    selectedNodeId = null;
+                    
+                    historyStack = [JSON.stringify({nodes, edges, customTimelineY})];
+                    historyStep = 0;
+                    updateUndoRedoUI();
+                    
+                    renderNodes();
+                    renderEdges();
+                    renderDynamicTimeline();
+                    centerView();
+                }
+            }
+        });
+
+        // --- STAN APLIKACJI I HISTORIA ---
         let nodes = [];
         let edges = [];
+        let customTimelineY = null;
+        
+        let historyStack = [];
+        let historyStep = -1;
         
         let pan = { x: 0, y: 0 };
         let zoom = 1;
@@ -278,8 +598,14 @@
         
         let isResizingNode = null;
         let isRotatingNode = null;
+        let isDraggingTimeline = false;
+        let hasMoved = false;
 
-        // ZAAWANSOWANE ZARZĄDZANIE WSKAŹNIKAMI (POINTER EVENTS) DLA MOBILE/DESKTOP
+        // GUIDES (Snapping z zachowaniem wirtualnych koordynatów dla braku oporu)
+        let guides = { x: null, y: null };
+        let dragVirtualX = 0;
+        let dragVirtualY = 0;
+
         let activePointers = new Map();
         let initialPinchDistance = null;
         let initialPinchZoom = 1;
@@ -295,6 +621,60 @@
             'data': '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5V19A9 3 0 0 0 21 19V5"></path><path d="M3 12A9 3 0 0 0 21 12"></path></svg>',
         };
 
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            const lang = params.get('lang');
+            if (lang && i18n[lang]) {
+                setLanguage(lang);
+            } else {
+                setLanguage('pl');
+            }
+            saveHistory(); 
+        };
+
+        // --- SYSTEM HISTORII (Cofnij/Ponów) ---
+        window.saveHistory = function() {
+            const currentState = JSON.stringify({nodes, edges, customTimelineY});
+            if (historyStep >= 0 && historyStack[historyStep] === currentState) return;
+            historyStack = historyStack.slice(0, historyStep + 1);
+            historyStack.push(currentState);
+            historyStep++;
+            updateUndoRedoUI();
+        };
+
+        window.undo = function() {
+            if (historyStep > 0) {
+                historyStep--;
+                restoreHistoryState(historyStack[historyStep]);
+            }
+        };
+
+        window.redo = function() {
+            if (historyStep < historyStack.length - 1) {
+                historyStep++;
+                restoreHistoryState(historyStack[historyStep]);
+            }
+        };
+
+        function restoreHistoryState(stateStr) {
+            const state = JSON.parse(stateStr);
+            nodes = state.nodes;
+            edges = state.edges;
+            customTimelineY = state.customTimelineY !== undefined ? state.customTimelineY : null;
+            selectedNodeId = null;
+            renderNodes();
+            renderEdges();
+            renderDynamicTimeline();
+            updateUndoRedoUI();
+        }
+
+        function updateUndoRedoUI() {
+            const btnUndo = document.getElementById('btn-undo');
+            const btnRedo = document.getElementById('btn-redo');
+            if(btnUndo) btnUndo.disabled = (historyStep <= 0);
+            if(btnRedo) btnRedo.disabled = (historyStep >= historyStack.length - 1);
+        }
+
         window.toggleSidebar = function() {
             const sidebar = document.getElementById('left-toolbar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -305,45 +685,6 @@
                 sidebar.classList.add('-translate-x-full');
                 overlay.classList.add('hidden');
             }
-        };
-
-        window.saveMap = function() {
-            const title = document.getElementById('map-title').value;
-            const subtitle = document.getElementById('map-subtitle').value;
-            const data = JSON.stringify({title, subtitle, nodes, edges});
-            const blob = new Blob([data], {type: "application/json"});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = "vsm_mapa.json";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        };
-
-        window.loadMap = function(event) {
-            const file = event.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const parsed = JSON.parse(e.target.result);
-                    if(parsed.nodes && parsed.edges) {
-                        nodes = parsed.nodes;
-                        edges = parsed.edges;
-                        selectedNodeId = null;
-                        if(parsed.title !== undefined) document.getElementById('map-title').value = parsed.title;
-                        if(parsed.subtitle !== undefined) document.getElementById('map-subtitle').value = parsed.subtitle;
-                        renderNodes();
-                        renderEdges();
-                        renderDynamicTimeline();
-                        centerView();
-                    }
-                } catch(err) {
-                    alert("Wystąpił błąd podczas odczytu pliku JSON.");
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
         };
 
         function parseTime(str) {
@@ -367,7 +708,20 @@
             if (secs < 60) return `${Math.round(secs * 10) / 10} s`;
             if (secs < 3600) return `${Math.round((secs / 60) * 10) / 10} min`;
             if (secs < 3600 * 8) return `${Math.round((secs / 3600) * 10) / 10} h`;
-            return `${Math.round((secs / (3600 * 8)) * 10) / 10} dni`;
+            return `${Math.round((secs / (3600 * 8)) * 10) / 10} ${currentLang==='pl'?'dni':'days'}`;
+        }
+
+        function getNodeRect(n) {
+            let w = 130, h = 90;
+            if (n.type === 'process') { w = 150; h = 180; }
+            if (n.type === 'inventory' || n.type === 'transport-int') { w = 80; h = 100; }
+            if (n.type === 'kaizen') { w = n.width || 180; h = n.height || 120; }
+            if (n.type === 'text') { w = 100; h = 40; } 
+            if (n.type.startsWith('arrow-thick')) { w = n.width || 120; h = n.height || 50; }
+            if (n.type === 'data') { w = 140; h = 140; }
+            if (n.type === 'supplier') { w = 130; h = 120; }
+            if (n.type === 'transport') { w = 90; h = 120; }
+            return { w, h, cx: n.x + w/2, cy: n.y + h/2 };
         }
 
         const workspaceEl = document.getElementById('workspace');
@@ -383,10 +737,10 @@
                 const btn = document.getElementById(`tab-${id}`);
                 const view = document.getElementById(`view-${id}`);
                 if(id === tabId) {
-                    btn.className = "flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 font-bold transition-all duration-200 text-xs md:text-sm bg-white text-emerald-600 border-b-2 border-emerald-600 whitespace-nowrap";
+                    btn.className = "flex items-center gap-2 px-3 py-2 font-bold transition-all duration-200 text-xs md:text-sm bg-white text-emerald-600 border-b-[3px] border-emerald-500 whitespace-nowrap";
                     view.classList.remove('hidden');
                 } else {
-                    btn.className = "flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 font-medium transition-all duration-200 text-xs md:text-sm text-slate-500 hover:text-emerald-600 border-b-2 border-transparent whitespace-nowrap";
+                    btn.className = "flex items-center gap-2 px-3 py-2 font-bold transition-all duration-200 text-xs md:text-sm text-slate-400 hover:text-emerald-600 border-b-[3px] border-transparent whitespace-nowrap";
                     view.classList.add('hidden');
                 }
             });
@@ -398,7 +752,6 @@
 
         // OBSŁUGA OBSZARU ROBOCZEGO (PAN, ZOOM)
         workspaceEl.addEventListener('pointerdown', (e) => {
-            // Ignorujemy jeśli kliknięto w węzeł lub UI
             if (e.target.closest('.vsm-node') || e.target.closest('#timeline-panel') || e.target.closest('.print-hide')) return;
             
             selectedNodeId = null;
@@ -480,7 +833,6 @@
         workspaceEl.addEventListener('pointerup', endWorkspacePointer);
         workspaceEl.addEventListener('pointercancel', endWorkspacePointer);
 
-        // KÓŁKO MYSZY DLA DESKTOPU
         workspaceEl.addEventListener('wheel', (e) => {
             e.preventDefault();
             const scaleAdjust = e.deltaY > 0 ? 0.9 : 1.1;
@@ -494,17 +846,28 @@
             updateTransform();
         }, { passive: false });
 
-        // GLOBALNA OBSŁUGA RUCHU WĘZŁÓW
         document.addEventListener('pointermove', (e) => {
             if (!lastPointerPos) return;
             const dx = e.clientX - lastPointerPos.x;
             const dy = e.clientY - lastPointerPos.y;
             
-            if (isResizingNode || isRotatingNode || draggingNode) {
-                e.preventDefault(); // Blokada scrollowania strony na mobile podczas przeciągania węzłów
+            if (isResizingNode || isRotatingNode || draggingNode || isDraggingTimeline) {
+                e.preventDefault(); 
+                hasMoved = true;
             }
 
-            if (isResizingNode) {
+            if (isDraggingTimeline) {
+                let baseMaxY = 300;
+                const mainNodes = nodes.filter(n => ['process', 'supplier', 'data'].includes(n.type));
+                if (mainNodes.length > 0) baseMaxY = Math.max(...mainNodes.map(n => n.y + (n.type === 'process' ? 180 : 120)));
+                
+                let currentBottom = customTimelineY !== null ? customTimelineY : baseMaxY + 80;
+                currentBottom += dy / zoom;
+                customTimelineY = currentBottom;
+                
+                renderDynamicTimeline();
+                lastPointerPos = { x: e.clientX, y: e.clientY };
+            } else if (isResizingNode) {
                 const node = nodes.find(n => n.id === isResizingNode);
                 if(node) {
                     node.width = Math.max(50, (node.width || 120) + dx / zoom);
@@ -534,8 +897,30 @@
             } else if (draggingNode) {
                 const node = nodes.find(n => n.id === draggingNode);
                 if (node) {
-                    node.x += dx / zoom;
-                    node.y += dy / zoom;
+                    dragVirtualX += dx / zoom;
+                    dragVirtualY += dy / zoom;
+                    
+                    let newX = dragVirtualX;
+                    let newY = dragVirtualY;
+                    
+                    const nRect = { w: getNodeRect(node).w, h: getNodeRect(node).h, cx: newX + getNodeRect(node).w/2, cy: newY + getNodeRect(node).h/2 };
+                    let snapX = null;
+                    let snapY = null;
+                    const snapThreshold = 4 / zoom; 
+                    
+                    nodes.forEach(other => {
+                        if(other.id === node.id) return;
+                        const oRect = getNodeRect(other);
+                        if (Math.abs(nRect.cx - oRect.cx) < snapThreshold) snapX = oRect.cx;
+                        if (Math.abs(nRect.cy - oRect.cy) < snapThreshold) snapY = oRect.cy;
+                        if (Math.abs(newY - other.y) < snapThreshold) snapY = other.y + nRect.h/2;
+                    });
+
+                    if (snapX !== null) { newX = snapX - nRect.w/2; guides.x = snapX; } else { guides.x = null; }
+                    if (snapY !== null) { newY = snapY - nRect.h/2; guides.y = snapY; } else { guides.y = null; }
+
+                    node.x = newX;
+                    node.y = newY;
                     const nodeEl = document.querySelector(`.vsm-node[data-id="${node.id}"]`);
                     if(nodeEl) {
                         nodeEl.style.left = `${node.x}px`;
@@ -543,22 +928,33 @@
                     }
                     renderEdges();
                     renderDynamicTimeline();
+                    renderGuides();
                 }
                 lastPointerPos = { x: e.clientX, y: e.clientY };
             }
         }, { passive: false });
 
         document.addEventListener('pointerup', () => {
+            if (hasMoved) {
+                saveHistory();
+                hasMoved = false;
+            }
             draggingNode = null;
             isResizingNode = null;
             isRotatingNode = null;
+            isDraggingTimeline = false;
             lastPointerPos = null;
+            guides = { x: null, y: null };
+            renderGuides();
         });
         document.addEventListener('pointercancel', () => {
             draggingNode = null;
             isResizingNode = null;
             isRotatingNode = null;
+            isDraggingTimeline = false;
             lastPointerPos = null;
+            guides = { x: null, y: null };
+            renderGuides();
         });
 
         document.addEventListener('keydown', (e) => {
@@ -568,6 +964,19 @@
                 if (selectedNodeId) deleteNode(selectedNodeId);
             }
         });
+
+        function renderGuides() {
+            const layer = document.getElementById('guides-layer');
+            if (!layer) return;
+            let html = '';
+            if (guides.x !== null) {
+                html += `<line x1="${guides.x}" y1="-5000" x2="${guides.x}" y2="5000" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 4" opacity="0.5" />`;
+            }
+            if (guides.y !== null) {
+                html += `<line x1="-5000" y1="${guides.y}" x2="5000" y2="${guides.y}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 4" opacity="0.5" />`;
+            }
+            layer.innerHTML = html;
+        }
 
         function centerView() {
             if (nodes.length === 0) {
@@ -599,21 +1008,20 @@
         }
 
         function addNode(type) {
-            const labels = {
-                'supplier': 'S - Dostawcy',
-                'process': 'P - Proces',
-                'inventory': 'I - Zapasy',
-                'transport': 'T - Transport',
-                'data': 'Dane Procesowe',
-                'kaizen': 'Wpisz problem / pomysł...',
-                'text': 'Pole tekstowe\n(kliknij by edytować)',
-                'arrow-thick-push': '',
-                'arrow-thick-pull': ''
-            };
+            let label = i18n[currentLang].toolText;
+            if(type === 'supplier') label = i18n[currentLang].toolSupplier;
+            if(type === 'process') label = i18n[currentLang].defaultProcess;
+            if(type === 'inventory') label = i18n[currentLang].toolInventory;
+            if(type === 'transport' || type === 'transport-int') label = i18n[currentLang].toolTransport;
+            if(type === 'data') label = i18n[currentLang].toolData;
+            if(type === 'kaizen') label = i18n[currentLang].defaultKaizen;
+            if(type === 'text') label = i18n[currentLang].defaultText;
+            if(type.startsWith('arrow')) label = '';
+
             const newNode = {
                 id: generateId(),
                 type,
-                label: labels[type] !== undefined ? labels[type] : 'Element',
+                label: label,
                 x: (-pan.x + workspaceEl.clientWidth / 2) / zoom - 60,
                 y: (-pan.y + workspaceEl.clientHeight / 2) / zoom - 50,
                 data: {}
@@ -628,16 +1036,70 @@
             selectedNodeId = newNode.id;
             renderNodes();
             renderDynamicTimeline();
+            saveHistory();
         }
 
-        window.handleNodePointerDown = function(e, id) {
-            // Ignorujemy, by klawiatura mogła się normalnie wysunąć na urządzeniach mobilnych
-            if (e.target.tagName.toLowerCase() === 'input' || e.target.isContentEditable) {
-                selectedNodeId = id;
-                updateNodesRender();
-                return;
-            }
+        window.startTimelineDrag = function(e) {
+            e.stopPropagation();
+            try { e.target.setPointerCapture(e.pointerId); } catch(err){}
+            isDraggingTimeline = true;
+            hasMoved = false;
+            lastPointerPos = { x: e.clientX, y: e.clientY };
+        };
 
+        let lastTapTime = 0;
+        let lastTapNode = null;
+        
+        window.handleTap = function(e, el) {
+            e.stopPropagation();
+            const now = Date.now();
+            if (now - lastTapTime < 400 && lastTapNode === el) {
+                enableEdit(el);
+            } else {
+                const parentNode = el.closest('.vsm-node');
+                if (parentNode) {
+                    const id = parentNode.getAttribute('data-id');
+                    handleNodePointerDown(e, id);
+                }
+            }
+            lastTapTime = now;
+            lastTapNode = el;
+        };
+
+        window.enableEdit = function(el) {
+            if (el.tagName.toLowerCase() === 'input') {
+                el.removeAttribute('readonly');
+                el.classList.remove('cursor-pointer');
+                el.classList.add('cursor-text');
+                el.focus();
+            } else {
+                el.setAttribute('contenteditable', 'true');
+                el.classList.remove('cursor-pointer');
+                el.classList.add('cursor-text');
+                el.focus();
+                
+                const range = document.createRange();
+                range.selectNodeContents(el);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        };
+
+        window.disableEdit = function(el) {
+            if (el.tagName.toLowerCase() === 'input') {
+                el.setAttribute('readonly', 'true');
+                el.classList.add('cursor-pointer');
+                el.classList.remove('cursor-text');
+            } else {
+                el.setAttribute('contenteditable', 'false');
+                el.classList.add('cursor-pointer');
+                el.classList.remove('cursor-text');
+            }
+            window.getSelection()?.removeAllRanges();
+        };
+
+        window.handleNodePointerDown = function(e, id) {
             e.stopPropagation();
             selectedNodeId = id;
             updateNodesRender();
@@ -645,23 +1107,32 @@
             if (interactionMode.startsWith('connect')) {
                 if (!connectionStart) {
                     connectionStart = id;
-                    document.getElementById('connect-tooltip-text').innerText = "Kliknij cel strzałki";
+                    document.getElementById('connect-tooltip-text').innerText = i18n[currentLang].tooltipConnectEnd;
                     renderNodes();
                 } else {
                     if (connectionStart !== id) {
                         const edgeType = interactionMode === 'connect-zigzag' ? 'zigzag' : 'straight';
                         edges.push({ id: generateId(), source: connectionStart, target: id, type: edgeType });
+                        saveHistory();
                     }
                     connectionStart = null;
                     setMode('select');
                     renderEdges();
                     renderNodes();
                 }
-            } else {
-                try { e.target.setPointerCapture(e.pointerId); } catch(err){}
-                draggingNode = id;
-                lastPointerPos = { x: e.clientX, y: e.clientY };
             }
+        };
+
+        window.startNodeDrag = function(e, id) {
+            e.stopPropagation();
+            selectedNodeId = id;
+            updateNodesRender();
+            try { e.target.setPointerCapture(e.pointerId); } catch(err){}
+            draggingNode = id;
+            const n = nodes.find(x => x.id === id);
+            if(n) { dragVirtualX = n.x; dragVirtualY = n.y; }
+            hasMoved = false;
+            lastPointerPos = { x: e.clientX, y: e.clientY };
         };
 
         window.startResize = function(e, id) {
@@ -669,6 +1140,7 @@
             try { e.target.setPointerCapture(e.pointerId); } catch(err){}
             isResizingNode = id;
             selectedNodeId = id;
+            hasMoved = false;
             lastPointerPos = { x: e.clientX, y: e.clientY };
             updateNodesRender();
         };
@@ -678,6 +1150,7 @@
             try { e.target.setPointerCapture(e.pointerId); } catch(err){}
             isRotatingNode = id;
             selectedNodeId = id;
+            hasMoved = false;
             lastPointerPos = { x: e.clientX, y: e.clientY };
             updateNodesRender();
         };
@@ -689,6 +1162,7 @@
             renderNodes();
             renderEdges();
             renderDynamicTimeline();
+            saveHistory();
         };
 
         window.updateNodeLabelWithoutRender = function(id, value) {
@@ -720,6 +1194,7 @@
         window.deleteEdge = function(id) {
             edges = edges.filter(e => e.id !== id);
             renderEdges();
+            saveHistory();
         };
 
         function drawZigzagPath(x1, y1, x2, y2) {
@@ -741,7 +1216,7 @@
         }
 
         window.renderDynamicTimeline = function() {
-            const flowNodes = nodes.filter(n => n.type === 'process' || n.type === 'inventory').sort((a,b) => a.x - b.x);
+            const flowNodes = nodes.filter(n => n.type === 'process' || n.type === 'inventory' || n.type === 'transport-int').sort((a,b) => a.x - b.x);
             const layer = document.getElementById('timeline-layer');
             const labelsLayer = document.getElementById('timeline-labels');
             
@@ -751,8 +1226,11 @@
                 return;
             }
 
-            const maxY = Math.max(...flowNodes.map(n => n.y + (n.type === 'process' ? 180 : 100)));
-            const yBottom = maxY + 80;
+            let baseMaxY = 300;
+            const mainNodes = nodes.filter(n => ['process', 'supplier', 'data'].includes(n.type));
+            if (mainNodes.length > 0) baseMaxY = Math.max(...mainNodes.map(n => n.y + (n.type === 'process' ? 180 : 120)));
+            
+            const yBottom = customTimelineY !== null ? customTimelineY : baseMaxY + 80;
             const yTop = yBottom - 40;
 
             let pathD = "";
@@ -762,6 +1240,15 @@
 
             let currentX = flowNodes[0].x - 50;
             pathD += `M ${currentX} ${yTop} `;
+
+            guidesHtml += `
+                <g class="pointer-events-auto cursor-ns-resize print-hide" onpointerdown="startTimelineDrag(event)">
+                    <rect x="${currentX - 50}" y="${yTop - 15}" width="30" height="30" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" rx="6" />
+                    <line x1="${currentX - 42}" y1="${yTop - 5}" x2="${currentX - 28}" y2="${yTop - 5}" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="${currentX - 42}" y1="${yTop}" x2="${currentX - 28}" y2="${yTop}" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="${currentX - 42}" y1="${yTop + 5}" x2="${currentX - 28}" y2="${yTop + 5}" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+                </g>
+            `;
 
             flowNodes.forEach((node) => {
                 if (node.type === 'process') {
@@ -777,14 +1264,14 @@
                     const valStr = node.data.ct || '10 min';
                     sumVA += parseTime(valStr);
                     labelsHtml += `<div class="absolute text-center text-[11px] font-bold text-emerald-700 bg-white/80 px-1" style="left: ${node.x}px; top: ${yBottom + 5}px; width: ${nodeW}px;">${valStr}</div>`;
-                } else if (node.type === 'inventory') {
+                } else if (node.type === 'inventory' || node.type === 'transport-int') {
                     const nodeW = 80; 
                     const centerX = node.x + nodeW/2;
                     guidesHtml += `<line x1="${centerX}" y1="${node.y + 100}" x2="${centerX}" y2="${yTop}" stroke="#cbd5e1" stroke-dasharray="6 4" stroke-width="1.5" />`;
 
                     pathD += `L ${centerX} ${yTop} `;
                     
-                    const valStr = node.data.nva || '1 dzień';
+                    const valStr = node.data.nva || (currentLang === 'pl' ? '1 min' : '1 min');
                     sumNVA += parseTime(valStr);
                     labelsHtml += `<div class="absolute text-center text-[11px] font-bold text-slate-600 bg-white/80 px-1" style="left: ${centerX - 40}px; top: ${yTop - 20}px; width: 80px;">${valStr}</div>`;
                 }
@@ -798,11 +1285,20 @@
             const upArrowY = yTop - 60;
             guidesHtml += `<polygon points="${upArrowX-12},${upArrowY} ${upArrowX-12},${upArrowY-50} ${upArrowX-24},${upArrowY-50} ${upArrowX},${upArrowY-80} ${upArrowX+24},${upArrowY-50} ${upArrowX+12},${upArrowY-50} ${upArrowX+12},${upArrowY}" fill="#cbd5e1" />`;
 
+            const summaryTitle = currentLang === 'pl' ? 'Podsumowanie Sumaryczne' : 'Summary';
+            
+            let pce = 0;
+            let totalTime = sumVA + sumNVA;
+            if(totalTime > 0) {
+                pce = ((sumVA / totalTime) * 100).toFixed(1);
+            }
+            
             labelsHtml += `
             <div class="absolute text-left border border-slate-300 bg-white/95 px-3 py-2 rounded shadow-sm backdrop-blur-sm" style="left: ${endX + 30}px; top: ${yTop - 50}px; min-width: 150px;">
-                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1 mb-1.5">Podsumowanie Sumaryczne</div>
+                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1 mb-1.5">${summaryTitle}</div>
                 <div class="text-[12px] font-bold text-slate-600 mb-0.5 flex justify-between"><span>Lead Time (NVA):</span> <span class="text-slate-800 ml-2">${formatTime(sumNVA)}</span></div>
-                <div class="text-[12px] font-bold text-slate-600 flex justify-between"><span>Process Time (VA):</span> <span class="text-emerald-600 ml-2">${formatTime(sumVA)}</span></div>
+                <div class="text-[12px] font-bold text-slate-600 flex justify-between mb-0.5"><span>Process Time (VA):</span> <span class="text-emerald-600 ml-2">${formatTime(sumVA)}</span></div>
+                <div class="text-[12px] font-bold text-slate-600 flex justify-between border-t border-slate-200 mt-1 pt-1"><span id="lbl-pce">${i18n[currentLang].pceTitle}</span> <span class="text-blue-600 ml-2">${pce}%</span></div>
             </div>`;
 
             if(layer) layer.innerHTML = `${guidesHtml} <path d="${pathD}" fill="none" stroke="#0f766e" stroke-width="2.5" />`;
@@ -826,7 +1322,7 @@
                 workspaceEl.classList.remove('cursor-grab');
                 workspaceEl.classList.add('cursor-crosshair');
                 tooltip.classList.remove('hidden');
-                document.getElementById('connect-tooltip-text').innerText = "Kliknij element początkowy";
+                document.getElementById('connect-tooltip-text').innerText = i18n[currentLang].tooltipConnectStart;
             } else {
                 workspaceEl.classList.add('cursor-grab');
                 workspaceEl.classList.remove('cursor-crosshair');
@@ -842,23 +1338,13 @@
                 const targetNode = nodes.find(n => n.id === edge.target);
                 if (!sourceNode || !targetNode) return;
 
-                let w1 = sourceNode.type === 'data' ? 140 : 130;
-                let h1 = sourceNode.type === 'data' ? 140 : 90;
-                let w2 = targetNode.type === 'data' ? 140 : 130;
-                let h2 = targetNode.type === 'data' ? 140 : 90;
-                
-                if (sourceNode.type === 'kaizen') { w1 = sourceNode.width||150; h1 = sourceNode.height||100; }
-                else if (sourceNode.type === 'text') { w1 = 80; h1 = 40; }
-                else if (sourceNode.type.startsWith('arrow-thick')) { w1 = sourceNode.width||120; h1 = sourceNode.height||50; }
+                const r1 = getNodeRect(sourceNode);
+                const r2 = getNodeRect(targetNode);
 
-                if (targetNode.type === 'kaizen') { w2 = targetNode.width||150; h2 = targetNode.height||100; }
-                else if (targetNode.type === 'text') { w2 = 80; h2 = 40; }
-                else if (targetNode.type.startsWith('arrow-thick')) { w2 = targetNode.width||120; h2 = targetNode.height||50; }
-
-                const startX = sourceNode.x + w1/2;
-                const startY = sourceNode.y + h1/2;
-                const endX = targetNode.x + w2/2;
-                const endY = targetNode.y + h2/2;
+                const startX = r1.cx;
+                const startY = r1.cy;
+                const endX = r2.cx;
+                const endY = r2.cy;
 
                 const isZigzag = edge.type === 'zigzag';
                 const strokeColor = isZigzag ? "#10b981" : "#475569";
@@ -894,7 +1380,7 @@
                 const isSelected = selectedNodeId === id;
                 const isKaizen = type === 'kaizen';
                 const isProcess = type === 'process';
-                const isInventory = type === 'inventory';
+                const isInventory = type === 'inventory' || type === 'transport-int';
                 const isText = type === 'text';
                 const isThickArrow = type.startsWith('arrow-thick');
                 
@@ -938,15 +1424,15 @@
                     el.classList.add('hidden');
                 }
             });
-            
-            document.querySelectorAll('.vsm-delete-btn').forEach(btn => {
-                const parentId = btn.closest('.vsm-node').getAttribute('data-id');
+
+            document.querySelectorAll('.vsm-toolbar').forEach(toolbar => {
+                const parentId = toolbar.closest('.vsm-node').getAttribute('data-id');
                 if(selectedNodeId === parentId) {
-                    btn.classList.remove('opacity-0');
-                    btn.classList.add('opacity-100');
+                    toolbar.classList.remove('hidden');
+                    toolbar.classList.add('flex');
                 } else {
-                    btn.classList.add('opacity-0');
-                    btn.classList.remove('opacity-100');
+                    toolbar.classList.add('hidden');
+                    toolbar.classList.remove('flex');
                 }
             });
         }
@@ -954,62 +1440,83 @@
         function renderNodes() {
             let html = '';
             nodes.forEach(node => {
-                const isConnecting = connectionStart === node.id;
                 const isSelected = selectedNodeId === node.id;
                 const isKaizen = node.type === 'kaizen';
                 const isProcess = node.type === 'process';
                 const isInventory = node.type === 'inventory';
+                const isTransportInt = node.type === 'transport-int';
                 const isText = node.type === 'text';
                 const isThickArrow = node.type.startsWith('arrow-thick');
+                
+                const toolbarHtml = `
+                    <div class="vsm-toolbar absolute -top-12 -left-4 gap-1 bg-white border border-slate-200 shadow-md rounded-lg p-1 z-50 print-hide ${isSelected ? 'flex' : 'hidden'} transition-opacity">
+                        <button class="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-slate-200 text-slate-600 rounded cursor-grab active:cursor-grabbing" onpointerdown="startNodeDrag(event, '${node.id}')" title="Przesuń element">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M19 9l3 3-3 3M9 19l3 3 3 3M2 12h20M12 2v20"/></svg>
+                        </button>
+                        <button class="w-8 h-8 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 rounded cursor-pointer" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')" title="Usuń element">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                `;
 
                 if (isProcess) {
                     const nodeWidth = 150;
-                    let nodeClass = `vsm-node absolute flex flex-col shadow-sm transition-colors bg-white border border-slate-300 cursor-grab `;
+                    let nodeClass = `vsm-node absolute flex flex-col shadow-sm transition-colors bg-white border border-slate-300 `;
                     if (isSelected) nodeClass += 'ring-4 ring-blue-400 border-blue-500 z-20 ';
-                    else if (isConnecting) nodeClass += 'ring-4 ring-emerald-100 border-emerald-500 shadow-md z-20 ';
-                    else if (interactionMode.startsWith('connect')) nodeClass += 'hover:ring-2 hover:ring-emerald-200 z-20 ';
 
                     html += `
                     <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${nodeWidth}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
-                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                        </button>
-                        <div class="bg-teal-600 w-full text-white font-bold text-center py-1.5 px-1 min-h-[40px] flex items-center justify-center cursor-text">
-                            <input class="bg-transparent text-center w-full outline-none text-white text-[11px] leading-tight" value="${node.label}" oninput="updateNodeLabel('${node.id}', this.value)" onpointerdown="event.stopPropagation()">
+                        ${toolbarHtml}
+                        <div class="bg-teal-600 w-full text-white font-bold text-center py-1.5 px-1 min-h-[40px] flex items-center justify-center">
+                            <input class="bg-transparent text-center w-full outline-none text-white text-[11px] leading-tight cursor-pointer" value="${node.label}" oninput="updateNodeLabel('${node.id}', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
-                        <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] border-b border-slate-200 cursor-text">
-                            <span class="font-medium text-slate-600">FTE:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.fte||'1'}" oninput="updateNodeData('${node.id}', 'fte', this.value)" onpointerdown="event.stopPropagation()">
+                        <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] border-b border-slate-200">
+                            <span class="font-medium text-slate-600">FTE:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.fte||'1'}" oninput="updateNodeData('${node.id}', 'fte', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
-                        <div class="flex justify-between px-2 py-1 bg-white text-[11px] border-b border-slate-200 cursor-text">
-                            <span class="font-medium text-slate-600">C/T:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.ct||'10 min'}" oninput="updateNodeData('${node.id}', 'ct', this.value)" onpointerdown="event.stopPropagation()">
+                        <div class="flex justify-between px-2 py-1 bg-white text-[11px] border-b border-slate-200">
+                            <span class="font-medium text-slate-600">C/T:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.ct||'10 min'}" oninput="updateNodeData('${node.id}', 'ct', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
-                        <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] border-b border-slate-200 cursor-text">
-                            <span class="font-medium text-slate-600">RFT:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.rft||'85%'}" oninput="updateNodeData('${node.id}', 'rft', this.value)" onpointerdown="event.stopPropagation()">
+                        <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] border-b border-slate-200">
+                            <span class="font-medium text-slate-600">RFT:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.rft||'85%'}" oninput="updateNodeData('${node.id}', 'rft', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
-                        <div class="flex justify-between px-2 py-1 bg-white text-[11px] border-b border-slate-200 cursor-text">
-                            <span class="font-medium text-slate-600">Batch:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.batch||'1'}" oninput="updateNodeData('${node.id}', 'batch', this.value)" onpointerdown="event.stopPropagation()">
+                        <div class="flex justify-between px-2 py-1 bg-white text-[11px] border-b border-slate-200">
+                            <span class="font-medium text-slate-600">Batch:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.batch||'1'}" oninput="updateNodeData('${node.id}', 'batch', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
-                        <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] cursor-text">
-                            <span class="font-medium text-slate-600">Uptime:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.uptime||'90%'}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" onpointerdown="event.stopPropagation()">
+                        <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px]">
+                            <span class="font-medium text-slate-600">Uptime:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.uptime||'90%'}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
                     </div>
                     `;
                 } else if (isInventory) {
                     const nodeWidth = 80;
-                    let nodeClass = `vsm-node absolute flex flex-col items-center justify-center transition-colors cursor-grab `;
+                    let nodeClass = `vsm-node absolute flex flex-col items-center justify-center transition-colors `;
                     if (isSelected) nodeClass += 'ring-4 ring-blue-400 bg-white/50 rounded z-20 ';
                     
                     html += `
                     <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${nodeWidth}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
-                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                        </button>
+                        ${toolbarHtml}
                         <div class="relative w-[60px] h-[60px]">
                             <svg viewBox="0 0 100 100" class="w-full h-full text-slate-400 fill-slate-200 stroke-[3px] drop-shadow-sm"><polygon points="50,15 90,85 10,85"></polygon></svg>
-                            <input class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[20%] w-8 text-center bg-transparent text-sm font-bold text-slate-700 outline-none cursor-text" value="${node.data.inventory||'3'}" oninput="updateNodeData('${node.id}', 'inventory', this.value)" onpointerdown="event.stopPropagation()">
+                            <input class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[20%] w-8 text-center bg-transparent text-sm font-bold text-slate-700 outline-none cursor-pointer" value="${node.data.inventory||'3'}" oninput="updateNodeData('${node.id}', 'inventory', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
                         <div class="mt-2 w-full text-center">
-                             <input class="w-full text-center text-[11px] font-bold text-slate-600 bg-transparent border-b border-transparent focus:border-slate-400 outline-none cursor-text" value="${node.data.nva||'1 dzień'}" title="Czas oczekiwania (NVA)" oninput="updateNodeData('${node.id}', 'nva', this.value)" onpointerdown="event.stopPropagation()">
+                             <input class="w-full text-center text-[11px] font-bold text-slate-600 bg-transparent border-b border-transparent focus:border-slate-400 outline-none cursor-pointer" value="${node.data.nva || (currentLang === 'pl' ? '1 dzień' : '1 day')}" title="Czas oczekiwania (NVA)" oninput="updateNodeData('${node.id}', 'nva', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+                        </div>
+                    </div>
+                    `;
+                } else if (isTransportInt) {
+                    const nodeWidth = 80;
+                    let nodeClass = `vsm-node absolute flex flex-col items-center justify-center transition-colors `;
+                    if (isSelected) nodeClass += 'ring-4 ring-blue-400 bg-white/50 rounded z-20 ';
+                    
+                    html += `
+                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${nodeWidth}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                        ${toolbarHtml}
+                        <div class="relative w-[60px] h-[60px] flex items-center justify-center text-orange-500 bg-orange-50 rounded-full border-2 border-orange-200 shadow-inner">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2 12h10l2-8H7"></path><circle cx="9" cy="20" r="2"></circle><circle cx="16" cy="20" r="2"></circle></svg>
+                        </div>
+                        <div class="mt-2 w-full text-center">
+                             <input class="w-full text-center text-[11px] font-bold text-slate-600 bg-transparent border-b border-transparent focus:border-slate-400 outline-none cursor-pointer" value="${node.data.nva || '1 min'}" title="Czas transportu (NVA)" oninput="updateNodeData('${node.id}', 'nva', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
                     </div>
                     `;
@@ -1018,18 +1525,13 @@
                     if (isSelected) nodeClass += 'ring-2 ring-blue-400 z-20 rounded ';
 
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; min-width: 100px;" data-id="${node.id}" data-type="${node.type}">
-                        <div class="w-full h-6 md:h-4 bg-slate-200 hover:bg-slate-300 flex items-center justify-center cursor-grab rounded-t opacity-50 hover:opacity-100 transition-opacity print-hide" onpointerdown="handleNodePointerDown(event, '${node.id}')">
-                            <svg width="14" height="6" viewBox="0 0 24 10" stroke="#64748b" stroke-width="2"><line x1="2" y1="2" x2="22" y2="2"/><line x1="2" y1="8" x2="22" y2="8"/></svg>
-                        </div>
-                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                        </button>
-                        <div contenteditable="true" class="outline-none w-full min-h-[30px] text-slate-800 px-3 pb-2 pt-1 font-bold bg-transparent cursor-text whitespace-pre-wrap break-words leading-tight" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onpointerdown="event.stopPropagation(); selectedNodeId='${node.id}'; updateNodesRender()">${node.label}</div>
+                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; min-width: 100px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                        ${toolbarHtml}
+                        <div contenteditable="false" class="outline-none w-full min-h-[30px] text-slate-800 px-3 py-2 font-bold bg-transparent cursor-pointer whitespace-pre-wrap break-words leading-tight" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">${node.label}</div>
                     </div>
                     `;
                 } else if (isKaizen) {
-                    let nodeClass = `vsm-node absolute flex flex-col transition-colors cursor-grab `;
+                    let nodeClass = `vsm-node absolute flex flex-col transition-colors `;
                     if (isSelected) nodeClass += 'ring-4 ring-blue-400 z-20 rounded-xl ';
                     
                     const w = node.width || 180;
@@ -1044,12 +1546,10 @@
                         
                         <div class="resize-handles ${isSelected ? '' : 'hidden'} absolute -right-4 -bottom-4 md:-right-3 md:-bottom-3 w-8 h-8 md:w-5 md:h-5 bg-blue-500 border-2 border-white rounded-full cursor-se-resize z-40 shadow-md print-hide flex items-center justify-center" onpointerdown="startResize(event, '${node.id}')" title="Zmień rozmiar"></div>
                         
-                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                        </button>
+                        ${toolbarHtml}
                         
                         <div class="w-full flex justify-center z-10 mb-1 relative pointer-events-none">
-                            <div contenteditable="true" class="kaizen-text-box pointer-events-auto ${textBgClass} border px-3 py-2 rounded-md text-[11px] font-bold text-red-800 outline-none text-center min-w-[50px] max-w-[200px] break-words whitespace-pre-wrap cursor-text transition-colors" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onpointerdown="event.stopPropagation()">${node.label}</div>
+                            <div contenteditable="false" class="kaizen-text-box pointer-events-auto ${textBgClass} border px-3 py-2 rounded-md text-[11px] font-bold text-red-800 outline-none text-center min-w-[50px] max-w-[200px] break-words whitespace-pre-wrap cursor-pointer transition-colors" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">${node.label}</div>
                         </div>
 
                         <div class="relative flex-1 w-full pointer-events-none drop-shadow-md">
@@ -1060,7 +1560,7 @@
                     </div>
                     `;
                 } else if (isThickArrow) {
-                    let nodeClass = `vsm-node absolute flex items-center justify-center transition-colors cursor-grab `;
+                    let nodeClass = `vsm-node absolute flex items-center justify-center transition-colors `;
                     if (isSelected) nodeClass += 'ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-50 z-20 rounded ';
                     
                     const isPush = node.type === 'arrow-thick-push';
@@ -1078,9 +1578,7 @@
                         <div class="resize-handles ${isSelected ? '' : 'hidden'} absolute -top-10 left-1/2 -translate-x-1/2 w-8 h-8 md:w-5 md:h-5 bg-blue-500 border-2 border-white rounded-full cursor-grab z-40 shadow-md print-hide" onpointerdown="startRotate(event, '${node.id}')" title="Obróć"></div>
                         <div class="resize-handles ${isSelected ? '' : 'hidden'} absolute -top-6 left-1/2 -translate-x-1/2 w-[2px] h-6 bg-blue-500 z-30 print-hide"></div>
                         
-                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                        </button>
+                        ${toolbarHtml}
                         
                         <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="drop-shadow-sm pointer-events-none">
                             ${defs}
@@ -1093,42 +1591,39 @@
                     let nodeMinHeight = 90;
                     if (node.type === 'data') { nodeWidth = 140; nodeMinHeight = 140; }
                     if (node.type === 'supplier') { nodeMinHeight = 120; }
+                    if (node.type === 'transport') { nodeWidth = 90; nodeMinHeight = 120; }
                     
-                    let nodeClass = `vsm-node absolute flex flex-col p-2 transition-colors cursor-grab `;
+                    let nodeClass = `vsm-node absolute flex flex-col p-2 transition-colors `;
                     nodeClass += `bg-white rounded-xl shadow-sm border border-slate-200 border-t-[4px] border-t-emerald-500 items-start px-3 py-3 `;
 
                     if (isSelected) nodeClass += 'ring-4 ring-blue-400 border-blue-500 z-20 ';
-                    else if (isConnecting) nodeClass += 'ring-4 ring-emerald-100 border-emerald-500 shadow-md z-20 ';
-                    else if (interactionMode.startsWith('connect')) nodeClass += 'hover:ring-2 hover:ring-emerald-200 hover:shadow-md z-20 ';
 
                     let extraFields = '';
                     if(node.type === 'supplier') {
                         extraFields = `
                             <div class="w-full flex flex-col gap-1.5 mt-3">
-                                <input class="w-full text-left text-[10px] font-medium text-slate-500 bg-slate-50 border-b border-slate-200 hover:bg-emerald-50 focus:bg-emerald-50 focus:border-emerald-500 focus:text-slate-800 px-1 py-2 md:py-1 outline-none transition-colors cursor-text" placeholder="Nazwa elementu..." value="${node.data.product || ''}" oninput="updateNodeData('${node.id}', 'product', this.value)" onpointerdown="event.stopPropagation()">
-                                <input class="w-full text-left text-[10px] text-slate-400 bg-transparent border-b border-transparent hover:bg-emerald-50 focus:bg-emerald-50 focus:border-emerald-500 px-1 py-2 md:py-1 outline-none transition-colors cursor-text" placeholder="Szczegóły / ilość..." value="${node.data.quantity || ''}" oninput="updateNodeData('${node.id}', 'quantity', this.value)" onpointerdown="event.stopPropagation()">
+                                <input class="w-full text-left text-[10px] font-medium text-slate-500 bg-slate-50 border-b border-slate-200 hover:bg-emerald-50 focus:bg-emerald-50 focus:border-emerald-500 focus:text-slate-800 px-1 py-2 md:py-1 outline-none transition-colors cursor-pointer" placeholder="Nazwa elementu..." value="${node.data.product || ''}" oninput="updateNodeData('${node.id}', 'product', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+                                <input class="w-full text-left text-[10px] text-slate-400 bg-transparent border-b border-transparent hover:bg-emerald-50 focus:bg-emerald-50 focus:border-emerald-500 px-1 py-2 md:py-1 outline-none transition-colors cursor-pointer" placeholder="Szczegóły / ilość..." value="${node.data.quantity || ''}" oninput="updateNodeData('${node.id}', 'quantity', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                             </div>
                         `;
                     } else if(node.type === 'data') {
                         extraFields = `
                             <div class="w-full flex flex-col gap-1 mt-3 border-t border-slate-100 pt-2">
-                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/T</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-text" placeholder="s" value="${node.data.ct || ''}" oninput="updateNodeData('${node.id}', 'ct', this.value)" onpointerdown="event.stopPropagation()"></div>
-                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/O</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-text" placeholder="min" value="${node.data.co || ''}" oninput="updateNodeData('${node.id}', 'co', this.value)" onpointerdown="event.stopPropagation()"></div>
-                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Uptime</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-text" placeholder="%" value="${node.data.uptime || ''}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" onpointerdown="event.stopPropagation()"></div>
-                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Zmiany</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-text" placeholder="ilość" value="${node.data.shifts || ''}" oninput="updateNodeData('${node.id}', 'shifts', this.value)" onpointerdown="event.stopPropagation()"></div>
+                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/T</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="s" value="${node.data.ct || ''}" oninput="updateNodeData('${node.id}', 'ct', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
+                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/O</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="min" value="${node.data.co || ''}" oninput="updateNodeData('${node.id}', 'co', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
+                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Uptime</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="%" value="${node.data.uptime || ''}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
+                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Zmiany</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="ilość" value="${node.data.shifts || ''}" oninput="updateNodeData('${node.id}', 'shifts', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
                             </div>
                         `;
                     }
 
                     html += `
                     <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${nodeWidth}px; min-height: ${nodeMinHeight}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
-                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                        </button>
-                        <div class="flex items-center gap-2 mb-2 w-full text-emerald-600">
+                        ${toolbarHtml}
+                        <div class="flex items-center justify-center mb-1 text-emerald-600 pointer-events-none ${node.type === 'transport' ? 'w-full' : ''}">
                             ${nodeIcons[node.type] || ''}
-                            <input class="w-full text-left text-[11px] font-extrabold text-slate-800 bg-transparent border-b border-transparent focus:border-emerald-400 focus:bg-emerald-50 outline-none z-10 transition-colors uppercase tracking-wide cursor-text py-1 md:py-0" value="${node.label}" oninput="updateNodeLabel('${node.id}', this.value)" onpointerdown="event.stopPropagation()">
                         </div>
+                        <input class="w-full ${node.type === 'transport' ? 'text-center' : 'text-left'} text-[11px] font-extrabold text-slate-800 bg-transparent border-b border-transparent focus:border-emerald-400 focus:bg-emerald-50 outline-none z-10 transition-colors uppercase tracking-wide cursor-pointer py-1 md:py-0 pointer-events-auto" value="${node.label}" oninput="updateNodeLabel('${node.id}', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         ${extraFields}
                     </div>
                     `;
