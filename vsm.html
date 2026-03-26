@@ -10,7 +10,10 @@
         .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
         .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #10b981; }
+        
+        /* Wymuszenie zachowania na ekranach dotykowych */
         .no-select { user-select: none; -webkit-user-select: none; touch-action: none; }
+        input, [contenteditable="true"] { touch-action: auto; }
         
         .bg-grid {
             background-image: url('data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M0 0h40v40H0V0zm20 20h20v20H20V20zM0 20h20v20H0V20z" fill="%23f1f5f9" fill-opacity="0.6" fill-rule="evenodd"/%3E%3C/svg%3E');
@@ -18,7 +21,7 @@
 
         /* Ustawienia dla druku */
         @media print {
-            #main-header, #left-toolbar, #sidebar-overlay, #connect-tooltip, .print-hide, .vsm-node button {
+            #main-header, #left-toolbar, #sidebar-overlay, #connect-tooltip, .print-hide, .vsm-node button, .resize-handles {
                 display: none !important;
             }
             body { background: white !important; margin: 0; padding: 0; }
@@ -205,12 +208,32 @@
 
         <!-- ZAKŁADKA 2: SAMOUCZEK -->
         <div id="view-tutorial" class="hidden h-full w-full overflow-y-auto bg-slate-50 p-4 md:p-8">
-            <!-- (Tutaj treść bez zmian, ukryta dla zwięzłości w trybie mobilnym wciąż działa poprawnie, tailwind załatwia responsywność p-4) -->
             <div class="max-w-4xl mx-auto space-y-6 md:space-y-8 text-slate-700">
                 <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 border-b-2 border-emerald-500 pb-3 inline-block">Samouczek VSM</h1>
                 <section class="bg-white p-4 md:p-6 rounded-xl border-t-4 border-t-emerald-500 shadow-sm">
                     <h2 class="text-lg md:text-xl font-bold text-slate-800 mb-3">Czym jest VSM?</h2>
                     <p class="mb-2 leading-relaxed text-sm md:text-base text-slate-600">Mapowanie Strumienia Wartości (VSM) to kluczowe narzędzie w metodyce Lean Management, służące do wizualizacji przepływu materiałów oraz informacji niezbędnych do dostarczenia produktu klientowi.</p>
+                </section>
+                <section>
+                    <h2 class="text-xl font-bold text-slate-800 mb-5">Główne komponenty VSM</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="bg-white border border-slate-200 border-t-4 border-t-emerald-500 p-5 rounded-lg flex gap-4 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="bg-emerald-50 p-3 rounded-full h-fit text-emerald-600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path></svg></div>
+                            <div><h3 class="font-bold text-slate-800">Dostawca / Klient</h3><p class="text-sm text-slate-500 mt-1 leading-relaxed">Umieszczani na krańcach mapy. Klient dyktuje takt czasu, a dostawca podaje typ i ilość surowców.</p></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 border-t-4 border-t-emerald-500 p-5 rounded-lg flex gap-4 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="bg-emerald-50 p-3 rounded-full h-fit text-emerald-600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"></rect></svg></div>
+                            <div><h3 class="font-bold text-slate-800">Proces</h3><p class="text-sm text-slate-500 mt-1 leading-relaxed">Proces produkcyjny lub usługowy reprezentujący krok w strumieniu wartości.</p></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 border-t-4 border-t-emerald-500 p-5 rounded-lg flex gap-4 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="bg-emerald-50 p-3 rounded-full h-fit text-emerald-600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5V19A9 3 0 0 0 21 19V5"></path><path d="M3 12A9 3 0 0 0 21 12"></path></svg></div>
+                            <div><h3 class="font-bold text-slate-800">Skrzynka Danych (Data Box)</h3><p class="text-sm text-slate-500 mt-1 leading-relaxed">Zawiera mierzalne wskaźniki: C/T (Cycle Time), C/O (Changeover Time), Dostępność (Uptime) maszyn itp.</p></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 border-t-4 border-t-emerald-500 p-5 rounded-lg flex gap-4 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="bg-emerald-50 p-3 rounded-full h-fit text-emerald-600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
+                            <div><h3 class="font-bold text-slate-800">Przepływ Informacji (Zygzak)</h3><p class="text-sm text-slate-500 mt-1 leading-relaxed">Błyskawica reprezentuje elektroniczny przepływ informacji (np. zamówienia ERP/MRP).</p></div>
+                        </div>
+                    </div>
                 </section>
             </div>
         </div>
@@ -222,15 +245,15 @@
                 <div class="space-y-4 md:space-y-6">
                     <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
                         <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">1</div>
-                        <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Telefony i Tablety (Gesty)</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Możesz przesuwać mapę palcem. Aby przybliżyć/oddalić użyj gestu uszczypnięcia dwoma palcami (Pinch-to-zoom). Dotknij obiektu aby go zaznaczyć.</div></div>
+                        <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Telefony i Tablety (Gesty)</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Możesz przesuwać mapę palcem. Aby przybliżyć/oddalić użyj gestu uszczypnięcia dwoma palcami (Pinch-to-zoom). Dotknij obiektu aby go chwycić i przenieść.</div></div>
                     </div>
                     <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
                         <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">2</div>
-                        <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Nazwa Mapy, Wstawianie i Edycja</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Tytuł w lewym górnym rogu jest edytowalny. W panelu bocznym (pod przyciskiem Menu na telefonie) znajdziesz wszystkie narzędzia. Stuknij w tekst by go edytować.</div></div>
+                        <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Nazwa Mapy, Wstawianie i Edycja</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Tytuł w lewym górnym rogu jest edytowalny. W panelu bocznym (pod przyciskiem Menu na telefonie) znajdziesz wszystkie narzędzia. Stuknij w tekst na elemencie, by wysunąć klawiaturę i go edytować.</div></div>
                     </div>
                     <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
                         <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">3</div>
-                        <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Usuwanie elementów</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Aby usunąć obiekt naciśnij na małą czerwoną ikonę kosza w jego prawym górnym rogu (ikona pojawia się po zaznaczeniu obiektu) lub użyj klawisza Delete na komputerze.</div></div>
+                        <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Usuwanie elementów</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Aby usunąć obiekt, najpierw w niego kliknij. W jego prawym górnym rogu pojawi się czerwona ikona kosza - naciśnij ją. Na komputerze możesz użyć klawisza Delete.</div></div>
                     </div>
                 </div>
             </div>
@@ -256,10 +279,13 @@
         let isResizingNode = null;
         let isRotatingNode = null;
 
-        // TOUCH HANDLING STATE
+        // ZAAWANSOWANE ZARZĄDZANIE WSKAŹNIKAMI (POINTER EVENTS) DLA MOBILE/DESKTOP
+        let activePointers = new Map();
         let initialPinchDistance = null;
+        let initialPinchZoom = 1;
+        let initialPinchCenter = null;
+        let lastPanPos = null;
         let lastPointerPos = null;
-        let lastTouchCenter = null;
 
         const nodeIcons = {
             'supplier': '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-600"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M17 18h1"></path><path d="M12 18h1"></path><path d="M7 18h1"></path></svg>',
@@ -370,24 +396,11 @@
             transformContainer.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
         }
 
-        // Utils for touch multi-point calculation
-        function getDistance(touches) {
-            const dx = touches[0].clientX - touches[1].clientX;
-            const dy = touches[0].clientY - touches[1].clientY;
-            return Math.sqrt(dx * dx + dy * dy);
-        }
-        function getCenter(touches) {
-            if(touches.length === 1) return { x: touches[0].clientX, y: touches[0].clientY };
-            return { x: (touches[0].clientX + touches[1].clientX) / 2, y: (touches[0].clientY + touches[1].clientY) / 2 };
-        }
-        function getPointerPos(e) {
-            if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            return { x: e.clientX, y: e.clientY };
-        }
-
-        // UNIFIED MOUSE / TOUCH DOWN FOR WORKSPACE
-        function handleWorkspaceDown(e) {
-            if (e.target.closest('.vsm-node')) return;
+        // OBSŁUGA OBSZARU ROBOCZEGO (PAN, ZOOM)
+        workspaceEl.addEventListener('pointerdown', (e) => {
+            // Ignorujemy jeśli kliknięto w węzeł lub UI
+            if (e.target.closest('.vsm-node') || e.target.closest('#timeline-panel') || e.target.closest('.print-hide')) return;
+            
             selectedNodeId = null;
             updateNodesRender();
             if (interactionMode.startsWith('connect')) {
@@ -396,25 +409,78 @@
                 return;
             }
 
-            if (e.type === 'touchstart') {
-                if (e.touches.length === 1) {
-                    isPanning = true;
-                    lastPointerPos = getPointerPos(e);
-                } else if (e.touches.length === 2) {
-                    initialPinchDistance = getDistance(e.touches);
-                    lastTouchCenter = getCenter(e.touches);
-                    isPanning = false; // block pan while zooming
-                }
-            } else {
+            activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            try { workspaceEl.setPointerCapture(e.pointerId); } catch(err){}
+
+            if (activePointers.size === 1) {
                 isPanning = true;
+                lastPanPos = { x: e.clientX, y: e.clientY };
                 workspaceEl.classList.remove('cursor-grab');
                 workspaceEl.classList.add('cursor-grabbing');
-                lastPointerPos = getPointerPos(e);
+            } else if (activePointers.size === 2) {
+                isPanning = false;
+                const pts = Array.from(activePointers.values());
+                initialPinchDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+                initialPinchZoom = zoom;
+                initialPinchCenter = { x: (pts[0].x + pts[1].x)/2, y: (pts[0].y + pts[1].y)/2 };
+            }
+        });
+
+        workspaceEl.addEventListener('pointermove', (e) => {
+            if (activePointers.has(e.pointerId)) {
+                activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+                if (activePointers.size === 2) {
+                    const pts = Array.from(activePointers.values());
+                    const currentDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+                    const currentCenter = { x: (pts[0].x + pts[1].x)/2, y: (pts[0].y + pts[1].y)/2 };
+                    
+                    const scaleAdjust = currentDistance / initialPinchDistance;
+                    let newZoom = Math.max(0.1, Math.min(initialPinchZoom * scaleAdjust, 3));
+                    
+                    const rect = workspaceEl.getBoundingClientRect();
+                    const mouseX = initialPinchCenter.x - rect.left;
+                    const mouseY = initialPinchCenter.y - rect.top;
+
+                    pan.x = mouseX - (mouseX - pan.x) * (newZoom / zoom) + (currentCenter.x - initialPinchCenter.x);
+                    pan.y = mouseY - (mouseY - pan.y) * (newZoom / zoom) + (currentCenter.y - initialPinchCenter.y);
+                    
+                    zoom = newZoom;
+                    initialPinchCenter = currentCenter;
+                    initialPinchZoom = zoom;
+                    initialPinchDistance = currentDistance;
+                    
+                    updateTransform();
+                } else if (activePointers.size === 1 && isPanning) {
+                    const dx = e.clientX - lastPanPos.x;
+                    const dy = e.clientY - lastPanPos.y;
+                    pan.x += dx;
+                    pan.y += dy;
+                    lastPanPos = { x: e.clientX, y: e.clientY };
+                    updateTransform();
+                }
+            }
+        });
+
+        function endWorkspacePointer(e) {
+            activePointers.delete(e.pointerId);
+            if (activePointers.size < 2) {
+                initialPinchDistance = null;
+            }
+            if (activePointers.size === 0) {
+                isPanning = false;
+                workspaceEl.classList.add('cursor-grab');
+                workspaceEl.classList.remove('cursor-grabbing');
+            } else if (activePointers.size === 1) {
+                const remaining = Array.from(activePointers.values())[0];
+                lastPanPos = { x: remaining.x, y: remaining.y };
+                isPanning = true;
             }
         }
-        workspaceEl.addEventListener('mousedown', handleWorkspaceDown);
-        workspaceEl.addEventListener('touchstart', handleWorkspaceDown, { passive: false });
-        
+        workspaceEl.addEventListener('pointerup', endWorkspacePointer);
+        workspaceEl.addEventListener('pointercancel', endWorkspacePointer);
+
+        // KÓŁKO MYSZY DLA DESKTOPU
         workspaceEl.addEventListener('wheel', (e) => {
             e.preventDefault();
             const scaleAdjust = e.deltaY > 0 ? 0.9 : 1.1;
@@ -428,55 +494,21 @@
             updateTransform();
         }, { passive: false });
 
-        // UNIFIED MOUSE / TOUCH MOVE
-        function handlePointerMove(e) {
-            if (e.type === 'touchmove') {
-                if (!isPanning && !draggingNode && !isResizingNode && !isRotatingNode && e.touches.length < 2) return;
-                // Prevent scrolling during interactions
-                if (e.target.closest('#workspace') || draggingNode || isResizingNode || isRotatingNode) {
-                    if(e.cancelable) e.preventDefault();
-                }
-
-                // Pinch to zoom logic
-                if (e.touches.length === 2) {
-                    const currentDistance = getDistance(e.touches);
-                    const currentCenter = getCenter(e.touches);
-                    
-                    if (initialPinchDistance) {
-                        const scaleAdjust = currentDistance / initialPinchDistance;
-                        let newZoom = Math.max(0.1, Math.min(zoom * scaleAdjust, 3));
-                        
-                        const rect = workspaceEl.getBoundingClientRect();
-                        const mouseX = currentCenter.x - rect.left;
-                        const mouseY = currentCenter.y - rect.top;
-
-                        pan.x = mouseX - (mouseX - pan.x) * (newZoom / zoom);
-                        pan.y = mouseY - (mouseY - pan.y) * (newZoom / zoom);
-                        zoom = newZoom;
-                        
-                        if (lastTouchCenter) {
-                            pan.x += currentCenter.x - lastTouchCenter.x;
-                            pan.y += currentCenter.y - lastTouchCenter.y;
-                        }
-                        updateTransform();
-                    }
-                    initialPinchDistance = currentDistance;
-                    lastTouchCenter = currentCenter;
-                    return; 
-                }
+        // GLOBALNA OBSŁUGA RUCHU WĘZŁÓW
+        document.addEventListener('pointermove', (e) => {
+            if (!lastPointerPos) return;
+            const dx = e.clientX - lastPointerPos.x;
+            const dy = e.clientY - lastPointerPos.y;
+            
+            if (isResizingNode || isRotatingNode || draggingNode) {
+                e.preventDefault(); // Blokada scrollowania strony na mobile podczas przeciągania węzłów
             }
-
-            const pos = getPointerPos(e);
-            if (!lastPointerPos) lastPointerPos = pos;
-            const movementX = pos.x - lastPointerPos.x;
-            const movementY = pos.y - lastPointerPos.y;
-            lastPointerPos = pos;
 
             if (isResizingNode) {
                 const node = nodes.find(n => n.id === isResizingNode);
                 if(node) {
-                    node.width = Math.max(50, (node.width || 120) + movementX / zoom);
-                    node.height = Math.max(30, (node.height || 60) + movementY / zoom);
+                    node.width = Math.max(50, (node.width || 120) + dx / zoom);
+                    node.height = Math.max(30, (node.height || 60) + dy / zoom);
                     const nodeEl = document.querySelector(`.vsm-node[data-id="${node.id}"]`);
                     if(nodeEl) {
                         nodeEl.style.width = `${node.width}px`;
@@ -484,6 +516,7 @@
                     }
                     renderEdges();
                 }
+                lastPointerPos = { x: e.clientX, y: e.clientY };
             } else if (isRotatingNode) {
                 const node = nodes.find(n => n.id === isRotatingNode);
                 if(node) {
@@ -492,20 +525,17 @@
                         const rect = nodeEl.getBoundingClientRect();
                         const centerX = rect.left + rect.width / 2;
                         const centerY = rect.top + rect.height / 2;
-                        const angle = Math.atan2(pos.y - centerY, pos.x - centerX) * (180 / Math.PI);
+                        const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
                         node.rotation = angle + 90;
                         nodeEl.style.transform = `rotate(${node.rotation}deg)`;
                     }
                 }
-            } else if (isPanning) {
-                pan.x += movementX;
-                pan.y += movementY;
-                updateTransform();
+                lastPointerPos = { x: e.clientX, y: e.clientY };
             } else if (draggingNode) {
                 const node = nodes.find(n => n.id === draggingNode);
                 if (node) {
-                    node.x += movementX / zoom;
-                    node.y += movementY / zoom;
+                    node.x += dx / zoom;
+                    node.y += dy / zoom;
                     const nodeEl = document.querySelector(`.vsm-node[data-id="${node.id}"]`);
                     if(nodeEl) {
                         nodeEl.style.left = `${node.x}px`;
@@ -514,33 +544,22 @@
                     renderEdges();
                     renderDynamicTimeline();
                 }
+                lastPointerPos = { x: e.clientX, y: e.clientY };
             }
-        }
-        document.addEventListener('mousemove', handlePointerMove);
-        document.addEventListener('touchmove', handlePointerMove, { passive: false });
+        }, { passive: false });
 
-        // UNIFIED MOUSE / TOUCH UP
-        function handlePointerUp(e) {
-            if(isPanning) {
-                isPanning = false;
-                workspaceEl.classList.add('cursor-grab');
-                workspaceEl.classList.remove('cursor-grabbing');
-            }
+        document.addEventListener('pointerup', () => {
             draggingNode = null;
             isResizingNode = null;
             isRotatingNode = null;
             lastPointerPos = null;
-            
-            if (e.type === 'touchend') {
-                initialPinchDistance = null;
-                lastTouchCenter = null;
-                if (e.touches && e.touches.length > 0) {
-                    lastPointerPos = getPointerPos(e);
-                }
-            }
-        }
-        document.addEventListener('mouseup', handlePointerUp);
-        document.addEventListener('touchend', handlePointerUp);
+        });
+        document.addEventListener('pointercancel', () => {
+            draggingNode = null;
+            isResizingNode = null;
+            isRotatingNode = null;
+            lastPointerPos = null;
+        });
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -602,7 +621,7 @@
             if(type.startsWith('arrow-thick')) {
                 newNode.width = 120; newNode.height = 50; newNode.rotation = 0;
             } else if(type === 'kaizen') {
-                newNode.width = 180; newNode.height = 120;
+                newNode.width = 180; newNode.height = 120; newNode.rotation = 0;
             }
             nodes.push(newNode);
             setMode('select');
@@ -611,7 +630,14 @@
             renderDynamicTimeline();
         }
 
-        window.handleNodeMouseDown = function(e, id) {
+        window.handleNodePointerDown = function(e, id) {
+            // Ignorujemy, by klawiatura mogła się normalnie wysunąć na urządzeniach mobilnych
+            if (e.target.tagName.toLowerCase() === 'input' || e.target.isContentEditable) {
+                selectedNodeId = id;
+                updateNodesRender();
+                return;
+            }
+
             e.stopPropagation();
             selectedNodeId = id;
             updateNodesRender();
@@ -632,24 +658,27 @@
                     renderNodes();
                 }
             } else {
+                try { e.target.setPointerCapture(e.pointerId); } catch(err){}
                 draggingNode = id;
-                lastPointerPos = getPointerPos(e);
+                lastPointerPos = { x: e.clientX, y: e.clientY };
             }
         };
 
         window.startResize = function(e, id) {
             e.stopPropagation();
+            try { e.target.setPointerCapture(e.pointerId); } catch(err){}
             isResizingNode = id;
             selectedNodeId = id;
-            lastPointerPos = getPointerPos(e);
+            lastPointerPos = { x: e.clientX, y: e.clientY };
             updateNodesRender();
         };
 
         window.startRotate = function(e, id) {
             e.stopPropagation();
+            try { e.target.setPointerCapture(e.pointerId); } catch(err){}
             isRotatingNode = id;
             selectedNodeId = id;
-            lastPointerPos = getPointerPos(e);
+            lastPointerPos = { x: e.clientX, y: e.clientY };
             updateNodesRender();
         };
 
@@ -844,7 +873,7 @@
                 const arrowheadHtml = `<polygon points="-10,-8 12,0 -10,8" fill="${strokeColor}" transform="translate(${mx}, ${my}) rotate(${angle})" class="pointer-events-none group-hover:fill-red-500 transition-colors" />`;
 
                 svgHtml += `
-                    <g class="pointer-events-auto cursor-pointer group" onclick="deleteEdge('${edge.id}')">
+                    <g class="pointer-events-auto cursor-pointer group" onpointerdown="deleteEdge('${edge.id}')">
                         <line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="transparent" stroke-width="20" />
                         ${pathOrLine}
                         ${arrowheadHtml}
@@ -910,7 +939,6 @@
                 }
             });
             
-            // Show/hide delete button for selected element on mobile layout (and always on hover)
             document.querySelectorAll('.vsm-delete-btn').forEach(btn => {
                 const parentId = btn.closest('.vsm-node').getAttribute('data-id');
                 if(selectedNodeId === parentId) {
@@ -942,27 +970,27 @@
                     else if (interactionMode.startsWith('connect')) nodeClass += 'hover:ring-2 hover:ring-emerald-200 z-20 ';
 
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${nodeWidth}px;" data-id="${node.id}" data-type="${node.type}" onmousedown="handleNodeMouseDown(event, '${node.id}')" ontouchstart="handleNodeMouseDown(event, '${node.id}')">
-                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onmousedown="event.stopPropagation(); deleteNode('${node.id}')" ontouchstart="event.stopPropagation(); deleteNode('${node.id}')">
+                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${nodeWidth}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                         </button>
                         <div class="bg-teal-600 w-full text-white font-bold text-center py-1.5 px-1 min-h-[40px] flex items-center justify-center cursor-text">
-                            <input class="bg-transparent text-center w-full outline-none text-white text-[11px] leading-tight" value="${node.label}" oninput="updateNodeLabel('${node.id}', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+                            <input class="bg-transparent text-center w-full outline-none text-white text-[11px] leading-tight" value="${node.label}" oninput="updateNodeLabel('${node.id}', this.value)" onpointerdown="event.stopPropagation()">
                         </div>
                         <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] border-b border-slate-200 cursor-text">
-                            <span class="font-medium text-slate-600">FTE:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.fte||'1'}" oninput="updateNodeData('${node.id}', 'fte', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+                            <span class="font-medium text-slate-600">FTE:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.fte||'1'}" oninput="updateNodeData('${node.id}', 'fte', this.value)" onpointerdown="event.stopPropagation()">
                         </div>
                         <div class="flex justify-between px-2 py-1 bg-white text-[11px] border-b border-slate-200 cursor-text">
-                            <span class="font-medium text-slate-600">C/T:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.ct||'10 min'}" oninput="updateNodeData('${node.id}', 'ct', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+                            <span class="font-medium text-slate-600">C/T:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.ct||'10 min'}" oninput="updateNodeData('${node.id}', 'ct', this.value)" onpointerdown="event.stopPropagation()">
                         </div>
                         <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] border-b border-slate-200 cursor-text">
-                            <span class="font-medium text-slate-600">RFT:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.rft||'85%'}" oninput="updateNodeData('${node.id}', 'rft', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+                            <span class="font-medium text-slate-600">RFT:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.rft||'85%'}" oninput="updateNodeData('${node.id}', 'rft', this.value)" onpointerdown="event.stopPropagation()">
                         </div>
                         <div class="flex justify-between px-2 py-1 bg-white text-[11px] border-b border-slate-200 cursor-text">
-                            <span class="font-medium text-slate-600">Batch:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.batch||'1'}" oninput="updateNodeData('${node.id}', 'batch', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+                            <span class="font-medium text-slate-600">Batch:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.batch||'1'}" oninput="updateNodeData('${node.id}', 'batch', this.value)" onpointerdown="event.stopPropagation()">
                         </div>
                         <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] cursor-text">
-                            <span class="font-medium text-slate-600">Uptime:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.uptime||'90%'}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+                            <span class="font-medium text-slate-600">Uptime:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800" value="${node.data.uptime||'90%'}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" onpointerdown="event.stopPropagation()">
                         </div>
                     </div>
                     `;
@@ -972,16 +1000,16 @@
                     if (isSelected) nodeClass += 'ring-4 ring-blue-400 bg-white/50 rounded z-20 ';
                     
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${nodeWidth}px;" data-id="${node.id}" data-type="${node.type}" onmousedown="handleNodeMouseDown(event, '${node.id}')" ontouchstart="handleNodeMouseDown(event, '${node.id}')">
-                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onmousedown="event.stopPropagation(); deleteNode('${node.id}')" ontouchstart="event.stopPropagation(); deleteNode('${node.id}')">
+                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${nodeWidth}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                         </button>
                         <div class="relative w-[60px] h-[60px]">
                             <svg viewBox="0 0 100 100" class="w-full h-full text-slate-400 fill-slate-200 stroke-[3px] drop-shadow-sm"><polygon points="50,15 90,85 10,85"></polygon></svg>
-                            <input class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[20%] w-8 text-center bg-transparent text-sm font-bold text-slate-700 outline-none cursor-text" value="${node.data.inventory||'3'}" oninput="updateNodeData('${node.id}', 'inventory', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+                            <input class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[20%] w-8 text-center bg-transparent text-sm font-bold text-slate-700 outline-none cursor-text" value="${node.data.inventory||'3'}" oninput="updateNodeData('${node.id}', 'inventory', this.value)" onpointerdown="event.stopPropagation()">
                         </div>
                         <div class="mt-2 w-full text-center">
-                             <input class="w-full text-center text-[11px] font-bold text-slate-600 bg-transparent border-b border-transparent focus:border-slate-400 outline-none cursor-text" value="${node.data.nva||'1 dzień'}" title="Czas oczekiwania (NVA)" oninput="updateNodeData('${node.id}', 'nva', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+                             <input class="w-full text-center text-[11px] font-bold text-slate-600 bg-transparent border-b border-transparent focus:border-slate-400 outline-none cursor-text" value="${node.data.nva||'1 dzień'}" title="Czas oczekiwania (NVA)" oninput="updateNodeData('${node.id}', 'nva', this.value)" onpointerdown="event.stopPropagation()">
                         </div>
                     </div>
                     `;
@@ -991,13 +1019,13 @@
 
                     html += `
                     <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; min-width: 100px;" data-id="${node.id}" data-type="${node.type}">
-                        <div class="w-full h-6 md:h-4 bg-slate-200 hover:bg-slate-300 flex items-center justify-center cursor-grab rounded-t opacity-50 hover:opacity-100 transition-opacity print-hide" onmousedown="handleNodeMouseDown(event, '${node.id}')" ontouchstart="handleNodeMouseDown(event, '${node.id}')">
+                        <div class="w-full h-6 md:h-4 bg-slate-200 hover:bg-slate-300 flex items-center justify-center cursor-grab rounded-t opacity-50 hover:opacity-100 transition-opacity print-hide" onpointerdown="handleNodePointerDown(event, '${node.id}')">
                             <svg width="14" height="6" viewBox="0 0 24 10" stroke="#64748b" stroke-width="2"><line x1="2" y1="2" x2="22" y2="2"/><line x1="2" y1="8" x2="22" y2="8"/></svg>
                         </div>
-                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onmousedown="event.stopPropagation(); deleteNode('${node.id}')" ontouchstart="event.stopPropagation(); deleteNode('${node.id}')">
+                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                         </button>
-                        <div contenteditable="true" class="outline-none w-full min-h-[30px] text-slate-800 px-3 pb-2 pt-1 font-bold bg-transparent cursor-text whitespace-pre-wrap break-words leading-tight" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onmousedown="event.stopPropagation(); selectedNodeId='${node.id}'; updateNodesRender()" ontouchstart="event.stopPropagation(); selectedNodeId='${node.id}'; updateNodesRender()">${node.label}</div>
+                        <div contenteditable="true" class="outline-none w-full min-h-[30px] text-slate-800 px-3 pb-2 pt-1 font-bold bg-transparent cursor-text whitespace-pre-wrap break-words leading-tight" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onpointerdown="event.stopPropagation(); selectedNodeId='${node.id}'; updateNodesRender()">${node.label}</div>
                     </div>
                     `;
                 } else if (isKaizen) {
@@ -1012,16 +1040,16 @@
                     const textBgClass = textContent === '' ? 'bg-transparent border-transparent' : 'bg-white/90 border-yellow-400 shadow-sm';
 
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px; transform: rotate(${rot}deg); transform-origin: center center;" data-id="${node.id}" data-type="${node.type}" onmousedown="handleNodeMouseDown(event, '${node.id}')" ontouchstart="handleNodeMouseDown(event, '${node.id}')">
+                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px; transform: rotate(${rot}deg); transform-origin: center center;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
                         
-                        <div class="resize-handles ${isSelected ? '' : 'hidden'} absolute -right-4 -bottom-4 md:-right-3 md:-bottom-3 w-8 h-8 md:w-5 md:h-5 bg-blue-500 border-2 border-white rounded-full cursor-se-resize z-40 shadow-md print-hide flex items-center justify-center" onmousedown="startResize(event, '${node.id}')" ontouchstart="startResize(event, '${node.id}')" title="Zmień rozmiar"></div>
+                        <div class="resize-handles ${isSelected ? '' : 'hidden'} absolute -right-4 -bottom-4 md:-right-3 md:-bottom-3 w-8 h-8 md:w-5 md:h-5 bg-blue-500 border-2 border-white rounded-full cursor-se-resize z-40 shadow-md print-hide flex items-center justify-center" onpointerdown="startResize(event, '${node.id}')" title="Zmień rozmiar"></div>
                         
-                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onmousedown="event.stopPropagation(); deleteNode('${node.id}')" ontouchstart="event.stopPropagation(); deleteNode('${node.id}')">
+                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                         </button>
                         
                         <div class="w-full flex justify-center z-10 mb-1 relative pointer-events-none">
-                            <div contenteditable="true" class="kaizen-text-box pointer-events-auto ${textBgClass} border px-3 py-2 rounded-md text-[11px] font-bold text-red-800 outline-none text-center min-w-[50px] max-w-[200px] break-words whitespace-pre-wrap cursor-text transition-colors" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">${node.label}</div>
+                            <div contenteditable="true" class="kaizen-text-box pointer-events-auto ${textBgClass} border px-3 py-2 rounded-md text-[11px] font-bold text-red-800 outline-none text-center min-w-[50px] max-w-[200px] break-words whitespace-pre-wrap cursor-text transition-colors" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onpointerdown="event.stopPropagation()">${node.label}</div>
                         </div>
 
                         <div class="relative flex-1 w-full pointer-events-none drop-shadow-md">
@@ -1044,13 +1072,13 @@
                     const rot = node.rotation || 0;
 
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px; transform: rotate(${rot}deg); transform-origin: center center;" data-id="${node.id}" data-type="${node.type}" onmousedown="handleNodeMouseDown(event, '${node.id}')" ontouchstart="handleNodeMouseDown(event, '${node.id}')">
+                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px; transform: rotate(${rot}deg); transform-origin: center center;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
                         
-                        <div class="resize-handles ${isSelected ? '' : 'hidden'} absolute -right-4 -bottom-4 md:-right-3 md:-bottom-3 w-8 h-8 md:w-5 md:h-5 bg-blue-500 border-2 border-white rounded-full cursor-se-resize z-40 shadow-md print-hide" onmousedown="startResize(event, '${node.id}')" ontouchstart="startResize(event, '${node.id}')" title="Zmień rozmiar"></div>
-                        <div class="resize-handles ${isSelected ? '' : 'hidden'} absolute -top-10 left-1/2 -translate-x-1/2 w-8 h-8 md:w-5 md:h-5 bg-blue-500 border-2 border-white rounded-full cursor-grab z-40 shadow-md print-hide" onmousedown="startRotate(event, '${node.id}')" ontouchstart="startRotate(event, '${node.id}')" title="Obróć"></div>
+                        <div class="resize-handles ${isSelected ? '' : 'hidden'} absolute -right-4 -bottom-4 md:-right-3 md:-bottom-3 w-8 h-8 md:w-5 md:h-5 bg-blue-500 border-2 border-white rounded-full cursor-se-resize z-40 shadow-md print-hide" onpointerdown="startResize(event, '${node.id}')" title="Zmień rozmiar"></div>
+                        <div class="resize-handles ${isSelected ? '' : 'hidden'} absolute -top-10 left-1/2 -translate-x-1/2 w-8 h-8 md:w-5 md:h-5 bg-blue-500 border-2 border-white rounded-full cursor-grab z-40 shadow-md print-hide" onpointerdown="startRotate(event, '${node.id}')" title="Obróć"></div>
                         <div class="resize-handles ${isSelected ? '' : 'hidden'} absolute -top-6 left-1/2 -translate-x-1/2 w-[2px] h-6 bg-blue-500 z-30 print-hide"></div>
                         
-                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onmousedown="event.stopPropagation(); deleteNode('${node.id}')" ontouchstart="event.stopPropagation(); deleteNode('${node.id}')">
+                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                         </button>
                         
@@ -1077,29 +1105,29 @@
                     if(node.type === 'supplier') {
                         extraFields = `
                             <div class="w-full flex flex-col gap-1.5 mt-3">
-                                <input class="w-full text-left text-[10px] font-medium text-slate-500 bg-slate-50 border-b border-slate-200 hover:bg-emerald-50 focus:bg-emerald-50 focus:border-emerald-500 focus:text-slate-800 px-1 py-2 md:py-1 outline-none transition-colors cursor-text" placeholder="Nazwa elementu..." value="${node.data.product || ''}" oninput="updateNodeData('${node.id}', 'product', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
-                                <input class="w-full text-left text-[10px] text-slate-400 bg-transparent border-b border-transparent hover:bg-emerald-50 focus:bg-emerald-50 focus:border-emerald-500 px-1 py-2 md:py-1 outline-none transition-colors cursor-text" placeholder="Szczegóły / ilość..." value="${node.data.quantity || ''}" oninput="updateNodeData('${node.id}', 'quantity', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+                                <input class="w-full text-left text-[10px] font-medium text-slate-500 bg-slate-50 border-b border-slate-200 hover:bg-emerald-50 focus:bg-emerald-50 focus:border-emerald-500 focus:text-slate-800 px-1 py-2 md:py-1 outline-none transition-colors cursor-text" placeholder="Nazwa elementu..." value="${node.data.product || ''}" oninput="updateNodeData('${node.id}', 'product', this.value)" onpointerdown="event.stopPropagation()">
+                                <input class="w-full text-left text-[10px] text-slate-400 bg-transparent border-b border-transparent hover:bg-emerald-50 focus:bg-emerald-50 focus:border-emerald-500 px-1 py-2 md:py-1 outline-none transition-colors cursor-text" placeholder="Szczegóły / ilość..." value="${node.data.quantity || ''}" oninput="updateNodeData('${node.id}', 'quantity', this.value)" onpointerdown="event.stopPropagation()">
                             </div>
                         `;
                     } else if(node.type === 'data') {
                         extraFields = `
                             <div class="w-full flex flex-col gap-1 mt-3 border-t border-slate-100 pt-2">
-                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/T</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-text" placeholder="s" value="${node.data.ct || ''}" oninput="updateNodeData('${node.id}', 'ct', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()"></div>
-                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/O</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-text" placeholder="min" value="${node.data.co || ''}" oninput="updateNodeData('${node.id}', 'co', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()"></div>
-                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Uptime</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-text" placeholder="%" value="${node.data.uptime || ''}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()"></div>
-                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Zmiany</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-text" placeholder="ilość" value="${node.data.shifts || ''}" oninput="updateNodeData('${node.id}', 'shifts', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()"></div>
+                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/T</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-text" placeholder="s" value="${node.data.ct || ''}" oninput="updateNodeData('${node.id}', 'ct', this.value)" onpointerdown="event.stopPropagation()"></div>
+                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/O</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-text" placeholder="min" value="${node.data.co || ''}" oninput="updateNodeData('${node.id}', 'co', this.value)" onpointerdown="event.stopPropagation()"></div>
+                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Uptime</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-text" placeholder="%" value="${node.data.uptime || ''}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" onpointerdown="event.stopPropagation()"></div>
+                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Zmiany</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-text" placeholder="ilość" value="${node.data.shifts || ''}" oninput="updateNodeData('${node.id}', 'shifts', this.value)" onpointerdown="event.stopPropagation()"></div>
                             </div>
                         `;
                     }
 
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${nodeWidth}px; min-height: ${nodeMinHeight}px;" data-id="${node.id}" data-type="${node.type}" onmousedown="handleNodeMouseDown(event, '${node.id}')" ontouchstart="handleNodeMouseDown(event, '${node.id}')">
-                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onmousedown="event.stopPropagation(); deleteNode('${node.id}')" ontouchstart="event.stopPropagation(); deleteNode('${node.id}')">
+                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${nodeWidth}px; min-height: ${nodeMinHeight}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                        <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-30 shadow-md print-hide" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                         </button>
                         <div class="flex items-center gap-2 mb-2 w-full text-emerald-600">
                             ${nodeIcons[node.type] || ''}
-                            <input class="w-full text-left text-[11px] font-extrabold text-slate-800 bg-transparent border-b border-transparent focus:border-emerald-400 focus:bg-emerald-50 outline-none z-10 transition-colors uppercase tracking-wide cursor-text py-1 md:py-0" value="${node.label}" oninput="updateNodeLabel('${node.id}', this.value)" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+                            <input class="w-full text-left text-[11px] font-extrabold text-slate-800 bg-transparent border-b border-transparent focus:border-emerald-400 focus:bg-emerald-50 outline-none z-10 transition-colors uppercase tracking-wide cursor-text py-1 md:py-0" value="${node.label}" oninput="updateNodeLabel('${node.id}', this.value)" onpointerdown="event.stopPropagation()">
                         </div>
                         ${extraFields}
                     </div>
