@@ -14,6 +14,10 @@
         .no-select { user-select: none; -webkit-user-select: none; touch-action: none; }
         input, [contenteditable="true"] { touch-action: auto; }
         
+        /* Usuwamy strzałki (spinnery) z ewentualnych pól numerycznych */
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
         .bg-grid {
             background-image: url('data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M0 0h40v40H0V0zm20 20h20v20H20V20zM0 20h20v20H0V20z" fill="%23f1f5f9" fill-opacity="0.6" fill-rule="evenodd"/%3E%3C/svg%3E');
         }
@@ -99,60 +103,76 @@
                 </div>
                 
                 <div class="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin">
-                    <button onclick="addNode('supplier'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
-                        <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M17 18h1"></path><path d="M12 18h1"></path><path d="M7 18h1"></path></svg></div>
-                        <span class="text-[11px] font-bold text-slate-700" id="tool-supplier">Dostawca / Klient</span>
-                    </button>
-                    <button onclick="addNode('process'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
-                        <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"></rect></svg></div>
-                        <span class="text-[11px] font-bold text-slate-700" id="tool-process">Proces</span>
-                    </button>
-                    <button onclick="addNode('data'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
-                        <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5V19A9 3 0 0 0 21 19V5"></path><path d="M3 12A9 3 0 0 0 21 12"></path></svg></div>
-                        <span class="text-[11px] font-bold text-slate-700" id="tool-data">Skrzynka Danych</span>
-                    </button>
-                    <button onclick="addNode('inventory'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
-                        <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path></svg></div>
-                        <span class="text-[11px] font-bold text-slate-700" id="tool-inventory">Zapasy</span>
-                    </button>
-                    <button onclick="addNode('transport-int'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
-                        <div class="text-emerald-600">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2 12h10l2-8H7"></path><circle cx="9" cy="20" r="2"></circle><circle cx="16" cy="20" r="2"></circle></svg>
-                        </div>
-                        <span class="text-[11px] font-bold text-slate-700" id="tool-transport-int">Transport Wew.</span>
-                    </button>
-                    <button onclick="addNode('transport'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
-                        <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"></path><path d="M14 9h4l4 4v5c0 .6-.4 1-1 1h-2"></path><circle cx="7" cy="18" r="2"></circle><path d="M15 18H9"></path><circle cx="17" cy="18" r="2"></circle></svg></div>
-                        <span class="text-[11px] font-bold text-slate-700" id="tool-transport">Transport Zewn.</span>
-                    </button>
+                    <script>
+                        const iconPlus = '<div class="ml-auto w-5 h-5 bg-emerald-500 rounded flex items-center justify-center text-white shrink-0 shadow-sm"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>';
+                        document.write(`
+                            <button onclick="addNode('supplier'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
+                                <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M17 18h1"></path><path d="M12 18h1"></path><path d="M7 18h1"></path></svg></div>
+                                <span class="text-[11px] font-bold text-slate-700" id="tool-supplier">Dostawca / Klient</span>
+                                ${iconPlus}
+                            </button>
+                            <button onclick="addNode('process'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
+                                <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"></rect></svg></div>
+                                <span class="text-[11px] font-bold text-slate-700" id="tool-process">Proces</span>
+                                ${iconPlus}
+                            </button>
+                            <button onclick="addNode('data'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
+                                <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5V19A9 3 0 0 0 21 19V5"></path><path d="M3 12A9 3 0 0 0 21 12"></path></svg></div>
+                                <span class="text-[11px] font-bold text-slate-700" id="tool-data">Skrzynka Danych</span>
+                                ${iconPlus}
+                            </button>
+                            <button onclick="addNode('inventory'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
+                                <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path></svg></div>
+                                <span class="text-[11px] font-bold text-slate-700" id="tool-inventory">Zapasy</span>
+                                ${iconPlus}
+                            </button>
+                            <button onclick="addNode('transport-int'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
+                                <div class="text-emerald-600">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2 12h10l2-8H7"></path><circle cx="9" cy="20" r="2"></circle><circle cx="16" cy="20" r="2"></circle></svg>
+                                </div>
+                                <span class="text-[11px] font-bold text-slate-700" id="tool-transport-int">Transport Wew.</span>
+                                ${iconPlus}
+                            </button>
+                            <button onclick="addNode('transport'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
+                                <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"></path><path d="M14 9h4l4 4v5c0 .6-.4 1-1 1h-2"></path><circle cx="7" cy="18" r="2"></circle><path d="M15 18H9"></path><circle cx="17" cy="18" r="2"></circle></svg></div>
+                                <span class="text-[11px] font-bold text-slate-700" id="tool-transport">Transport Zewn.</span>
+                                ${iconPlus}
+                            </button>
 
-                    <div class="my-2 border-t border-slate-100 pt-2"></div>
-                    <button onclick="addNode('arrow-thick-push'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-200 hover:border-slate-300 transition-colors shadow-sm">
-                        <div class="w-5 h-4 relative flex items-center justify-center">
-                            <svg width="24" height="12" viewBox="0 0 80 40"><defs><pattern id="stripes-btn" width="12" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(20)"><rect width="6" height="40" fill="#334155"/><rect x="6" width="6" height="40" fill="#fff"/></pattern></defs><polygon points="0,10 50,10 50,0 80,20 50,40 50,30 0,30" fill="url(#stripes-btn)" stroke="#334155" stroke-width="2"/></svg>
-                        </div>
-                        <span class="text-[11px] font-bold text-slate-700" id="tool-thick-push">Gruba Strzałka (B-C)</span>
-                    </button>
-                    <button onclick="addNode('arrow-thick-pull'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-200 hover:border-slate-300 transition-colors shadow-sm">
-                        <div class="w-5 h-4 relative flex items-center justify-center">
-                            <svg width="24" height="12" viewBox="0 0 80 40"><polygon points="0,10 50,10 50,0 80,20 50,40 50,30 0,30" fill="transparent" stroke="#334155" stroke-width="2"/></svg>
-                        </div>
-                        <span class="text-[11px] font-bold text-slate-700" id="tool-thick-pull">Gruba Strzałka (Przezro.)</span>
-                    </button>
-                    
-                    <button onclick="addNode('kaizen'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-yellow-50 text-slate-700 rounded border border-slate-200 hover:border-yellow-300 transition-colors shadow-sm">
-                        <div class="text-yellow-500">
-                            <svg width="16" height="16" viewBox="0 0 100 70" fill="none" stroke="currentColor" stroke-width="6">
-                                <polygon points="50,0 60,20 95,15 75,35 95,55 60,50 50,70 40,50 5,55 25,35 5,15 40,20" />
-                            </svg>
-                        </div>
-                        <span class="text-[11px] font-bold text-slate-700" id="tool-kaizen">Chmura Kaizen</span>
-                    </button>
+                            <div class="my-2 border-t border-slate-100 pt-2"></div>
+                            
+                            <button onclick="addNode('arrow-thick-push'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-200 hover:border-slate-300 transition-colors shadow-sm">
+                                <div class="w-5 h-4 relative flex items-center justify-center">
+                                    <svg width="24" height="12" viewBox="0 0 80 40"><defs><pattern id="stripes-btn" width="12" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(20)"><rect width="6" height="40" fill="#334155"/><rect x="6" width="6" height="40" fill="#fff"/></pattern></defs><polygon points="0,10 50,10 50,0 80,20 50,40 50,30 0,30" fill="url(#stripes-btn)" stroke="#334155" stroke-width="2"/></svg>
+                                </div>
+                                <span class="text-[11px] font-bold text-slate-700" id="tool-thick-push">Gruba Strzałka (B-C)</span>
+                                ${iconPlus}
+                            </button>
+                            <button onclick="addNode('arrow-thick-pull'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-200 hover:border-slate-300 transition-colors shadow-sm">
+                                <div class="w-5 h-4 relative flex items-center justify-center">
+                                    <svg width="24" height="12" viewBox="0 0 80 40"><polygon points="0,10 50,10 50,0 80,20 50,40 50,30 0,30" fill="transparent" stroke="#334155" stroke-width="2"/></svg>
+                                </div>
+                                <span class="text-[11px] font-bold text-slate-700" id="tool-thick-pull">Gruba Strzałka (Puste)</span>
+                                ${iconPlus}
+                            </button>
+                            
+                            <button onclick="addNode('kaizen'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-yellow-50 text-slate-700 rounded border border-slate-200 hover:border-yellow-300 transition-colors shadow-sm">
+                                <div class="text-yellow-500">
+                                    <svg width="16" height="16" viewBox="0 0 100 70" fill="none" stroke="currentColor" stroke-width="6">
+                                        <polygon points="50,0 60,20 95,15 75,35 95,55 60,50 50,70 40,50 5,55 25,35 5,15 40,20" />
+                                    </svg>
+                                </div>
+                                <span class="text-[11px] font-bold text-slate-700" id="tool-kaizen">Chmura Kaizen</span>
+                                ${iconPlus}
+                            </button>
 
-                    <button onclick="addNode('text'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-200 hover:border-slate-300 transition-colors shadow-sm">
-                        <div class="text-slate-500"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div>
-                        <span class="text-[11px] font-bold text-slate-700" id="tool-text">Pole Tekstowe</span>
-                    </button>
+                            <button onclick="addNode('text'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-200 hover:border-slate-300 transition-colors shadow-sm">
+                                <div class="text-slate-500"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div>
+                                <span class="text-[11px] font-bold text-slate-700" id="tool-text">Pole Tekstowe</span>
+                                ${iconPlus}
+                            </button>
+                        `);
+                    </script>
                     
                     <div class="my-2 border-t border-slate-100 pt-2"></div>
                     <h3 class="text-[10px] font-semibold text-slate-400 uppercase mb-2 px-1" id="lbl-interact-title">Tryby interakcji</h3>
@@ -182,7 +202,6 @@
             <!-- OBSZAR PŁÓTNA -->
             <div id="workspace" class="flex-1 overflow-hidden relative bg-grid bg-white cursor-grab no-select">
                 
-                <!-- COFNIJ / PONÓW -->
                 <div id="undo-redo-panel" class="absolute top-4 left-4 z-20 flex bg-white border border-slate-200 rounded-md shadow-sm print-hide">
                     <button id="btn-undo" onclick="undo()" class="p-2 text-slate-600 hover:bg-slate-100 transition-colors rounded-l-md border-r border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed" title="Cofnij">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
@@ -208,8 +227,9 @@
                                 <polygon points="0 0, 16 6, 0 12" fill="#10b981" />
                             </marker>
                         </defs>
-                        <!-- Prowadnice (Snapping) -->
                         <g id="guides-layer"></g>
+                        <!-- Niewidzialna, gruba warstwa do swobodnego przesuwania linii czasu -->
+                        <g id="timeline-drag-layer"></g> 
                         <g id="timeline-layer"></g>
                         <g id="edges-group"></g>
                     </svg>
@@ -348,19 +368,19 @@
                     <div class="space-y-4 md:space-y-6">
                         <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
                             <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">1</div>
-                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Przesuwanie i Zaznaczanie</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Pojedyncze kliknięcie zaznacza obiekt. W lewym rogu pojawi się uchwyt do łapania i przesuwania (krzyżyk), a w prawym ikona usuwania (kosz). Chroni to przed przypadkowym skasowaniem elementu.</div></div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Przesuwanie i Zaznaczanie</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Pojedyncze kliknięcie zaznacza obiekt. W lewym górnym rogu pojawi się uchwyt do łapania i przesuwania (krzyżyk), a w prawym górnym rogu ikona usuwania (kosz). W prawym dolnym rogu jest uchwyt do skalowania wielkości.</div></div>
                         </div>
                         <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
                             <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">2</div>
-                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Edycja Tekstu (Podwójne kliknięcie)</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Aby pisać na polach tekstowych, <b>kliknij w nie szybko dwa razy</b> (double tap). To zapobiega samoistnemu wysuwaniu się klawiatury na telefonach podczas przeglądania mapy.</div></div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Edycja Tekstu i Czasów</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Aby pisać na polach tekstowych, <b>kliknij w nie szybko dwa razy</b> (double tap). Wartości i jednostki czasu (np. 10 min, 5 s, 2 h, 1 dni) wpisuj ręcznie prosto w pola tekstowe. Pola same dobiorą odpowiedni przelicznik czasu.</div></div>
                         </div>
                         <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
                             <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">3</div>
-                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Delikatne Linie Referencyjne</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Podczas ciągnięcia elementu, program szuka w pobliżu innych obiektów. Jeśli znajdą się w osi, zobaczysz jasnoszarą, subtelną linię podpowiedzi. Element lekko do niej przyciągnie.</div></div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Delikatne Linie Referencyjne</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Podczas ciągnięcia elementu, program szuka w pobliżu innych obiektów. Jeśli znajdą się w osi, zobaczysz jasnoszarą, subtelną linię podpowiedzi. Element idealnie wyrówna się bez oporu myszki.</div></div>
                         </div>
                         <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
                             <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">4</div>
-                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Cofanie, Transport i PCE</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Linia Czasu posiada uchwyt do swobodnego przesuwania w pionie. Ikona "Transport Wew." jest dodawana do osi jako NVA. Podsumowanie na końcu oblicza % PCE (VA/Total Time). Każdą akcję możesz wycofać używając przycisków w lewym górnym rogu.</div></div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Cofanie, Transport i PCE</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Linia Czasu posiada uchwyt do swobodnego przesuwania w pionie. Ikona "Transport Wew." jest dodawana do osi jako NVA. Podsumowanie na końcu oblicza % PCE (VA/Total Time). Każdą akcję możesz wycofać używając strzałek w lewym górnym rogu.</div></div>
                         </div>
                     </div>
                 `
@@ -478,19 +498,19 @@
                     <div class="space-y-4 md:space-y-6">
                         <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
                             <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">1</div>
-                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Selecting and Moving</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Single click selects an object. A grab handle (cross) will appear on the left, and a delete button (trash) on the right. Grab the cross to move it.</div></div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Selecting and Moving</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Single click selects an object. A grab handle (cross) will appear on the top left, and a delete button (trash) on the top right. You can also resize via bottom-right handle.</div></div>
                         </div>
                         <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
                             <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">2</div>
-                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Text Editing (Double Click)</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Text fields are locked to prevent unwanted keyboard popups on mobile. <b>Double click/tap quickly</b> to start typing.</div></div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Text Editing (Double Click)</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Text fields are locked to prevent unwanted keyboard popups on mobile. <b>Double click/tap quickly</b> to start typing. Type time values and units (e.g., 10 min, 5 s, 2 h, 1 days) manually into the fields.</div></div>
                         </div>
                         <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
                             <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">3</div>
-                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Subtle Snapping</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">When dragging, the app will show soft grey dashed lines if the shape aligns with others. It very softly snaps in place for a neat layout.</div></div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Subtle Snapping</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">When dragging, the app will show soft grey dashed lines if the shape aligns with others. It softly snaps in place without blocking your drag.</div></div>
                         </div>
                         <div class="bg-white border border-slate-200 rounded-lg p-4 md:p-5 shadow-sm flex gap-4 md:gap-5 items-start">
                             <div class="flex-none bg-emerald-500 text-white w-8 md:w-10 h-8 md:h-10 rounded-full flex items-center justify-center font-bold shadow-sm text-base md:text-lg">4</div>
-                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Undo, Transport & PCE</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Timeline has a drag handle to move it vertically. "Internal Transport" adds NVA time to the timeline. The summary automatically calculates the <b>PCE</b> %. You can undo/redo any action using top buttons.</div></div>
+                            <div class="pt-1"><h3 class="text-base md:text-lg font-bold text-slate-800">Undo, Timeline & PCE</h3><div class="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">Grab any part of the timeline to move it up or down. "Internal Transport" adds NVA time to the timeline. The summary calculates accurate <b>PCE</b> %. You can undo/redo any action.</div></div>
                         </div>
                     </div>
                 `
@@ -601,7 +621,7 @@
         let isDraggingTimeline = false;
         let hasMoved = false;
 
-        // GUIDES (Snapping z zachowaniem wirtualnych koordynatów dla braku oporu)
+        // GUIDES
         let guides = { x: null, y: null };
         let dragVirtualX = 0;
         let dragVirtualY = 0;
@@ -632,7 +652,6 @@
             saveHistory(); 
         };
 
-        // --- SYSTEM HISTORII (Cofnij/Ponów) ---
         window.saveHistory = function() {
             const currentState = JSON.stringify({nodes, edges, customTimelineY});
             if (historyStep >= 0 && historyStack[historyStep] === currentState) return;
@@ -689,7 +708,7 @@
 
         function parseTime(str) {
             if (!str) return 0;
-            const s = str.toLowerCase().trim();
+            const s = String(str).toLowerCase().trim();
             const match = s.match(/([0-9.,]+)\s*([a-zżółćęśąńź]+)?/);
             if (!match) return 0;
             const val = parseFloat(match[1].replace(',', '.'));
@@ -703,12 +722,24 @@
             return val;
         }
 
-        function formatTime(secs) {
-            if (secs === 0) return '0 s';
-            if (secs < 60) return `${Math.round(secs * 10) / 10} s`;
-            if (secs < 3600) return `${Math.round((secs / 60) * 10) / 10} min`;
-            if (secs < 3600 * 8) return `${Math.round((secs / 3600) * 10) / 10} h`;
-            return `${Math.round((secs / (3600 * 8)) * 10) / 10} ${currentLang==='pl'?'dni':'days'}`;
+        function formatTimeDetailed(secs, lang) {
+            if (!secs || secs === 0) return '0 s';
+            let d = 0, h = 0, m = 0, s = 0;
+            let isPl = lang === 'pl';
+            d = Math.floor(secs / (3600 * 8));
+            let rem = secs % (3600 * 8);
+            h = Math.floor(rem / 3600);
+            rem = rem % 3600;
+            m = Math.floor(rem / 60);
+            s = rem % 60;
+            
+            let parts = [];
+            if (d > 0) parts.push(`${d} ${isPl ? 'dni' : 'days'}`);
+            if (h > 0) parts.push(`${h} h`);
+            if (m > 0) parts.push(`${m} min`);
+            if (s > 0 || parts.length === 0) parts.push(`${Math.round(s)} s`);
+            
+            return parts.join(', ');
         }
 
         function getNodeRect(n) {
@@ -750,9 +781,8 @@
             transformContainer.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
         }
 
-        // OBSŁUGA OBSZARU ROBOCZEGO (PAN, ZOOM)
         workspaceEl.addEventListener('pointerdown', (e) => {
-            if (e.target.closest('.vsm-node') || e.target.closest('#timeline-panel') || e.target.closest('.print-hide')) return;
+            if (e.target.closest('.vsm-node') || e.target.closest('.timeline-drag-area') || e.target.closest('.print-hide')) return;
             
             selectedNodeId = null;
             updateNodesRender();
@@ -870,8 +900,8 @@
             } else if (isResizingNode) {
                 const node = nodes.find(n => n.id === isResizingNode);
                 if(node) {
-                    node.width = Math.max(50, (node.width || 120) + dx / zoom);
-                    node.height = Math.max(30, (node.height || 60) + dy / zoom);
+                    node.width = Math.max(40, (node.width || 120) + dx / zoom);
+                    node.height = Math.max(40, (node.height || 60) + dy / zoom);
                     const nodeEl = document.querySelector(`.vsm-node[data-id="${node.id}"]`);
                     if(nodeEl) {
                         nodeEl.style.width = `${node.width}px`;
@@ -906,7 +936,7 @@
                     const nRect = { w: getNodeRect(node).w, h: getNodeRect(node).h, cx: newX + getNodeRect(node).w/2, cy: newY + getNodeRect(node).h/2 };
                     let snapX = null;
                     let snapY = null;
-                    const snapThreshold = 4 / zoom; 
+                    const snapThreshold = 5 / zoom; 
                     
                     nodes.forEach(other => {
                         if(other.id === node.id) return;
@@ -970,10 +1000,10 @@
             if (!layer) return;
             let html = '';
             if (guides.x !== null) {
-                html += `<line x1="${guides.x}" y1="-5000" x2="${guides.x}" y2="5000" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 4" opacity="0.5" />`;
+                html += `<line x1="${guides.x}" y1="-5000" x2="${guides.x}" y2="5000" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 4" opacity="0.6" />`;
             }
             if (guides.y !== null) {
-                html += `<line x1="-5000" y1="${guides.y}" x2="5000" y2="${guides.y}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 4" opacity="0.5" />`;
+                html += `<line x1="-5000" y1="${guides.y}" x2="5000" y2="${guides.y}" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 4" opacity="0.6" />`;
             }
             layer.innerHTML = html;
         }
@@ -987,12 +1017,13 @@
             }
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
             nodes.forEach(n => {
+                const r = getNodeRect(n);
                 if (n.x < minX) minX = n.x;
                 if (n.y < minY) minY = n.y;
-                if (n.x > maxX) maxX = n.x;
-                if (n.y > maxY) maxY = n.y;
+                if (n.x + r.w > maxX) maxX = n.x + r.w;
+                if (n.y + r.h > maxY) maxY = n.y + r.h;
             });
-            minX -= 100; minY -= 100; maxX += 200; maxY += 200;
+            minX -= 100; minY -= 100; maxX += 100; maxY += 100;
             const bboxWidth = maxX - minX;
             const bboxHeight = maxY - minY;
             const viewportWidth = workspaceEl.clientWidth;
@@ -1026,11 +1057,21 @@
                 y: (-pan.y + workspaceEl.clientHeight / 2) / zoom - 50,
                 data: {}
             };
-            if(type.startsWith('arrow-thick')) {
-                newNode.width = 120; newNode.height = 50; newNode.rotation = 0;
-            } else if(type === 'kaizen') {
-                newNode.width = 180; newNode.height = 120; newNode.rotation = 0;
-            }
+
+            let w = 130, h = 90;
+            if (type === 'process') { w = 150; h = 180; }
+            if (type === 'inventory' || type === 'transport-int') { w = 80; h = 100; newNode.data.nva = '0 min'; }
+            if (type === 'kaizen') { w = 180; h = 120; }
+            if (type === 'text') { w = 100; h = 40; } 
+            if (type.startsWith('arrow-thick')) { w = 120; h = 50; }
+            if (type === 'data') { w = 140; h = 140; }
+            if (type === 'supplier') { w = 130; h = 120; }
+            if (type === 'transport') { w = 90; h = 120; }
+
+            newNode.width = w;
+            newNode.height = h;
+            newNode.rotation = 0;
+            
             nodes.push(newNode);
             setMode('select');
             selectedNodeId = newNode.id;
@@ -1219,16 +1260,18 @@
             const flowNodes = nodes.filter(n => n.type === 'process' || n.type === 'inventory' || n.type === 'transport-int').sort((a,b) => a.x - b.x);
             const layer = document.getElementById('timeline-layer');
             const labelsLayer = document.getElementById('timeline-labels');
+            const dragLayer = document.getElementById('timeline-drag-layer');
             
             if (flowNodes.length === 0) {
                 if(layer) layer.innerHTML = '';
                 if(labelsLayer) labelsLayer.innerHTML = '';
+                if(dragLayer) dragLayer.innerHTML = '';
                 return;
             }
 
             let baseMaxY = 300;
             const mainNodes = nodes.filter(n => ['process', 'supplier', 'data'].includes(n.type));
-            if (mainNodes.length > 0) baseMaxY = Math.max(...mainNodes.map(n => n.y + (n.type === 'process' ? 180 : 120)));
+            if (mainNodes.length > 0) baseMaxY = Math.max(...mainNodes.map(n => n.y + (n.height || (n.type === 'process' ? 180 : 120))));
             
             const yBottom = customTimelineY !== null ? customTimelineY : baseMaxY + 80;
             const yTop = yBottom - 40;
@@ -1251,33 +1294,32 @@
             `;
 
             flowNodes.forEach((node) => {
+                const w = node.width || getNodeRect(node).w;
+                const centerX = node.x + w/2;
+                
                 if (node.type === 'process') {
-                    const nodeW = 150; 
-                    const centerX = node.x + nodeW/2;
-                    guidesHtml += `<line x1="${centerX}" y1="${node.y + 175}" x2="${centerX}" y2="${yTop}" stroke="#cbd5e1" stroke-dasharray="6 4" stroke-width="1.5" />`;
+                    guidesHtml += `<line x1="${centerX}" y1="${node.y + (node.height||180)-5}" x2="${centerX}" y2="${yTop}" stroke="#cbd5e1" stroke-dasharray="6 4" stroke-width="1.5" />`;
 
                     pathD += `L ${node.x} ${yTop} `;
                     pathD += `L ${node.x} ${yBottom} `;
-                    pathD += `L ${node.x + nodeW} ${yBottom} `;
-                    pathD += `L ${node.x + nodeW} ${yTop} `;
+                    pathD += `L ${node.x + w} ${yBottom} `;
+                    pathD += `L ${node.x + w} ${yTop} `;
                     
                     const valStr = node.data.ct || '10 min';
                     sumVA += parseTime(valStr);
-                    labelsHtml += `<div class="absolute text-center text-[11px] font-bold text-emerald-700 bg-white/80 px-1" style="left: ${node.x}px; top: ${yBottom + 5}px; width: ${nodeW}px;">${valStr}</div>`;
+                    labelsHtml += `<div class="absolute text-center text-[11px] font-bold text-emerald-700 bg-white/80 px-1" style="left: ${node.x}px; top: ${yBottom + 5}px; width: ${w}px;">${valStr}</div>`;
                 } else if (node.type === 'inventory' || node.type === 'transport-int') {
-                    const nodeW = 80; 
-                    const centerX = node.x + nodeW/2;
-                    guidesHtml += `<line x1="${centerX}" y1="${node.y + 100}" x2="${centerX}" y2="${yTop}" stroke="#cbd5e1" stroke-dasharray="6 4" stroke-width="1.5" />`;
+                    guidesHtml += `<line x1="${centerX}" y1="${node.y + (node.height||100)-5}" x2="${centerX}" y2="${yTop}" stroke="#cbd5e1" stroke-dasharray="6 4" stroke-width="1.5" />`;
 
                     pathD += `L ${centerX} ${yTop} `;
                     
-                    const valStr = node.data.nva || (currentLang === 'pl' ? '1 min' : '1 min');
+                    const valStr = node.data.nva || '0 min';
                     sumNVA += parseTime(valStr);
                     labelsHtml += `<div class="absolute text-center text-[11px] font-bold text-slate-600 bg-white/80 px-1" style="left: ${centerX - 40}px; top: ${yTop - 20}px; width: 80px;">${valStr}</div>`;
                 }
             });
 
-            const endX = flowNodes[flowNodes.length-1].x + 220;
+            const endX = flowNodes[flowNodes.length-1].x + (flowNodes[flowNodes.length-1].width||150) + 70;
             pathD += `L ${endX} ${yTop}`;
             guidesHtml += `<polygon points="${endX},${yTop-7} ${endX},${yTop+7} ${endX+14},${yTop}" fill="#0f766e" />`;
 
@@ -1290,18 +1332,19 @@
             let pce = 0;
             let totalTime = sumVA + sumNVA;
             if(totalTime > 0) {
-                pce = ((sumVA / totalTime) * 100).toFixed(1);
+                pce = ((sumVA / totalTime) * 100).toFixed(2);
             }
             
             labelsHtml += `
-            <div class="absolute text-left border border-slate-300 bg-white/95 px-3 py-2 rounded shadow-sm backdrop-blur-sm" style="left: ${endX + 30}px; top: ${yTop - 50}px; min-width: 150px;">
+            <div class="absolute text-left border border-slate-300 bg-white/95 px-3 py-2 rounded shadow-sm backdrop-blur-sm pointer-events-auto cursor-ns-resize timeline-drag-area" style="left: ${endX + 30}px; top: ${yTop - 50}px; min-width: 250px;" onpointerdown="startTimelineDrag(event)">
                 <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1 mb-1.5">${summaryTitle}</div>
-                <div class="text-[12px] font-bold text-slate-600 mb-0.5 flex justify-between"><span>Lead Time (NVA):</span> <span class="text-slate-800 ml-2">${formatTime(sumNVA)}</span></div>
-                <div class="text-[12px] font-bold text-slate-600 flex justify-between mb-0.5"><span>Process Time (VA):</span> <span class="text-emerald-600 ml-2">${formatTime(sumVA)}</span></div>
-                <div class="text-[12px] font-bold text-slate-600 flex justify-between border-t border-slate-200 mt-1 pt-1"><span id="lbl-pce">${i18n[currentLang].pceTitle}</span> <span class="text-blue-600 ml-2">${pce}%</span></div>
+                <div class="text-[12px] font-bold text-slate-600 mb-0.5 flex justify-between"><span>Lead Time (NVA):</span> <span class="text-slate-800 ml-2 text-right">${formatTimeDetailed(sumNVA, currentLang)}</span></div>
+                <div class="text-[12px] font-bold text-slate-600 flex justify-between mb-0.5"><span>Process Time (VA):</span> <span class="text-emerald-600 ml-2 text-right">${formatTimeDetailed(sumVA, currentLang)}</span></div>
+                <div class="text-[12px] font-bold text-slate-600 flex justify-between border-t border-slate-200 mt-1 pt-1"><span id="lbl-pce">${i18n[currentLang].pceTitle}</span> <span class="text-blue-600 ml-2 text-right">${pce}%</span></div>
             </div>`;
 
             if(layer) layer.innerHTML = `${guidesHtml} <path d="${pathD}" fill="none" stroke="#0f766e" stroke-width="2.5" />`;
+            if(dragLayer) dragLayer.innerHTML = `<path d="${pathD}" fill="none" stroke="transparent" stroke-width="40" class="pointer-events-auto cursor-ns-resize timeline-drag-area" onpointerdown="startTimelineDrag(event)" />`;
             if(labelsLayer) labelsLayer.innerHTML = labelsHtml;
         };
 
@@ -1373,6 +1416,17 @@
             edgesGroup.innerHTML = svgHtml;
         }
 
+        // Pomocnicza funkcja do generowania pól czasowych (Input Tekstowy wg życzenia z manualnym wpisem)
+        function renderTimeField(node, field, defaultValue, labelStr) {
+            const val = node.data[field] !== undefined ? node.data[field] : defaultValue;
+            return `
+            <div class="flex justify-between items-center px-2 py-1 bg-transparent border-b border-slate-200 cursor-text">
+                <span class="font-medium text-slate-600">${labelStr}:</span>
+                <input type="text" class="w-16 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${val}" oninput="updateNodeData('${node.id}', '${field}', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+            </div>
+            `;
+        }
+
         function updateNodesRender() {
             document.querySelectorAll('.vsm-node').forEach(el => {
                 const id = el.getAttribute('data-id');
@@ -1403,7 +1457,7 @@
                 if (isSelected) {
                     baseClasses += 'ring-4 ring-blue-400 z-20 ';
                     if (isInventory) baseClasses += 'bg-white/50 rounded ';
-                    if (isKaizen) baseClasses += 'rounded ';
+                    if (isKaizen) baseClasses += 'rounded-xl ';
                     if (isThickArrow) baseClasses += 'ring-offset-2 ring-offset-slate-50 ';
                     if (isProcess) baseClasses += 'border-blue-500 ';
                     if (isText) baseClasses += 'rounded ';
@@ -1425,14 +1479,19 @@
                 }
             });
 
-            document.querySelectorAll('.vsm-toolbar').forEach(toolbar => {
-                const parentId = toolbar.closest('.vsm-node').getAttribute('data-id');
+            // Toggle drag/delete buttons for nodes
+            document.querySelectorAll('.vsm-drag-btn, .vsm-delete-btn').forEach(btn => {
+                const parentId = btn.closest('.vsm-node').getAttribute('data-id');
                 if(selectedNodeId === parentId) {
-                    toolbar.classList.remove('hidden');
-                    toolbar.classList.add('flex');
+                    btn.classList.remove('opacity-0', 'pointer-events-none', 'hidden');
+                    if (btn.classList.contains('w-[2px]')) {
+                        btn.classList.add('block');
+                    } else {
+                        btn.classList.add('flex');
+                    }
                 } else {
-                    toolbar.classList.add('hidden');
-                    toolbar.classList.remove('flex');
+                    btn.classList.add('hidden');
+                    btn.classList.remove('flex', 'block');
                 }
             });
         }
@@ -1448,75 +1507,87 @@
                 const isText = node.type === 'text';
                 const isThickArrow = node.type.startsWith('arrow-thick');
                 
-                const toolbarHtml = `
-                    <div class="vsm-toolbar absolute -top-12 -left-4 gap-1 bg-white border border-slate-200 shadow-md rounded-lg p-1 z-50 print-hide ${isSelected ? 'flex' : 'hidden'} transition-opacity">
-                        <button class="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-slate-200 text-slate-600 rounded cursor-grab active:cursor-grabbing" onpointerdown="startNodeDrag(event, '${node.id}')" title="Przesuń element">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M19 9l3 3-3 3M9 19l3 3 3 3M2 12h20M12 2v20"/></svg>
-                        </button>
-                        <button class="w-8 h-8 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 rounded cursor-pointer" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')" title="Usuń element">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                        </button>
+                const w = node.width || getNodeRect(node).w;
+                const h = node.height || getNodeRect(node).h;
+                const rot = node.rotation || 0;
+
+                const showControls = isSelected ? 'flex' : 'hidden';
+
+                const dragBtnHtml = `
+                    <button class="vsm-drag-btn absolute -top-4 -left-4 bg-white border border-slate-200 text-slate-600 rounded-full p-2 ${showControls} hover:bg-slate-100 z-40 shadow-md print-hide items-center justify-center" onpointerdown="startNodeDrag(event, '${node.id}')" title="Przesuń element">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M19 9l3 3-3 3M9 19l3 3 3 3M2 12h20M12 2v20"/></svg>
+                    </button>
+                `;
+                const deleteBtnHtml = `
+                    <button class="vsm-delete-btn absolute -top-4 -right-4 bg-white border border-red-200 text-red-500 rounded-full p-2 ${showControls} hover:bg-red-500 hover:text-white hover:border-red-500 z-40 shadow-md print-hide items-center justify-center" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')" title="Usuń element">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                    </button>
+                `;
+                const resizeBtnHtml = `
+                    <div class="resize-handles ${showControls} absolute -right-3 -bottom-3 w-6 h-6 bg-blue-500 border-2 border-white rounded-full cursor-se-resize z-40 shadow-md print-hide items-center justify-center text-white" onpointerdown="startResize(event, '${node.id}')" title="Zmień rozmiar">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 21 15 21"/><line x1="21" y1="21" x2="13" y2="13"/></svg>
                     </div>
                 `;
 
                 if (isProcess) {
-                    const nodeWidth = 150;
                     let nodeClass = `vsm-node absolute flex flex-col shadow-sm transition-colors bg-white border border-slate-300 `;
                     if (isSelected) nodeClass += 'ring-4 ring-blue-400 border-blue-500 z-20 ';
 
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${nodeWidth}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
-                        ${toolbarHtml}
+                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; min-height: ${h}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                        ${dragBtnHtml}
+                        ${deleteBtnHtml}
+                        ${resizeBtnHtml}
                         <div class="bg-teal-600 w-full text-white font-bold text-center py-1.5 px-1 min-h-[40px] flex items-center justify-center">
-                            <input class="bg-transparent text-center w-full outline-none text-white text-[11px] leading-tight cursor-pointer" value="${node.label}" oninput="updateNodeLabel('${node.id}', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+                            <input type="text" class="bg-transparent text-center w-full outline-none text-white text-[11px] leading-tight cursor-pointer" value="${node.label}" oninput="updateNodeLabel('${node.id}', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
-                        <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] border-b border-slate-200">
-                            <span class="font-medium text-slate-600">FTE:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.fte||'1'}" oninput="updateNodeData('${node.id}', 'fte', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+                        <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] border-b border-slate-200 cursor-text">
+                            <span class="font-medium text-slate-600">FTE:</span><input type="text" class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.fte||'1'}" oninput="updateNodeData('${node.id}', 'fte', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
-                        <div class="flex justify-between px-2 py-1 bg-white text-[11px] border-b border-slate-200">
-                            <span class="font-medium text-slate-600">C/T:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.ct||'10 min'}" oninput="updateNodeData('${node.id}', 'ct', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+                        ${renderTimeField(node, 'ct', '10 min', 'C/T')}
+                        <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] border-b border-slate-200 cursor-text">
+                            <span class="font-medium text-slate-600">RFT:</span><input type="text" class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.rft||'85%'}" oninput="updateNodeData('${node.id}', 'rft', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
-                        <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] border-b border-slate-200">
-                            <span class="font-medium text-slate-600">RFT:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.rft||'85%'}" oninput="updateNodeData('${node.id}', 'rft', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+                        <div class="flex justify-between px-2 py-1 bg-white text-[11px] border-b border-slate-200 cursor-text">
+                            <span class="font-medium text-slate-600">Batch:</span><input type="text" class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.batch||'1'}" oninput="updateNodeData('${node.id}', 'batch', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
-                        <div class="flex justify-between px-2 py-1 bg-white text-[11px] border-b border-slate-200">
-                            <span class="font-medium text-slate-600">Batch:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.batch||'1'}" oninput="updateNodeData('${node.id}', 'batch', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
-                        </div>
-                        <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px]">
-                            <span class="font-medium text-slate-600">Uptime:</span><input class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.uptime||'90%'}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+                        <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] cursor-text">
+                            <span class="font-medium text-slate-600">Uptime:</span><input type="text" class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.uptime||'90%'}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
                     </div>
                     `;
                 } else if (isInventory) {
-                    const nodeWidth = 80;
                     let nodeClass = `vsm-node absolute flex flex-col items-center justify-center transition-colors `;
                     if (isSelected) nodeClass += 'ring-4 ring-blue-400 bg-white/50 rounded z-20 ';
                     
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${nodeWidth}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
-                        ${toolbarHtml}
-                        <div class="relative w-[60px] h-[60px]">
-                            <svg viewBox="0 0 100 100" class="w-full h-full text-slate-400 fill-slate-200 stroke-[3px] drop-shadow-sm"><polygon points="50,15 90,85 10,85"></polygon></svg>
-                            <input class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[20%] w-8 text-center bg-transparent text-sm font-bold text-slate-700 outline-none cursor-pointer" value="${node.data.inventory||'3'}" oninput="updateNodeData('${node.id}', 'inventory', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                        ${dragBtnHtml}
+                        ${deleteBtnHtml}
+                        ${resizeBtnHtml}
+                        <div class="relative w-full flex-1 flex items-center justify-center min-h-0">
+                            <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="w-full h-full text-slate-400 fill-slate-200 stroke-[3px] drop-shadow-sm"><polygon points="50,15 90,85 10,85"></polygon></svg>
+                            <input type="text" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[20%] w-3/4 text-center bg-transparent text-sm font-bold text-slate-700 outline-none cursor-pointer" value="${node.data.inventory||'3'}" oninput="updateNodeData('${node.id}', 'inventory', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
-                        <div class="mt-2 w-full text-center">
-                             <input class="w-full text-center text-[11px] font-bold text-slate-600 bg-transparent border-b border-transparent focus:border-slate-400 outline-none cursor-pointer" value="${node.data.nva || (currentLang === 'pl' ? '1 dzień' : '1 day')}" title="Czas oczekiwania (NVA)" oninput="updateNodeData('${node.id}', 'nva', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+                        <div class="mt-2 w-full text-center shrink-0">
+                             <input type="text" class="w-full text-center text-[11px] font-bold text-slate-600 bg-transparent border-b border-transparent focus:border-slate-400 outline-none cursor-pointer" value="${node.data.nva || '0 min'}" title="Czas oczekiwania (NVA)" oninput="updateNodeData('${node.id}', 'nva', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
                     </div>
                     `;
                 } else if (isTransportInt) {
-                    const nodeWidth = 80;
                     let nodeClass = `vsm-node absolute flex flex-col items-center justify-center transition-colors `;
                     if (isSelected) nodeClass += 'ring-4 ring-blue-400 bg-white/50 rounded z-20 ';
                     
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${nodeWidth}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
-                        ${toolbarHtml}
-                        <div class="relative w-[60px] h-[60px] flex items-center justify-center text-orange-500 bg-orange-50 rounded-full border-2 border-orange-200 shadow-inner">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2 12h10l2-8H7"></path><circle cx="9" cy="20" r="2"></circle><circle cx="16" cy="20" r="2"></circle></svg>
+                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                        ${dragBtnHtml}
+                        ${deleteBtnHtml}
+                        ${resizeBtnHtml}
+                        <div class="relative w-full flex-1 flex items-center justify-center text-orange-500 bg-orange-50 rounded-full border-2 border-orange-200 shadow-inner min-h-0">
+                            <svg width="50%" height="50%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2 12h10l2-8H7"></path><circle cx="9" cy="20" r="2"></circle><circle cx="16" cy="20" r="2"></circle></svg>
                         </div>
-                        <div class="mt-2 w-full text-center">
-                             <input class="w-full text-center text-[11px] font-bold text-slate-600 bg-transparent border-b border-transparent focus:border-slate-400 outline-none cursor-pointer" value="${node.data.nva || '1 min'}" title="Czas transportu (NVA)" oninput="updateNodeData('${node.id}', 'nva', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+                        <div class="mt-2 w-full text-center shrink-0">
+                             <input type="text" class="w-full text-center text-[11px] font-bold text-slate-600 bg-transparent border-b border-transparent focus:border-slate-400 outline-none cursor-pointer" value="${node.data.nva || '0 min'}" title="Czas transportu (NVA)" oninput="updateNodeData('${node.id}', 'nva', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
                     </div>
                     `;
@@ -1525,34 +1596,31 @@
                     if (isSelected) nodeClass += 'ring-2 ring-blue-400 z-20 rounded ';
 
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; min-width: 100px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
-                        ${toolbarHtml}
-                        <div contenteditable="false" class="outline-none w-full min-h-[30px] text-slate-800 px-3 py-2 font-bold bg-transparent cursor-pointer whitespace-pre-wrap break-words leading-tight" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">${node.label}</div>
+                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; min-height: ${h}px;" data-id="${node.id}" data-type="${node.type}">
+                        ${dragBtnHtml}
+                        ${deleteBtnHtml}
+                        ${resizeBtnHtml}
+                        <div contenteditable="false" class="outline-none w-full h-full text-slate-800 px-3 py-2 font-bold bg-transparent cursor-pointer whitespace-pre-wrap break-words leading-tight" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">${node.label}</div>
                     </div>
                     `;
                 } else if (isKaizen) {
                     let nodeClass = `vsm-node absolute flex flex-col transition-colors `;
                     if (isSelected) nodeClass += 'ring-4 ring-blue-400 z-20 rounded-xl ';
                     
-                    const w = node.width || 180;
-                    const h = node.height || 120;
-                    const rot = node.rotation || 0;
-                    
                     const textContent = node.label.trim();
                     const textBgClass = textContent === '' ? 'bg-transparent border-transparent' : 'bg-white/90 border-yellow-400 shadow-sm';
 
                     html += `
                     <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px; transform: rotate(${rot}deg); transform-origin: center center;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
-                        
-                        <div class="resize-handles ${isSelected ? '' : 'hidden'} absolute -right-4 -bottom-4 md:-right-3 md:-bottom-3 w-8 h-8 md:w-5 md:h-5 bg-blue-500 border-2 border-white rounded-full cursor-se-resize z-40 shadow-md print-hide flex items-center justify-center" onpointerdown="startResize(event, '${node.id}')" title="Zmień rozmiar"></div>
-                        
-                        ${toolbarHtml}
+                        ${dragBtnHtml}
+                        ${deleteBtnHtml}
+                        ${resizeBtnHtml}
                         
                         <div class="w-full flex justify-center z-10 mb-1 relative pointer-events-none">
-                            <div contenteditable="false" class="kaizen-text-box pointer-events-auto ${textBgClass} border px-3 py-2 rounded-md text-[11px] font-bold text-red-800 outline-none text-center min-w-[50px] max-w-[200px] break-words whitespace-pre-wrap cursor-pointer transition-colors" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">${node.label}</div>
+                            <div contenteditable="false" class="kaizen-text-box pointer-events-auto ${textBgClass} border px-3 py-2 rounded-md text-[11px] font-bold text-red-800 outline-none text-center min-w-[50px] max-w-full break-words whitespace-pre-wrap cursor-pointer transition-colors" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">${node.label}</div>
                         </div>
 
-                        <div class="relative flex-1 w-full pointer-events-none drop-shadow-md">
+                        <div class="relative flex-1 w-full pointer-events-none drop-shadow-md min-h-0">
                             <svg preserveAspectRatio="none" viewBox="0 0 100 100" class="absolute inset-0 w-full h-full z-0">
                                 <polygon points="50,0 60,18 95,15 75,35 95,55 60,52 50,70 40,52 5,55 25,35 5,15 40,18" fill="rgba(253, 224, 71, 0.4)" stroke="#ca8a04" stroke-width="2"/>
                             </svg>
@@ -1567,18 +1635,19 @@
                     const fillStyle = isPush ? `url(#stripes-${node.id})` : 'transparent';
                     const defs = isPush ? `<defs><pattern id="stripes-${node.id}" width="12" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(20)"><rect width="6" height="40" fill="#334155"/><rect x="6" width="6" height="40" fill="#ffffff"/></pattern></defs>` : '';
                     
-                    const w = node.width || 120;
-                    const h = node.height || 50;
-                    const rot = node.rotation || 0;
+                    const rotateBtnHtml = `
+                        <div class="resize-handles ${isSelected ? 'flex' : 'hidden'} absolute -top-8 left-1/2 -translate-x-1/2 w-6 h-6 bg-blue-500 border-2 border-white rounded-full cursor-grab z-40 shadow-md print-hide items-center justify-center text-white" onpointerdown="startRotate(event, '${node.id}')" title="Obróć">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-8.5l-3.35 3.35"/></svg>
+                        </div>
+                        <div class="resize-handles ${isSelected ? 'block' : 'hidden'} absolute -top-4 left-1/2 -translate-x-1/2 w-[2px] h-4 bg-blue-500 z-30 print-hide"></div>
+                    `;
 
                     html += `
                     <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px; transform: rotate(${rot}deg); transform-origin: center center;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
-                        
-                        <div class="resize-handles ${isSelected ? '' : 'hidden'} absolute -right-4 -bottom-4 md:-right-3 md:-bottom-3 w-8 h-8 md:w-5 md:h-5 bg-blue-500 border-2 border-white rounded-full cursor-se-resize z-40 shadow-md print-hide" onpointerdown="startResize(event, '${node.id}')" title="Zmień rozmiar"></div>
-                        <div class="resize-handles ${isSelected ? '' : 'hidden'} absolute -top-10 left-1/2 -translate-x-1/2 w-8 h-8 md:w-5 md:h-5 bg-blue-500 border-2 border-white rounded-full cursor-grab z-40 shadow-md print-hide" onpointerdown="startRotate(event, '${node.id}')" title="Obróć"></div>
-                        <div class="resize-handles ${isSelected ? '' : 'hidden'} absolute -top-6 left-1/2 -translate-x-1/2 w-[2px] h-6 bg-blue-500 z-30 print-hide"></div>
-                        
-                        ${toolbarHtml}
+                        ${rotateBtnHtml}
+                        ${dragBtnHtml}
+                        ${deleteBtnHtml}
+                        ${resizeBtnHtml}
                         
                         <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="drop-shadow-sm pointer-events-none">
                             ${defs}
@@ -1587,12 +1656,6 @@
                     </div>
                     `;
                 } else {
-                    let nodeWidth = 130;
-                    let nodeMinHeight = 90;
-                    if (node.type === 'data') { nodeWidth = 140; nodeMinHeight = 140; }
-                    if (node.type === 'supplier') { nodeMinHeight = 120; }
-                    if (node.type === 'transport') { nodeWidth = 90; nodeMinHeight = 120; }
-                    
                     let nodeClass = `vsm-node absolute flex flex-col p-2 transition-colors `;
                     nodeClass += `bg-white rounded-xl shadow-sm border border-slate-200 border-t-[4px] border-t-emerald-500 items-start px-3 py-3 `;
 
@@ -1602,28 +1665,30 @@
                     if(node.type === 'supplier') {
                         extraFields = `
                             <div class="w-full flex flex-col gap-1.5 mt-3">
-                                <input class="w-full text-left text-[10px] font-medium text-slate-500 bg-slate-50 border-b border-slate-200 hover:bg-emerald-50 focus:bg-emerald-50 focus:border-emerald-500 focus:text-slate-800 px-1 py-2 md:py-1 outline-none transition-colors cursor-pointer" placeholder="Nazwa elementu..." value="${node.data.product || ''}" oninput="updateNodeData('${node.id}', 'product', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
-                                <input class="w-full text-left text-[10px] text-slate-400 bg-transparent border-b border-transparent hover:bg-emerald-50 focus:bg-emerald-50 focus:border-emerald-500 px-1 py-2 md:py-1 outline-none transition-colors cursor-pointer" placeholder="Szczegóły / ilość..." value="${node.data.quantity || ''}" oninput="updateNodeData('${node.id}', 'quantity', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+                                <input type="text" class="w-full text-left text-[10px] font-medium text-slate-500 bg-slate-50 border-b border-slate-200 hover:bg-emerald-50 focus:bg-emerald-50 focus:border-emerald-500 focus:text-slate-800 px-1 py-2 md:py-1 outline-none transition-colors cursor-pointer" placeholder="Nazwa elementu..." value="${node.data.product || ''}" oninput="updateNodeData('${node.id}', 'product', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+                                <input type="text" class="w-full text-left text-[10px] text-slate-400 bg-transparent border-b border-transparent hover:bg-emerald-50 focus:bg-emerald-50 focus:border-emerald-500 px-1 py-2 md:py-1 outline-none transition-colors cursor-pointer" placeholder="Szczegóły / ilość..." value="${node.data.quantity || ''}" oninput="updateNodeData('${node.id}', 'quantity', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                             </div>
                         `;
                     } else if(node.type === 'data') {
                         extraFields = `
                             <div class="w-full flex flex-col gap-1 mt-3 border-t border-slate-100 pt-2">
-                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/T</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="s" value="${node.data.ct || ''}" oninput="updateNodeData('${node.id}', 'ct', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
-                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/O</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="min" value="${node.data.co || ''}" oninput="updateNodeData('${node.id}', 'co', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
-                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Uptime</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="%" value="${node.data.uptime || ''}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
-                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Zmiany</span><input class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="ilość" value="${node.data.shifts || ''}" oninput="updateNodeData('${node.id}', 'shifts', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
+                                ${renderTimeField(node, 'ct', '10 min', 'C/T')}
+                                ${renderTimeField(node, 'co', '0 min', 'C/O')}
+                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Uptime</span><input type="text" class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="%" value="${node.data.uptime || ''}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
+                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Zmiany</span><input type="text" class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="ilość" value="${node.data.shifts || ''}" oninput="updateNodeData('${node.id}', 'shifts', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
                             </div>
                         `;
                     }
 
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${nodeWidth}px; min-height: ${nodeMinHeight}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
-                        ${toolbarHtml}
+                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; min-height: ${h}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                        ${dragBtnHtml}
+                        ${deleteBtnHtml}
+                        ${resizeBtnHtml}
                         <div class="flex items-center justify-center mb-1 text-emerald-600 pointer-events-none ${node.type === 'transport' ? 'w-full' : ''}">
                             ${nodeIcons[node.type] || ''}
                         </div>
-                        <input class="w-full ${node.type === 'transport' ? 'text-center' : 'text-left'} text-[11px] font-extrabold text-slate-800 bg-transparent border-b border-transparent focus:border-emerald-400 focus:bg-emerald-50 outline-none z-10 transition-colors uppercase tracking-wide cursor-pointer py-1 md:py-0 pointer-events-auto" value="${node.label}" oninput="updateNodeLabel('${node.id}', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+                        <input type="text" class="w-full ${node.type === 'transport' ? 'text-center' : 'text-left'} text-[11px] font-extrabold text-slate-800 bg-transparent border-b border-transparent focus:border-emerald-400 focus:bg-emerald-50 outline-none z-10 transition-colors uppercase tracking-wide cursor-pointer py-1 md:py-0 pointer-events-auto" value="${node.label}" oninput="updateNodeLabel('${node.id}', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         ${extraFields}
                     </div>
                     `;
