@@ -46,8 +46,8 @@
         <div class="max-w-full mx-auto">
             
             <div class="mb-1.5 md:mb-2 flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
-                <button onclick="toggleSidebar()" class="md:hidden self-start p-1.5 bg-slate-100 text-slate-600 rounded hover:bg-slate-200 transition-colors shrink-0 print-hide">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                <button onclick="toggleSidebar()" class="md:hidden self-start p-1.5 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition-colors shrink-0 print-hide shadow-sm flex items-center justify-center">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
                 </button>
                 
                 <div class="w-full max-w-xl">
@@ -103,76 +103,61 @@
                 </div>
                 
                 <div class="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin">
-                    <script>
-                        const iconPlus = '<div class="ml-auto w-5 h-5 bg-emerald-500 rounded flex items-center justify-center text-white shrink-0 shadow-sm"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>';
-                        document.write(`
-                            <button onclick="addNode('supplier'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
-                                <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M17 18h1"></path><path d="M12 18h1"></path><path d="M7 18h1"></path></svg></div>
-                                <span class="text-[11px] font-bold text-slate-700" id="tool-supplier">Dostawca / Klient</span>
-                                ${iconPlus}
-                            </button>
-                            <button onclick="addNode('process'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
-                                <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"></rect></svg></div>
-                                <span class="text-[11px] font-bold text-slate-700" id="tool-process">Proces</span>
-                                ${iconPlus}
-                            </button>
-                            <button onclick="addNode('data'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
-                                <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5V19A9 3 0 0 0 21 19V5"></path><path d="M3 12A9 3 0 0 0 21 12"></path></svg></div>
-                                <span class="text-[11px] font-bold text-slate-700" id="tool-data">Skrzynka Danych</span>
-                                ${iconPlus}
-                            </button>
-                            <button onclick="addNode('inventory'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
-                                <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path></svg></div>
-                                <span class="text-[11px] font-bold text-slate-700" id="tool-inventory">Zapasy</span>
-                                ${iconPlus}
-                            </button>
-                            <button onclick="addNode('transport-int'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
-                                <div class="text-emerald-600">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2 12h10l2-8H7"></path><circle cx="9" cy="20" r="2"></circle><circle cx="16" cy="20" r="2"></circle></svg>
-                                </div>
-                                <span class="text-[11px] font-bold text-slate-700" id="tool-transport-int">Transport Wew.</span>
-                                ${iconPlus}
-                            </button>
-                            <button onclick="addNode('transport'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
-                                <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"></path><path d="M14 9h4l4 4v5c0 .6-.4 1-1 1h-2"></path><circle cx="7" cy="18" r="2"></circle><path d="M15 18H9"></path><circle cx="17" cy="18" r="2"></circle></svg></div>
-                                <span class="text-[11px] font-bold text-slate-700" id="tool-transport">Transport Zewn.</span>
-                                ${iconPlus}
-                            </button>
+                    <button onclick="addNode('supplier'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
+                        <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M17 18h1"></path><path d="M12 18h1"></path><path d="M7 18h1"></path></svg></div>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-supplier">Dostawca / Klient</span>
+                    </button>
+                    <button onclick="addNode('process'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
+                        <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"></rect></svg></div>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-process">Proces</span>
+                    </button>
+                    <button onclick="addNode('data'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
+                        <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5V19A9 3 0 0 0 21 19V5"></path><path d="M3 12A9 3 0 0 0 21 12"></path></svg></div>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-data">Skrzynka Danych</span>
+                    </button>
+                    <button onclick="addNode('inventory'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
+                        <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path></svg></div>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-inventory">Zapasy</span>
+                    </button>
+                    <button onclick="addNode('transport-int'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
+                        <div class="text-emerald-600">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2 12h10l2-8H7"></path><circle cx="9" cy="20" r="2"></circle><circle cx="16" cy="20" r="2"></circle></svg>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-transport-int">Transport Wew.</span>
+                    </button>
+                    <button onclick="addNode('transport'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-emerald-50 text-slate-700 rounded border border-slate-200 hover:border-emerald-300 transition-colors shadow-sm">
+                        <div class="text-emerald-600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"></path><path d="M14 9h4l4 4v5c0 .6-.4 1-1 1h-2"></path><circle cx="7" cy="18" r="2"></circle><path d="M15 18H9"></path><circle cx="17" cy="18" r="2"></circle></svg></div>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-transport">Transport Zewn.</span>
+                    </button>
 
-                            <div class="my-2 border-t border-slate-100 pt-2"></div>
-                            
-                            <button onclick="addNode('arrow-thick-push'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-200 hover:border-slate-300 transition-colors shadow-sm">
-                                <div class="w-5 h-4 relative flex items-center justify-center">
-                                    <svg width="24" height="12" viewBox="0 0 80 40"><defs><pattern id="stripes-btn" width="12" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(20)"><rect width="6" height="40" fill="#334155"/><rect x="6" width="6" height="40" fill="#fff"/></pattern></defs><polygon points="0,10 50,10 50,0 80,20 50,40 50,30 0,30" fill="url(#stripes-btn)" stroke="#334155" stroke-width="2"/></svg>
-                                </div>
-                                <span class="text-[11px] font-bold text-slate-700" id="tool-thick-push">Gruba Strzałka (B-C)</span>
-                                ${iconPlus}
-                            </button>
-                            <button onclick="addNode('arrow-thick-pull'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-200 hover:border-slate-300 transition-colors shadow-sm">
-                                <div class="w-5 h-4 relative flex items-center justify-center">
-                                    <svg width="24" height="12" viewBox="0 0 80 40"><polygon points="0,10 50,10 50,0 80,20 50,40 50,30 0,30" fill="transparent" stroke="#334155" stroke-width="2"/></svg>
-                                </div>
-                                <span class="text-[11px] font-bold text-slate-700" id="tool-thick-pull">Gruba Strzałka (Puste)</span>
-                                ${iconPlus}
-                            </button>
-                            
-                            <button onclick="addNode('kaizen'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-yellow-50 text-slate-700 rounded border border-slate-200 hover:border-yellow-300 transition-colors shadow-sm">
-                                <div class="text-yellow-500">
-                                    <svg width="16" height="16" viewBox="0 0 100 70" fill="none" stroke="currentColor" stroke-width="6">
-                                        <polygon points="50,0 60,20 95,15 75,35 95,55 60,50 50,70 40,50 5,55 25,35 5,15 40,20" />
-                                    </svg>
-                                </div>
-                                <span class="text-[11px] font-bold text-slate-700" id="tool-kaizen">Chmura Kaizen</span>
-                                ${iconPlus}
-                            </button>
+                    <div class="my-2 border-t border-slate-100 pt-2"></div>
+                    
+                    <button onclick="addNode('arrow-thick-push'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-200 hover:border-slate-300 transition-colors shadow-sm">
+                        <div class="w-5 h-4 relative flex items-center justify-center">
+                            <svg width="24" height="12" viewBox="0 0 80 40"><defs><pattern id="stripes-btn" width="12" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(20)"><rect width="6" height="40" fill="#334155"/><rect x="6" width="6" height="40" fill="#fff"/></pattern></defs><polygon points="0,10 50,10 50,0 80,20 50,40 50,30 0,30" fill="url(#stripes-btn)" stroke="#334155" stroke-width="2"/></svg>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-thick-push">Gruba Strzałka (B-C)</span>
+                    </button>
+                    <button onclick="addNode('arrow-thick-pull'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-200 hover:border-slate-300 transition-colors shadow-sm">
+                        <div class="w-5 h-4 relative flex items-center justify-center">
+                            <svg width="24" height="12" viewBox="0 0 80 40"><polygon points="0,10 50,10 50,0 80,20 50,40 50,30 0,30" fill="transparent" stroke="#334155" stroke-width="2"/></svg>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-thick-pull">Gruba Strzałka (Przezro.)</span>
+                    </button>
+                    
+                    <button onclick="addNode('kaizen'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-yellow-50 text-slate-700 rounded border border-slate-200 hover:border-yellow-300 transition-colors shadow-sm">
+                        <div class="text-yellow-500">
+                            <svg width="16" height="16" viewBox="0 0 100 70" fill="none" stroke="currentColor" stroke-width="6">
+                                <polygon points="50,0 60,20 95,15 75,35 95,55 60,50 50,70 40,50 5,55 25,35 5,15 40,20" />
+                            </svg>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-kaizen">Chmura Kaizen</span>
+                    </button>
 
-                            <button onclick="addNode('text'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-2 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-200 hover:border-slate-300 transition-colors shadow-sm">
-                                <div class="text-slate-500"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div>
-                                <span class="text-[11px] font-bold text-slate-700" id="tool-text">Pole Tekstowe</span>
-                                ${iconPlus}
-                            </button>
-                        `);
-                    </script>
+                    <button onclick="addNode('text'); if(window.innerWidth<768) toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-200 hover:border-slate-300 transition-colors shadow-sm">
+                        <div class="text-slate-500"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div>
+                        <span class="text-[11px] font-bold text-slate-700" id="tool-text">Pole Tekstowe</span>
+                    </button>
                     
                     <div class="my-2 border-t border-slate-100 pt-2"></div>
                     <h3 class="text-[10px] font-semibold text-slate-400 uppercase mb-2 px-1" id="lbl-interact-title">Tryby interakcji</h3>
@@ -889,7 +874,7 @@
             if (isDraggingTimeline) {
                 let baseMaxY = 300;
                 const mainNodes = nodes.filter(n => ['process', 'supplier', 'data'].includes(n.type));
-                if (mainNodes.length > 0) baseMaxY = Math.max(...mainNodes.map(n => n.y + (n.type === 'process' ? 180 : 120)));
+                if (mainNodes.length > 0) baseMaxY = Math.max(...mainNodes.map(n => n.y + (n.height || (n.type === 'process' ? 180 : 120))));
                 
                 let currentBottom = customTimelineY !== null ? customTimelineY : baseMaxY + 80;
                 currentBottom += dy / zoom;
@@ -1058,20 +1043,15 @@
                 data: {}
             };
 
-            let w = 130, h = 90;
-            if (type === 'process') { w = 150; h = 180; }
-            if (type === 'inventory' || type === 'transport-int') { w = 80; h = 100; newNode.data.nva = '0 min'; }
-            if (type === 'kaizen') { w = 180; h = 120; }
-            if (type === 'text') { w = 100; h = 40; } 
-            if (type.startsWith('arrow-thick')) { w = 120; h = 50; }
-            if (type === 'data') { w = 140; h = 140; }
-            if (type === 'supplier') { w = 130; h = 120; }
-            if (type === 'transport') { w = 90; h = 120; }
+            if (type === 'inventory' || type === 'transport-int') {
+                newNode.data.nva = '0 min';
+            }
 
-            newNode.width = w;
-            newNode.height = h;
-            newNode.rotation = 0;
-            
+            if(type.startsWith('arrow-thick')) {
+                newNode.width = 120; newNode.height = 50; newNode.rotation = 0;
+            } else if(type === 'kaizen') {
+                newNode.width = 180; newNode.height = 120; newNode.rotation = 0;
+            }
             nodes.push(newNode);
             setMode('select');
             selectedNodeId = newNode.id;
@@ -1416,17 +1396,6 @@
             edgesGroup.innerHTML = svgHtml;
         }
 
-        // Pomocnicza funkcja do generowania pól czasowych (Input Tekstowy wg życzenia z manualnym wpisem)
-        function renderTimeField(node, field, defaultValue, labelStr) {
-            const val = node.data[field] !== undefined ? node.data[field] : defaultValue;
-            return `
-            <div class="flex justify-between items-center px-2 py-1 bg-transparent border-b border-slate-200 cursor-text">
-                <span class="font-medium text-slate-600">${labelStr}:</span>
-                <input type="text" class="w-16 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${val}" oninput="updateNodeData('${node.id}', '${field}', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
-            </div>
-            `;
-        }
-
         function updateNodesRender() {
             document.querySelectorAll('.vsm-node').forEach(el => {
                 const id = el.getAttribute('data-id');
@@ -1514,12 +1483,12 @@
                 const showControls = isSelected ? 'flex' : 'hidden';
 
                 const dragBtnHtml = `
-                    <button class="vsm-drag-btn absolute -top-4 -left-4 bg-white border border-slate-200 text-slate-600 rounded-full p-2 ${showControls} hover:bg-slate-100 z-40 shadow-md print-hide items-center justify-center" onpointerdown="startNodeDrag(event, '${node.id}')" title="Przesuń element">
+                    <button class="vsm-drag-btn absolute -top-4 -left-4 md:-top-3 md:-left-3 bg-white border border-slate-200 text-slate-600 rounded-full p-2 md:p-1.5 ${showControls} transition-opacity hover:bg-slate-100 z-40 shadow-md print-hide items-center justify-center" onpointerdown="startNodeDrag(event, '${node.id}')" title="Przesuń element">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M19 9l3 3-3 3M9 19l3 3 3 3M2 12h20M12 2v20"/></svg>
                     </button>
                 `;
                 const deleteBtnHtml = `
-                    <button class="vsm-delete-btn absolute -top-4 -right-4 bg-white border border-red-200 text-red-500 rounded-full p-2 ${showControls} hover:bg-red-500 hover:text-white hover:border-red-500 z-40 shadow-md print-hide items-center justify-center" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')" title="Usuń element">
+                    <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1.5 ${showControls} transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-40 shadow-md print-hide items-center justify-center" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')" title="Usuń element">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                     </button>
                 `;
@@ -1544,7 +1513,9 @@
                         <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] border-b border-slate-200 cursor-text">
                             <span class="font-medium text-slate-600">FTE:</span><input type="text" class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.fte||'1'}" oninput="updateNodeData('${node.id}', 'fte', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
-                        ${renderTimeField(node, 'ct', '10 min', 'C/T')}
+                        <div class="flex justify-between px-2 py-1 bg-white text-[11px] border-b border-slate-200 cursor-text">
+                            <span class="font-medium text-slate-600">C/T:</span><input type="text" class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.ct||'10 min'}" oninput="updateNodeData('${node.id}', 'ct', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+                        </div>
                         <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] border-b border-slate-200 cursor-text">
                             <span class="font-medium text-slate-600">RFT:</span><input type="text" class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.rft||'85%'}" oninput="updateNodeData('${node.id}', 'rft', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
@@ -1612,6 +1583,7 @@
 
                     html += `
                     <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px; transform: rotate(${rot}deg); transform-origin: center center;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                        
                         ${dragBtnHtml}
                         ${deleteBtnHtml}
                         ${resizeBtnHtml}
@@ -1636,7 +1608,7 @@
                     const defs = isPush ? `<defs><pattern id="stripes-${node.id}" width="12" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(20)"><rect width="6" height="40" fill="#334155"/><rect x="6" width="6" height="40" fill="#ffffff"/></pattern></defs>` : '';
                     
                     const rotateBtnHtml = `
-                        <div class="resize-handles ${isSelected ? 'flex' : 'hidden'} absolute -top-8 left-1/2 -translate-x-1/2 w-6 h-6 bg-blue-500 border-2 border-white rounded-full cursor-grab z-40 shadow-md print-hide items-center justify-center text-white" onpointerdown="startRotate(event, '${node.id}')" title="Obróć">
+                        <div class="resize-handles ${showControls} absolute -top-8 left-1/2 -translate-x-1/2 w-6 h-6 bg-blue-500 border-2 border-white rounded-full cursor-grab z-40 shadow-md print-hide items-center justify-center text-white" onpointerdown="startRotate(event, '${node.id}')" title="Obróć">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-8.5l-3.35 3.35"/></svg>
                         </div>
                         <div class="resize-handles ${isSelected ? 'block' : 'hidden'} absolute -top-4 left-1/2 -translate-x-1/2 w-[2px] h-4 bg-blue-500 z-30 print-hide"></div>
@@ -1672,8 +1644,8 @@
                     } else if(node.type === 'data') {
                         extraFields = `
                             <div class="w-full flex flex-col gap-1 mt-3 border-t border-slate-100 pt-2">
-                                ${renderTimeField(node, 'ct', '10 min', 'C/T')}
-                                ${renderTimeField(node, 'co', '0 min', 'C/O')}
+                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/T</span><input type="text" class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="s" value="${node.data.ct || ''}" oninput="updateNodeData('${node.id}', 'ct', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
+                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/O</span><input type="text" class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="min" value="${node.data.co || ''}" oninput="updateNodeData('${node.id}', 'co', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
                                 <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Uptime</span><input type="text" class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="%" value="${node.data.uptime || ''}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
                                 <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Zmiany</span><input type="text" class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="ilość" value="${node.data.shifts || ''}" oninput="updateNodeData('${node.id}', 'shifts', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
                             </div>
