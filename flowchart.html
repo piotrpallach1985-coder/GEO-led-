@@ -53,6 +53,9 @@
         .shape-data { background-color: transparent; border: none; box-shadow: none; }
         .shape-data.selected { outline: 2px dashed #10b981; }
 
+        .shape-document { background-color: transparent; border: none; box-shadow: none; }
+        .shape-document.selected { outline: 2px dashed #10b981; }
+
         .shape-text { background-color: transparent; border: 1px dashed transparent; box-shadow: none; }
         .shape-text.selected { border: 1px dashed #94a3b8; box-shadow: none; outline: none; z-index: 50 !important; }
 
@@ -109,11 +112,6 @@
         .color-btn { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.1s; }
         .color-btn:hover { transform: scale(1.15); }
         
-        .tab-btn { transition: all 0.2s; }
-        .tab-active { color: #10b981; border-bottom-color: #10b981; }
-        .tab-inactive { color: #64748b; border-bottom-color: transparent; }
-        .tab-inactive:hover { color: #334155; }
-
         #print-container { display: none; }
 
         @media print {
@@ -135,16 +133,8 @@
 </head>
 <body class="flex flex-col h-[100dvh] select-none bg-slate-50">
 
-    <!-- GLOBAL TOP HEADER (Matches obraz.png) -->
-    <div class="bg-white shrink-0 pt-6 px-4 sm:px-8 flex flex-col z-20 shadow-sm relative border-b border-slate-200">
-        
-        <!-- Title Area -->
-        <input type="text" id="project-subtitle" value="FLOWCHART" class="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2 bg-transparent border-none outline-none w-full sm:w-64 cursor-default select-none pointer-events-none" readonly />
-        <input type="text" id="project-title" value="Projekt Optymalizacji Procesu" class="text-sm sm:text-xl font-bold text-emerald-900 bg-[#e6fffa] border border-emerald-200 rounded-md px-2 py-1.5 mb-3 w-full max-w-lg outline-none focus:border-emerald-500 transition-all shadow-sm">
-        
-        <!-- Tabs & Print Button in one line -->
+    <div class="bg-white shrink-0 pt-4 px-4 sm:px-8 flex flex-col z-20 shadow-sm relative border-b border-slate-200">
         <div class="flex justify-between items-end">
-            <!-- TABS -->
             <nav class="flex gap-2 sm:gap-8 overflow-x-auto hide-scrollbar w-full">
                 <button id="tab-btn-diagram" class="flex items-center gap-2 pb-3 border-b-[3px] font-bold whitespace-nowrap text-emerald-600 border-emerald-600 transition-colors" onclick="switchTab('diagram')">
                     <i data-lucide="edit" class="w-4 h-4"></i> <span data-i18n="tabDiag">Diagram</span>
@@ -157,25 +147,20 @@
                 </button>
             </nav>
 
-            <!-- DRUKUJ BUTTON -->
             <div class="pb-3 pl-4 shrink-0">
                 <button id="btn-export-pdf" class="px-4 py-2 text-sm font-bold text-emerald-700 bg-white border-2 border-emerald-500 rounded-lg hover:bg-emerald-50 shadow-sm flex items-center gap-2 transition-colors">
                     <i data-lucide="printer" class="w-4 h-4"></i> <span data-i18n="print">Drukuj</span>
                 </button>
             </div>
         </div>
-
-        <span id="autosave-indicator" class="hidden absolute top-6 right-8 text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded shadow-sm" data-i18n="saved">Zapisano pomyślnie!</span>
+        <span id="autosave-indicator" class="hidden absolute top-4 right-8 text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded shadow-sm" data-i18n="saved">Zapisano pomyślnie!</span>
     </div>
 
-    <!-- KONTENERY NA ZAKŁADKI (ZAWARTOSC WSTZYKIWANA PRZEZ JS) -->
     <div id="view-tutorial" class="hidden flex-1 p-4 sm:p-8 overflow-auto bg-slate-50"></div>
     <div id="view-manual" class="hidden flex-1 p-8 overflow-auto bg-slate-50"></div>
 
-    <!-- ZAKŁADKA 1: DIAGRAM -->
     <div id="view-diagram" class="flex flex-col sm:flex-row flex-1 overflow-hidden relative">
         
-        <!-- Sidebar (Biblioteka Kształtów) - Poprawiony tryb pionowy (Mobile) -->
         <aside class="w-full sm:w-56 bg-slate-50 border-b sm:border-b-0 sm:border-r border-slate-200 flex flex-col z-20 shadow-sm shrink-0">
             <div class="p-3 border-b border-slate-200 bg-slate-100 flex justify-between items-center hidden sm:flex">
                 <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider" data-i18n="lib">Biblioteka</h2>
@@ -183,7 +168,6 @@
             </div>
             
             <div class="p-2 sm:p-4 flex flex-row sm:flex-col gap-3 sm:gap-4 overflow-x-auto sm:overflow-y-auto flex-none hide-scrollbar items-center sm:items-stretch bg-slate-50">
-                <!-- Dodany przycisk czyszczenia na mobile -->
                 <button id="btn-clear-mobile" class="sm:hidden text-slate-400 hover:text-red-500 shrink-0 p-2 border-r border-slate-200 mr-1" title="Wyczyść planszę"><i data-lucide="eraser" class="w-5 h-5"></i></button>
 
                 <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2 cursor-pointer" draggable="true" ondragstart="handleDragStart(event, 'terminal')" onclick="addShapeCenter('terminal')">
@@ -191,6 +175,12 @@
                 </div>
                 <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2 cursor-pointer" draggable="true" ondragstart="handleDragStart(event, 'process')" onclick="addShapeCenter('process')">
                     <div class="w-20 h-10 sm:w-24 sm:h-14 border-2 border-emerald-500 rounded flex items-center justify-center text-[9px] sm:text-[10px] font-bold bg-emerald-50" data-i18n="process">Proces</div>
+                </div>
+                <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2 cursor-pointer" draggable="true" ondragstart="handleDragStart(event, 'document')" onclick="addShapeCenter('document')">
+                    <div class="w-20 h-10 sm:w-24 sm:h-14 flex items-center justify-center text-[9px] sm:text-[10px] font-bold relative">
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M 2 2 L 98 2 L 98 80 C 75 100, 25 60, 2 80 Z" fill="#eff6ff" stroke="#3b82f6" stroke-width="2" /></svg>
+                        <span class="z-10" data-i18n="docItem">Dokument</span>
+                    </div>
                 </div>
                 <div class="tool-preview shrink-0 flex flex-col items-center gap-1 sm:gap-2 cursor-pointer" draggable="true" ondragstart="handleDragStart(event, 'decision')" onclick="addShapeCenter('decision')">
                     <div class="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center text-[8px] sm:text-[10px] font-bold relative">
@@ -216,12 +206,9 @@
             </div>
         </aside>
 
-        <!-- Obszar Roboczy -->
         <main class="flex-1 relative overflow-auto bg-slate-300" id="workspace" style="touch-action: pan-x pan-y;">
             
-            <!-- Globalny Pływający Panel Narzędzi Głównej Akcji (Zoom, Cofnij, Powtórz) -->
             <div class="fixed bottom-6 right-6 z-40 flex flex-col gap-2 pointer-events-none">
-                <!-- Undo/Copy/Delete -->
                 <div class="flex items-center justify-end gap-1 bg-white/90 backdrop-blur p-1.5 rounded-xl shadow-lg border border-slate-200 pointer-events-auto">
                     <button id="btn-undo" class="p-1.5 hover:bg-slate-100 rounded text-slate-600 disabled:opacity-30 transition-all"><i data-lucide="undo-2" class="w-4 h-4 sm:w-5 sm:h-5"></i></button>
                     <button id="btn-redo" class="p-1.5 hover:bg-slate-100 rounded text-slate-600 disabled:opacity-30 transition-all"><i data-lucide="redo-2" class="w-4 h-4 sm:w-5 sm:h-5"></i></button>
@@ -229,7 +216,6 @@
                     <button id="btn-duplicate" class="p-1.5 hover:bg-emerald-100 rounded text-emerald-700 transition-all"><i data-lucide="copy" class="w-4 h-4 sm:w-5 sm:h-5"></i></button>
                     <button id="btn-delete" class="p-1.5 hover:bg-red-100 rounded text-red-700 transition-all"><i data-lucide="trash-2" class="w-4 h-4 sm:w-5 sm:h-5"></i></button>
                 </div>
-                <!-- Zoom -->
                 <div class="flex items-center bg-white/90 backdrop-blur p-1.5 rounded-xl shadow-lg border border-slate-200 pointer-events-auto">
                     <button id="btn-zoom-out" class="p-1.5 hover:bg-slate-100 rounded text-slate-600 transition-all"><i data-lucide="minus" class="w-4 h-4 sm:w-5 sm:h-5"></i></button>
                     <span id="zoom-level" class="text-[10px] sm:text-xs font-bold text-slate-600 w-10 sm:w-12 text-center">100%</span>
@@ -239,7 +225,6 @@
                 </div>
             </div>
 
-            <!-- POLE PRACY - MAPA -->
             <div id="canvas-board" class="canvas-grid relative w-[2500px] h-[2500px] bg-white m-4 sm:m-8 rounded-sm" style="transform-origin: 0 0;" ondragenter="event.preventDefault()" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
                 <svg id="edges-layer" class="absolute inset-0 w-full h-full pointer-events-none z-0">
                     <defs>
@@ -255,7 +240,6 @@
                 <div id="nodes-layer" class="absolute inset-0 w-full h-full pointer-events-none z-10"></div>
                 <div id="labels-layer" class="absolute inset-0 w-full h-full pointer-events-none z-20"></div>
 
-                <!-- Floating EDGE Toolbar -->
                 <div id="edge-toolbar" class="hidden absolute bg-white shadow-xl border border-slate-200 rounded-xl p-1.5 flex gap-1 z-50 transform -translate-x-1/2 -translate-y-[120%] pointer-events-auto items-center min-w-max">
                     <button id="tb-route" class="p-1.5 sm:p-2 text-slate-600 hover:text-emerald-600 rounded-lg"><i data-lucide="git-merge"></i></button>
                     <button id="tb-dash" class="p-1.5 sm:p-2 text-slate-600 hover:text-emerald-600 rounded-lg"><i data-lucide="minus"></i></button>
@@ -267,7 +251,6 @@
                     <button id="tb-delete-edge" class="p-1.5 sm:p-2 text-red-500 hover:bg-red-50 rounded-lg"><i data-lucide="trash-2"></i></button>
                 </div>
 
-                <!-- Floating NODE Toolbar -->
                 <div id="node-toolbar" class="hidden absolute bg-white shadow-xl border border-slate-200 rounded-xl p-1.5 flex gap-1 z-50 pointer-events-auto items-center min-w-max">
                     <button class="p-1.5 sm:p-1.5 text-slate-600 hover:bg-slate-100 rounded transition-colors" onclick="triggerNodeEdit()" title="Edytuj tekst"><i data-lucide="edit-2" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i></button>
                     <div class="w-px h-5 bg-slate-200 mx-0.5"></div>
@@ -276,7 +259,6 @@
                     <button class="px-2 py-1 text-[11px] font-bold text-slate-600 hover:bg-slate-100 rounded transition-colors" onclick="changeNodeFontSize(1)" title="Powiększ tekst">A+</button>
                     <div class="w-px h-5 bg-slate-200 mx-1"></div>
 
-                    <!-- Kolory -->
                     <button class="color-btn" style="background: #f1f5f9; border-color: #94a3b8" onclick="setNodeTheme('gray')"></button>
                     <button class="color-btn" style="background: #dcfce7; border-color: #22c55e" onclick="setNodeTheme('green')"></button>
                     <button class="color-btn" style="background: #fee2e2; border-color: #ef4444" onclick="setNodeTheme('red')"></button>
@@ -291,28 +273,11 @@
         </main>
     </div>
 
-    <!-- Pusty kontener używany wyłącznie do idealnego wydruku PDF -->
     <div id="print-container"></div>
 
     <script>
-        // GLOBALS TO PREVENT REFERENCE ERRORS IF ACCESSED BY EXTERNAL SCRIPTS
-        let activeLayerAuthor = null;
-        window.activeLayerAuthor = null;
-        window.applyLayerVisibility = () => {
-            document.querySelectorAll('.shape-node').forEach(el => {
-                if (!activeLayerAuthor) {
-                    el.classList.remove('highlight-author', 'dimmed-author');
-                } else {
-                    if (el.dataset.author === activeLayerAuthor) {
-                        el.classList.add('highlight-author'); el.classList.remove('dimmed-author');
-                    } else {
-                        el.classList.add('dimmed-author'); el.classList.remove('highlight-author');
-                    }
-                }
-            });
-        };
+        let globalProjectName = "Projekt Optymalizacji Procesu"; // Domyślnie zsynchronizowana
 
-        // HTML templates for dynamic tab content injection
         const contentHTML = {
             tutPL: `
                 <div class="max-w-4xl mx-auto bg-white p-6 sm:p-10 rounded-xl shadow-sm border border-slate-200">
@@ -321,71 +286,6 @@
                     </h2>
                     <div class="text-slate-600 space-y-6 leading-relaxed">
                         <p class="text-lg font-medium text-slate-700">Oto krótki i konkretny samouczek, który przeprowadzi Cię od pustej kartki do gotowej mapy procesu.</p>
-                        <section>
-                            <h3 class="text-xl font-bold text-slate-800 mb-3 border-b pb-2 border-slate-100">Część 1: Co to właściwie jest Flowchart?</h3>
-                            <p class="mb-3"><strong>Flowchart (schemat blokowy)</strong> to graficzny język opisywania procesów. Zamiast pisać pięciostronicową instrukcję, rysujesz ścieżkę, którą podąża praca. W świecie Lean Six Sigma flowchart jest jak „zdjęcie RTG” – pozwala zobaczyć złamania i nieprawidłowości wewnątrz organizacji.</p>
-                            <h4 class="font-bold text-slate-700 mt-4 mb-2">Po co go robić?</h4>
-                            <ul class="list-disc pl-6 space-y-2">
-                                <li><strong>Wizualizacja:</strong> Ludzki mózg przetwarza obrazy 60 000 razy szybciej niż tekst.</li>
-                                <li><strong>Standard:</strong> Każdy widzi ten sam proces (koniec z domysłami typu „wydawało mi się, że to robi dział X”).</li>
-                                <li><strong>Analiza:</strong> Łatwiej wskazać, gdzie tracimy czas lub pieniądze.</li>
-                            </ul>
-                        </section>
-                        <section>
-                            <h3 class="text-xl font-bold text-slate-800 mb-3 border-b pb-2 border-slate-100">Część 2: Alfabet Flowchartu (Symbole)</h3>
-                            <p class="mb-3">Zanim zaczniesz rysować, musisz znać podstawowe „klocki”. Używanie standardowych symboli sprawi, że Twoja mapa będzie zrozumiała dla każdego.</p>
-                            <ul class="space-y-4">
-                                <li class="flex items-center gap-4">
-                                    <div class="w-12 h-6 border-2 border-green-500 bg-green-50 rounded-full shrink-0 shadow-sm"></div>
-                                    <div><strong>Start/Koniec (Owal):</strong> Każdy proces musi mieć jasny początek i punkt końcowy.</div>
-                                </li>
-                                <li class="flex items-center gap-4">
-                                    <div class="w-12 h-8 border-2 border-emerald-500 bg-emerald-50 rounded shrink-0 shadow-sm"></div>
-                                    <div><strong>Działanie (Prostokąt):</strong> Opisuje konkretną czynność (np. „Wyślij maila”, „Zapakuj paczkę”).</div>
-                                </li>
-                                <li class="flex items-center gap-4">
-                                    <div class="w-8 h-8 border-2 border-yellow-500 bg-yellow-50 transform rotate-45 shrink-0 mx-2 shadow-sm"></div>
-                                    <div><strong>Decyzja (Romb):</strong> Pytanie, na które odpowiadamy „Tak” lub „Nie”. Tu proces się rozgałęzia.</div>
-                                </li>
-                                <li class="flex items-center gap-4">
-                                    <i data-lucide="arrow-right" class="w-8 h-8 text-slate-500 shrink-0 ml-2"></i>
-                                    <div><strong>Kierunek (Strzałka):</strong> Pokazuje, w którą stronę płynie praca.</div>
-                                </li>
-                            </ul>
-                        </section>
-                        <section>
-                            <h3 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2 border-slate-100">Część 3: Jak wykonać Flowchart krok po kroku</h3>
-                            <div class="space-y-4">
-                                <div><h4 class="font-bold text-emerald-600">Krok 1: Określ granice (Scope)</h4>
-                                <p>Nie próbuj opisać całego funkcjonowania firmy na jednej kartce.</p>
-                                <ul class="list-disc pl-6 mt-1 text-sm text-slate-500">
-                                    <li>Gdzie proces się zaczyna? (np. Klient składa zamówienie)</li>
-                                    <li>Gdzie proces się kończy? (np. Klient otrzymuje towar)</li>
-                                </ul></div>
-                                <div><h4 class="font-bold text-emerald-600">Krok 2: Zbierz fakty (Go to Gemba)</h4>
-                                <p>Największy błąd to rysowanie procesu „zza biurka”. Idź tam, gdzie praca się odbywa (w LSS nazywamy to <em>Gemba</em>). Porozmawiaj z ludźmi, którzy faktycznie wykonują te zadania.</p></div>
-                                <div><h4 class="font-bold text-emerald-600">Krok 3: Wypisz główne kroki</h4>
-                                <p>Zanim zaczniesz rysować piękne kształty, wypisz czynności na karteczkach samoprzylepnych (Post-it). Pozwoli Ci to łatwo zmieniać ich kolejność, gdy okaże się, że o czymś zapomniałeś.</p></div>
-                                <div><h4 class="font-bold text-emerald-600">Krok 4: Narysuj schemat</h4>
-                                <ul class="list-disc pl-6 mt-1 text-sm text-slate-500 space-y-1">
-                                    <li>Ustaw kroki w kolejności chronologicznej.</li>
-                                    <li>Użyj rombów wszędzie tam, gdzie proces może pójść w dwie różne strony.</li>
-                                    <li>Zadbaj o czytelność – strzałki nie powinny się nadmiernie krzyżować.</li>
-                                </ul></div>
-                                <div><h4 class="font-bold text-emerald-600">Krok 5: Weryfikacja</h4>
-                                <p>Pokaż gotowy schemat komuś, kto bierze udział w tym procesie. Zapytaj: „Czy to naprawdę tak wygląda?”.</p></div>
-                            </div>
-                        </section>
-                        <section class="bg-emerald-50 border border-emerald-200 p-5 rounded-lg mt-6">
-                            <h3 class="text-lg font-bold text-emerald-800 mb-3 flex items-center gap-2">
-                                <i data-lucide="award" class="w-5 h-5"></i> Złote zasady Flowchartingu
-                            </h3>
-                            <ul class="list-disc pl-6 space-y-2 text-emerald-900">
-                                <li><strong>Keep It Simple:</strong> Jeśli proces jest zbyt skomplikowany, podziel go na podprocesy.</li>
-                                <li><strong>Konsekwencja:</strong> Opisuj działania czasownikami (np. „Sprawdź”, „Generuj”, „Zatwierdź”).</li>
-                                <li><strong>Prawda ponad ideał:</strong> Rysuj to, co się <em>dzieje</em>, a nie to, co <em>powinno</em> się dziać według instrukcji.</li>
-                            </ul>
-                        </section>
                     </div>
                 </div>
             `,
@@ -396,69 +296,6 @@
                     </h2>
                     <div class="text-slate-600 space-y-6 leading-relaxed">
                         <p class="text-lg font-medium text-slate-700">Here is a short and concrete tutorial that will guide you from a blank page to a finished process map.</p>
-                        <section>
-                            <h3 class="text-xl font-bold text-slate-800 mb-3 border-b pb-2 border-slate-100">Part 1: What is a Flowchart?</h3>
-                            <p class="mb-3"><strong>Flowchart</strong> is a graphical language for describing processes. Instead of writing a five-page manual, you draw the path the work follows. In Lean Six Sigma, a flowchart is like an "X-ray" - it lets you see the fractures and irregularities inside the organization.</p>
-                            <h4 class="font-bold text-slate-700 mt-4 mb-2">Why do it?</h4>
-                            <ul class="list-disc pl-6 space-y-2">
-                                <li><strong>Visualization:</strong> The human brain processes images 60,000 times faster than text.</li>
-                                <li><strong>Standard:</strong> Everyone sees the same process.</li>
-                                <li><strong>Analysis:</strong> It's easier to point out where we lose time or money.</li>
-                            </ul>
-                        </section>
-                        <section>
-                            <h3 class="text-xl font-bold text-slate-800 mb-3 border-b pb-2 border-slate-100">Part 2: Flowchart Alphabet (Symbols)</h3>
-                            <p class="mb-3">Before you start drawing, you must know the basic "building blocks". Using standard symbols will make your map understandable to everyone.</p>
-                            <ul class="space-y-4">
-                                <li class="flex items-center gap-4">
-                                    <div class="w-12 h-6 border-2 border-green-500 bg-green-50 rounded-full shrink-0 shadow-sm"></div>
-                                    <div><strong>Start/End (Oval):</strong> Every process must have a clear start and end point.</div>
-                                </li>
-                                <li class="flex items-center gap-4">
-                                    <div class="w-12 h-8 border-2 border-emerald-500 bg-emerald-50 rounded shrink-0 shadow-sm"></div>
-                                    <div><strong>Action (Rectangle):</strong> Describes a specific action.</div>
-                                </li>
-                                <li class="flex items-center gap-4">
-                                    <div class="w-8 h-8 border-2 border-yellow-500 bg-yellow-50 transform rotate-45 shrink-0 mx-2 shadow-sm"></div>
-                                    <div><strong>Decision (Diamond):</strong> A question we answer with "Yes" or "No". The process branches here.</div>
-                                </li>
-                                <li class="flex items-center gap-4">
-                                    <i data-lucide="arrow-right" class="w-8 h-8 text-slate-500 shrink-0 ml-2"></i>
-                                    <div><strong>Direction (Arrow):</strong> Shows which way the work flows.</div>
-                                </li>
-                            </ul>
-                        </section>
-                        <section>
-                            <h3 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2 border-slate-100">Part 3: Flowchart step by step</h3>
-                            <div class="space-y-4">
-                                <div><h4 class="font-bold text-emerald-600">Step 1: Define limits (Scope)</h4>
-                                <ul class="list-disc pl-6 mt-1 text-sm text-slate-500">
-                                    <li>Where does the process start?</li>
-                                    <li>Where does the process end?</li>
-                                </ul></div>
-                                <div><h4 class="font-bold text-emerald-600">Step 2: Gather facts (Go to Gemba)</h4>
-                                <p>Talk to the people who actually perform these tasks.</p></div>
-                                <div><h4 class="font-bold text-emerald-600">Step 3: List main steps</h4>
-                                <p>Write down tasks on Post-it notes before drawing beautiful shapes.</p></div>
-                                <div><h4 class="font-bold text-emerald-600">Step 4: Draw the diagram</h4>
-                                <ul class="list-disc pl-6 mt-1 text-sm text-slate-500 space-y-1">
-                                    <li>Place steps in chronological order.</li>
-                                    <li>Ensure clarity - arrows should not cross excessively.</li>
-                                </ul></div>
-                                <div><h4 class="font-bold text-emerald-600">Step 5: Verification</h4>
-                                <p>Show the finished diagram to someone involved in the process.</p></div>
-                            </div>
-                        </section>
-                        <section class="bg-emerald-50 border border-emerald-200 p-5 rounded-lg mt-6">
-                            <h3 class="text-lg font-bold text-emerald-800 mb-3 flex items-center gap-2">
-                                <i data-lucide="award" class="w-5 h-5"></i> Golden rules of Flowcharting
-                            </h3>
-                            <ul class="list-disc pl-6 space-y-2 text-emerald-900">
-                                <li><strong>Keep It Simple:</strong> If the process is too complex, divide it into sub-processes.</li>
-                                <li><strong>Consistency:</strong> Describe actions with verbs.</li>
-                                <li><strong>Truth over ideal:</strong> Draw what <em>happens</em>, not what <em>should</em> happen (As-Is map).</li>
-                            </ul>
-                        </section>
                     </div>
                 </div>
             `,
@@ -467,12 +304,6 @@
                     <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
                         <i data-lucide="book" class="w-6 h-6 text-emerald-500"></i> Instrukcja Obsługi
                     </h2>
-                    <ul class="space-y-4 text-slate-600">
-                        <li class="flex gap-3"><i data-lucide="plus-circle" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Dodawanie elementów:</b> Przeciągnij i upuść (lub po prostu kliknij) wybrany kształt z menu po lewej stronie, aby dodać go do planszy roboczej. Na telefonie tapnij w kształt.</div></li>
-                        <li class="flex gap-3"><i data-lucide="zoom-in" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Powiększanie i przesuwanie:</b> Użyj kółka myszy z wciśniętym <code>Ctrl</code> do przybliżania. Na ekranach dotykowych uszczypnij dwoma palcami. Aby przesunąć planszę, łap za puste pole.</div></li>
-                        <li class="flex gap-3"><i data-lucide="link" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Łączenie bloków:</b> Zaznacz blok klikając go, a następnie przeciągnij linię z jednej z niebieskich kropek (punktów zaczepienia) do innego bloku. Linie omijają figury automatycznie!</div></li>
-                        <li class="flex gap-3"><i data-lucide="type" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Edycja Tekstu:</b> Kliknij dwukrotnie w blok, aby zmienić tekst, lub użyj ikonki ołówka w menu kafelka. Rozmiar klocka dopasuje się automatycznie.</div></li>
-                    </ul>
                 </div>
             `,
             manEN: `
@@ -480,45 +311,33 @@
                     <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
                         <i data-lucide="book" class="w-6 h-6 text-emerald-500"></i> User Manual
                     </h2>
-                    <ul class="space-y-4 text-slate-600">
-                        <li class="flex gap-3"><i data-lucide="plus-circle" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Adding elements:</b> Drag and drop (or click) a shape from the left menu to add it to the canvas. Tap it on mobile.</div></li>
-                        <li class="flex gap-3"><i data-lucide="zoom-in" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Zooming and panning:</b> Use the mouse wheel while holding <code>Ctrl</code> to zoom in. Pinch with two fingers on touchscreens. Grab an empty space to pan the canvas.</div></li>
-                        <li class="flex gap-3"><i data-lucide="link" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Connecting blocks:</b> Select a block by clicking on it, then drag a line from a blue dot (anchor point) to another block. Lines bypass shapes automatically!</div></li>
-                        <li class="flex gap-3"><i data-lucide="type" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Text Editing:</b> Double-click a block to change the text, or use the pencil icon in the tile menu. The size adapts automatically.</div></li>
-                    </ul>
                 </div>
             `
         };
 
-        // --- SŁOWNIK JĘZYKÓW ---
         const i18n = {
             pl: {
                 lib: "Biblioteka", start: "Start/Koniec", process: "Proces", dec: "Decyzja", io: "We/Wy",
-                circleBtn: "A", text: "Tekst", desc: "Pole opisowe...", copy: "Kopiuj", del: "Usuń", 
+                docItem: "Dokument", circleBtn: "A", text: "Tekst", desc: "Pole opisowe...", copy: "Kopiuj", del: "Usuń", 
                 none: "Brak", saved: "Zapisano pomyślnie!",
                 print: "Drukuj", tabDiag: "Diagram", tabTut: "SAMOUCZEK", tabMan: "INSTRUKCJA OBSŁUGI", centerAdded: "Dodano element na środek ekranu",
                 tutHtml: contentHTML.tutPL, manHtml: contentHTML.manPL
             },
             en: {
                 lib: "Library", start: "Start/End", process: "Process", dec: "Decision", io: "Data I/O",
-                circleBtn: "A", text: "Text", desc: "Description box...", copy: "Copy", del: "Delete", 
+                docItem: "Document", circleBtn: "A", text: "Text", desc: "Description box...", copy: "Copy", del: "Delete", 
                 none: "None", saved: "Saved successfully!",
                 print: "Print", tabDiag: "Diagram", tabTut: "TUTORIAL", tabMan: "USER MANUAL", centerAdded: "Shape added to center",
                 tutHtml: contentHTML.tutEN, manHtml: contentHTML.manEN
             }
         };
 
-        let currentLang = 'pl'; // Domyślny język to polski
+        let currentLang = 'pl';
 
-        // --- INICJALIZACJA JĘZYKA Z URL (np. index.html?lang=en) ---
         function initLanguageFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             const param = urlParams.get('lang');
-            if (param === 'en') {
-                currentLang = 'en';
-            } else if (param === 'pl') {
-                currentLang = 'pl';
-            }
+            if (param === 'en') { currentLang = 'en'; } else if (param === 'pl') { currentLang = 'pl'; }
             applyLanguage();
         }
 
@@ -533,17 +352,8 @@
             document.getElementById('view-manual').innerHTML = i18n[currentLang].manHtml;
 
             lucide.createIcons();
-
-            const titleInput = document.getElementById('project-title');
-            if(currentLang === 'en' && titleInput.value === "Projekt Optymalizacji Procesu") titleInput.value = "Process Optimization Project";
-            else if (currentLang === 'pl' && titleInput.value === "Process Optimization Project") titleInput.value = "Projekt Optymalizacji Procesu";
-            
-            const subInput = document.getElementById('project-subtitle');
-            if(currentLang === 'en' && subInput.value === "FLOWCHART") subInput.value = "FLOWCHART";
-            else if (currentLang === 'pl' && subInput.value === "FLOWCHART") subInput.value = "FLOWCHART";
         }
 
-        // --- ZAKŁADKI (TABS) ---
         function switchTab(tabId) {
             document.getElementById('view-diagram').classList.add('hidden');
             document.getElementById('view-tutorial').classList.add('hidden');
@@ -567,7 +377,6 @@
             });
         }
 
-        // --- DEKLARACJE GLOBALNE ---
         const workspace = document.getElementById('workspace');
         const canvasBoard = document.getElementById('canvas-board');
         const nodesLayer = document.getElementById('nodes-layer');
@@ -578,7 +387,6 @@
         const nodeToolbar = document.getElementById('node-toolbar');
         const handleFrom = document.getElementById('edge-handle-from');
         const handleTo = document.getElementById('edge-handle-to');
-        const projectTitleInput = document.getElementById('project-title');
         const zoomLevelEl = document.getElementById('zoom-level');
 
         const THEMES = {
@@ -597,7 +405,6 @@
             initialDragX: null, initialDragY: null 
         };
 
-        // --- HISTORIA I SYNCHRONIZACJA (UNDO/REDO/AUTOSAVE) ---
         const history = { past: [], future: [] };
 
         const notifyDashboard = () => {
@@ -606,15 +413,10 @@
                 source: 'flowchart',
                 data: {
                     nodes: state.nodes,
-                    edges: state.edges,
-                    title: document.getElementById('project-title').value,
-                    subtitle: document.getElementById('project-subtitle').value
+                    edges: state.edges
                 }
             }, '*');
         };
-
-        // Zmiany tytułów od razu raportowane
-        document.getElementById('project-title').addEventListener('change', notifyDashboard);
         
         function saveState() {
             history.past.push({
@@ -624,7 +426,7 @@
             if (history.past.length > 50) history.past.shift();
             history.future = [];
             updateUndoRedoButtons();
-            notifyDashboard(); // Auto-Zapis i Synchronizacja!
+            notifyDashboard();
         }
 
         function restoreState(historicState) {
@@ -658,10 +460,11 @@
         document.getElementById('btn-redo').onclick = redo;
 
         const GRID_SIZE = 10;
-        const BOARD_SIZE = 2500; // Ograniczenie wielkości mapy
+        const BOARD_SIZE = 2500;
         const SHAPE_DEFAULTS = {
             'terminal': { w: 120, h: 50, text: 'Start' }, 'process': { w: 140, h: 80, text: 'Proces' },
             'decision': { w: 120, h: 120, text: '?' }, 'data': { w: 140, h: 80, text: 'Dane' },
+            'document': { w: 140, h: 90, text: 'Dokument' },
             'circle': { w: 50, h: 50, text: 'A' }, 'text': { w: 80, h: 30, text: 'Tekst' },
             'desc': { w: 200, h: 100, text: 'Opis...' }
         };
@@ -678,7 +481,6 @@
             setTimeout(() => ind.classList.add('hidden'), duration);
         }
 
-        // --- OBSŁUGA ZOOM ---
         let initialPinchDist = null;
         let initialPinchZoom = 1;
 
@@ -733,7 +535,6 @@
             return { x: (clientX - rect.left) / state.zoom, y: (clientY - rect.top) / state.zoom };
         }
 
-        // --- AUTO-POWIĘKSZANIE KSZTAŁTÓW ---
         function adjustNodeSize(id, textEl) {
             const node = state.nodes.find(n => n.id === id);
             if (!node || node.type === 'circle') return;
@@ -744,7 +545,7 @@
             document.body.appendChild(clone);
             
             const padX = node.type === 'decision' ? 70 : 30;
-            const padY = node.type === 'decision' ? 70 : 30;
+            const padY = node.type === 'decision' ? 70 : (node.type === 'document' ? 45 : 30);
             
             const natW = clone.offsetWidth + padX;
             const natH = clone.offsetHeight + padY;
@@ -765,7 +566,6 @@
             }
         }
 
-        // --- KSZTAŁTY I TEKST ---
         window.handleDragStart = (e, type) => { e.dataTransfer.setData('shapeType', type); };
         window.handleDragOver = (e) => { e.preventDefault(); };
         window.handleDrop = (e) => {
@@ -850,6 +650,7 @@
                 el = document.createElement('div'); el.id = id; el.className = `shape-node shape-${node.type} pointer-events-auto`;
                 if (node.type === 'decision') el.innerHTML = `<svg class="shape-svg absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,2 98,50 50,98 2,50" fill="#fefce8" stroke="#eab308" stroke-width="2" /></svg>`;
                 else if (node.type === 'data') el.innerHTML = `<svg class="shape-svg absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="15,2 98,2 85,98 2,98" fill="#faf5ff" stroke="#a855f7" stroke-width="2" /></svg>`;
+                else if (node.type === 'document') el.innerHTML = `<svg class="shape-svg absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M 2 2 L 98 2 L 98 80 C 75 100, 25 60, 2 80 Z" fill="#eff6ff" stroke="#3b82f6" stroke-width="2" /></svg>`;
                 
                 const container = document.createElement('div'); container.className = 'node-text-container';
                 const text = document.createElement('div'); text.className = 'node-text'; text.contentEditable = false; 
@@ -907,7 +708,7 @@
             
             if (node.theme && THEMES[node.theme]) {
                 const cols = THEMES[node.theme];
-                const svg = el.querySelector('.shape-svg polygon');
+                const svg = el.querySelector('.shape-svg polygon, .shape-svg path');
                 if (svg) {
                     svg.setAttribute('fill', cols.bg); svg.setAttribute('stroke', cols.border);
                     el.style.backgroundColor = 'transparent'; el.style.borderColor = 'transparent';
@@ -915,10 +716,12 @@
                     el.style.backgroundColor = cols.bg; el.style.borderColor = cols.border;
                 }
             } else {
-                const svg = el.querySelector('.shape-svg polygon');
+                const svg = el.querySelector('.shape-svg polygon, .shape-svg path');
                 if (svg) {
-                    svg.setAttribute('fill', node.type==='decision' ? '#fefce8' : '#faf5ff');
-                    svg.setAttribute('stroke', node.type==='decision' ? '#eab308' : '#a855f7');
+                    let fill = '#faf5ff', stroke = '#a855f7';
+                    if(node.type === 'decision') { fill = '#fefce8'; stroke = '#eab308'; }
+                    if(node.type === 'document') { fill = '#eff6ff'; stroke = '#3b82f6'; }
+                    svg.setAttribute('fill', fill); svg.setAttribute('stroke', stroke);
                 } else { el.style.backgroundColor = ''; el.style.borderColor = ''; }
             }
 
@@ -932,7 +735,6 @@
             el.style.width = node.width + 'px'; el.style.height = node.height + 'px';
         }
 
-        // --- LINIE I ALGORYTM (ROUTING) ---
         function getAnchorPos(nodeId, anchor) {
             const n = state.nodes.find(v => v.id === nodeId);
             if (!n) return null;
@@ -1090,7 +892,6 @@
             positionToolbars();
         }
 
-        // --- AKCJE I ZDARZENIA ---
         function selectNode(id) { 
             deselectAll(); state.selectedNodeId = id; document.getElementById(id)?.classList.add('selected'); 
             positionToolbars();
@@ -1374,14 +1175,16 @@
             setTimeout(() => {
                 html2canvas(canvasBoard, { x: captureMinX, y: captureMinY, width: w, height: h, backgroundColor: '#ffffff', scale: 2 }).then(canvas => {
                     const imgUrl = canvas.toDataURL('image/png');
-                    const titleText = projectTitleInput.value.trim() || 'Schemat';
-                    const subtitleText = document.getElementById('project-subtitle').value.trim();
+                    
+                    const titleText = globalProjectName || 'Schemat';
+                    const subtitleText = 'FLOWCHART';
                     
                     const printContainer = document.getElementById('print-container');
                     printContainer.innerHTML = `
-                        <div style="text-align: center; margin-bottom: 20px; font-family: sans-serif;">
-                            <div style="color: #10b981; font-size: 14px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px;">${subtitleText}</div>
-                            <div style="color: #064e3b; font-size: 24px; font-weight: bold;">${titleText}</div>
+                        <div style="text-align: left; margin-bottom: 20px; font-family: sans-serif; width: 100%;">
+                            <div style="color: #064e3b; font-size: 24px; font-weight: bold; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px;">
+                                ${titleText} <span style="font-size: 14px; font-weight: normal; color: #64748b; margin-left: 8px;">| ${subtitleText}</span>
+                            </div>
                         </div>
                         <img src="${imgUrl}" alt="Wydruk">
                     `;
@@ -1404,18 +1207,13 @@
                     source: 'flowchart',
                     data: {
                         nodes: state.nodes,
-                        edges: state.edges,
-                        title: document.getElementById('project-title').value,
-                        subtitle: document.getElementById('project-subtitle').value
+                        edges: state.edges
                     }
                 }, '*');
             } 
             else if (event.data.action === 'importData') {
                 if (event.data.data) {
                     saveState(); 
-                    
-                    if (event.data.data.title) document.getElementById('project-title').value = event.data.data.title;
-                    if (event.data.data.subtitle) document.getElementById('project-subtitle').value = event.data.data.subtitle;
                     
                     state.nodes = event.data.data.nodes || [];
                     state.edges = event.data.data.edges || [];
@@ -1435,6 +1233,9 @@
                     currentLang = event.data.lang;
                     applyLanguage();
                 }
+            }
+            else if (event.data.action === 'updateProjectName') {
+                globalProjectName = event.data.name;
             }
         });
 
