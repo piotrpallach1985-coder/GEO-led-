@@ -71,11 +71,10 @@
 
     <div id="app" class="max-w-[1600px] mx-auto p-2 md:p-4 pb-12">
         
-        <!-- Project Title -->
-        <div class="w-full flex flex-col items-start justify-start mb-2 mt-0">
-            <span id="map-subtitle" class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 mb-0.5 ml-1 no-print">Mapa SIPOC</span>
-            <input type="text" id="project-name" value="Projekt Optymalizacji Procesu" 
-                class="text-sm md:text-base font-black text-left text-emerald-800 bg-emerald-100 border-2 border-emerald-300 rounded-lg px-4 py-1.5 w-full max-w-xl hover:bg-emerald-200 focus:bg-white focus:border-emerald-500 focus:outline-none transition-all shadow-sm print:bg-transparent print:border-none print:text-xl print:text-left print:p-0 print:shadow-none">
+        <!-- Print Only Header -->
+        <div class="hidden print:block w-full mb-6">
+            <h1 id="print-project-name" class="text-2xl font-black text-slate-800">Projekt Optymalizacji Procesu</h1>
+            <h2 id="print-subtitle" class="text-sm font-bold text-emerald-600 uppercase tracking-widest mt-1">Mapa SIPOC</h2>
         </div>
 
         <!-- Navigation Tabs, Undo/Redo & Print -->
@@ -218,6 +217,7 @@
 
         let currentLang = 'pl';
         let tooltipTimeout;
+        let currentProjectName = 'Projekt Optymalizacji Procesu';
 
         // --- BILINGUAL DICTIONARY ---
         const i18n = {
@@ -494,12 +494,17 @@
 
         // --- NASŁUCHIWANIE KOMUNIKATÓW Z INDEX.HTML ---
         window.addEventListener('message', (event) => {
-            if (event.data.action === 'requestExport') {
+            if (event.data.action === 'updateProjectName') {
+                currentProjectName = event.data.name;
+                const printEl = document.getElementById('print-project-name');
+                if (printEl) printEl.innerText = currentProjectName;
+            }
+            else if (event.data.action === 'requestExport') {
                 window.parent.postMessage({
                     action: 'exportData',
                     source: 'sipoc',
                     data: {
-                        project: document.getElementById('project-name').value,
+                        project: currentProjectName,
                         version: "3.2",
                         data: state
                     }
@@ -511,7 +516,9 @@
                     if (payload.data) {
                         state = payload.data;
                         if (payload.project) {
-                            document.getElementById('project-name').value = payload.project;
+                            currentProjectName = payload.project;
+                            const printEl = document.getElementById('print-project-name');
+                            if (printEl) printEl.innerText = currentProjectName;
                         }
                     } else if (Array.isArray(payload.process)) {
                         state = payload;
@@ -621,16 +628,11 @@
             document.getElementById('btn-tutorial-text').innerText = dict.tabTutorial;
             document.getElementById('btn-instructions-text').innerText = dict.tabInstructions;
 
-            document.getElementById('map-subtitle').innerText = dict.mapSubtitle;
+            document.getElementById('print-subtitle').innerText = dict.mapSubtitle;
             document.getElementById('btn-print-text').innerText = dict.btnPrint;
             
             document.getElementById('btn-undo').title = dict.undoTitle;
             document.getElementById('btn-redo').title = dict.redoTitle;
-
-            const projectNameInput = document.getElementById('project-name');
-            if (projectNameInput.value === i18n.pl.defaultProject || projectNameInput.value === i18n.en.defaultProject || projectNameInput.value === "") {
-                projectNameInput.value = dict.defaultProject;
-            }
 
             document.getElementById('col-s-text').innerText = dict.colS;
             document.getElementById('col-i-text').innerText = dict.colI;
