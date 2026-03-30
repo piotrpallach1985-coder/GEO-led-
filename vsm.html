@@ -12,28 +12,35 @@
         .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #10b981; }
         
         .no-select { user-select: none; -webkit-user-select: none; touch-action: none; }
-        input, [contenteditable="true"] { touch-action: auto; }
+        input, [contenteditable="true"], select { touch-action: auto; }
         
         /* Usuwamy strzałki (spinnery) z ewentualnych pól numerycznych */
         input[type="number"]::-webkit-inner-spin-button, 
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         
+        select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+
         .bg-grid {
             background-image: url('data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M0 0h40v40H0V0zm20 20h20v20H20V20zM0 20h20v20H0V20z" fill="%23f1f5f9" fill-opacity="0.6" fill-rule="evenodd"/%3E%3C/svg%3E');
         }
 
         /* Ustawienia dla druku */
         @media print {
-            #left-toolbar, #sidebar-overlay, #connect-tooltip, .print-hide, .vsm-drag-btn, .vsm-delete-btn, .resize-handles, #undo-redo-panel {
+            #main-header, #left-toolbar, #sidebar-overlay, #connect-tooltip, .print-hide, .vsm-drag-btn, .vsm-delete-btn, .resize-handles, #undo-redo-panel {
                 display: none !important;
             }
-            body { background: white !important; margin: 0; padding: 0; display: block; }
+            body { background: white !important; margin: 0; padding: 0; display: block; overflow: visible !important; }
             
-            #main-header { position: static !important; border-bottom: none !important; padding: 0 0 10px 0 !important; margin-bottom: 10px; }
-            #map-title { color: black !important; font-size: 20px !important; }
-            .bg-\\[\\#e6fcf5\\] { background: transparent !important; border: none !important; padding: 0 !important; box-shadow: none !important; }
+            /* Nagłówek widoczny TYLKO do druku */
+            #print-header { 
+                display: block !important; 
+                padding: 15px 20px; 
+                border-bottom: 2px solid #10b981;
+                margin-bottom: 20px;
+                background: white;
+            }
             
-            #workspace { background: none !important; width: 100vw; height: auto; position: static; }
+            #workspace { background: none !important; width: 100vw; height: auto; position: static; overflow: visible !important; }
             .vsm-node { border: 1px solid #94a3b8 !important; box-shadow: none !important; }
             @page { size: landscape; margin: 0.5cm; }
         }
@@ -41,20 +48,23 @@
 </head>
 <body class="flex flex-col h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
 
-    <!-- NAGŁÓWEK -->
+    <!-- NAGŁÓWEK TYLKO DO DRUKU -->
+    <div id="print-header" class="hidden">
+        <div class="text-xs font-extrabold text-emerald-600 uppercase tracking-widest mb-1" id="print-map-type">MAPA VSM</div>
+        <h1 class="text-2xl font-extrabold text-slate-900" id="print-project-name">Projekt Optymalizacji Procesu</h1>
+    </div>
+
+    <!-- NAGŁÓWEK APLIKACJI -->
     <header id="main-header" class="bg-white flex-none z-40 relative pt-2 md:pt-3 px-4 md:px-8 border-b border-slate-200">
         <div class="max-w-full mx-auto">
             
-            <div class="mb-1.5 md:mb-2 flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+            <div class="mb-2 md:mb-3 flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
                 <button onclick="toggleSidebar()" class="md:hidden self-start p-1.5 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition-colors shrink-0 print-hide shadow-sm flex items-center justify-center">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
                 </button>
                 
-                <div class="w-full max-w-xl">
-                    <div class="text-[9px] font-extrabold text-emerald-600 uppercase tracking-[0.15em] mb-0.5" id="lbl-map-type">MAPA VSM</div>
-                    <div class="bg-[#e6fcf5] border border-[#a7f3d0] rounded-lg p-1.5 w-full shadow-sm transition-colors">
-                        <input type="text" id="map-title" class="font-extrabold text-sm md:text-base text-emerald-950 bg-transparent outline-none w-full placeholder-emerald-700/50" value="Projekt Optymalizacji Procesu" title="Zmień tytuł mapy" />
-                    </div>
+                <div class="w-full max-w-xl flex items-center">
+                    <div class="text-[12px] font-extrabold text-emerald-600 uppercase tracking-[0.1em]" id="lbl-map-type">MAPA VSM</div>
                 </div>
             </div>
 
@@ -213,7 +223,6 @@
                             </marker>
                         </defs>
                         <g id="guides-layer"></g>
-                        <!-- Niewidzialna, gruba warstwa do swobodnego przesuwania linii czasu -->
                         <g id="timeline-drag-layer"></g> 
                         <g id="timeline-layer"></g>
                         <g id="edges-group"></g>
@@ -509,6 +518,7 @@
             currentLang = lang;
             const t = i18n[lang];
 
+            document.getElementById('print-map-type').innerText = t.mapType;
             document.getElementById('lbl-map-type').innerText = t.mapType;
             document.getElementById('lbl-tab-diagram').innerText = t.tabDiagram;
             document.getElementById('lbl-tab-tutorial').innerText = t.tabTutorial;
@@ -550,15 +560,19 @@
             renderDynamicTimeline();
         }
 
+        let globalProjectName = "Projekt Optymalizacji Procesu";
+
         window.addEventListener('message', function(event) {
             const msg = event.data;
             if (!msg || !msg.action) return;
             
             if (msg.action === 'setLanguage') {
                 setLanguage(msg.lang);
+            } else if (msg.action === 'updateProjectName') {
+                globalProjectName = msg.name;
+                document.getElementById('print-project-name').innerText = globalProjectName;
             } else if (msg.action === 'requestExport') {
                 const dataToExport = {
-                    title: document.getElementById('map-title').value,
                     nodes: nodes,
                     edges: edges,
                     customTimelineY: customTimelineY
@@ -566,7 +580,6 @@
                 window.parent.postMessage({ action: 'exportData', source: 'vsm', data: dataToExport }, '*');
             } else if (msg.action === 'importData') {
                 if (msg.data) {
-                    if (msg.data.title !== undefined) document.getElementById('map-title').value = msg.data.title;
                     if (msg.data.nodes) nodes = msg.data.nodes;
                     if (msg.data.edges) edges = msg.data.edges;
                     customTimelineY = msg.data.customTimelineY !== undefined ? msg.data.customTimelineY : null;
@@ -634,6 +647,7 @@
             } else {
                 setLanguage('pl');
             }
+            document.getElementById('print-project-name').innerText = globalProjectName;
             saveHistory(); 
         };
 
@@ -1396,6 +1410,17 @@
             edgesGroup.innerHTML = svgHtml;
         }
 
+        // Pomocnicza funkcja do generowania pól czasowych (Input Tekstowy)
+        function renderTimeField(node, field, defaultValue, labelStr) {
+            const val = node.data[field] !== undefined ? node.data[field] : defaultValue;
+            return `
+            <div class="flex justify-between items-center px-2 py-1 bg-transparent border-b border-slate-200 cursor-text">
+                <span class="font-medium text-slate-600">${labelStr}:</span>
+                <input type="text" class="w-16 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${val}" oninput="updateNodeData('${node.id}', '${field}', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
+            </div>
+            `;
+        }
+
         function updateNodesRender() {
             document.querySelectorAll('.vsm-node').forEach(el => {
                 const id = el.getAttribute('data-id');
@@ -1482,16 +1507,19 @@
 
                 const showControls = isSelected ? 'flex' : 'hidden';
 
+                // Krzyżyk PRZESUWANIA (w lewym górnym rogu)
                 const dragBtnHtml = `
                     <button class="vsm-drag-btn absolute -top-4 -left-4 md:-top-3 md:-left-3 bg-white border border-slate-200 text-slate-600 rounded-full p-2 md:p-1.5 ${showControls} transition-opacity hover:bg-slate-100 z-40 shadow-md print-hide items-center justify-center" onpointerdown="startNodeDrag(event, '${node.id}')" title="Przesuń element">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M19 9l3 3-3 3M9 19l3 3 3 3M2 12h20M12 2v20"/></svg>
                     </button>
                 `;
+                // Kosz USUWANIA (w prawym górnym rogu)
                 const deleteBtnHtml = `
                     <button class="vsm-delete-btn absolute -top-4 -right-4 md:-top-3 md:-right-3 bg-white border border-red-200 text-red-500 rounded-full p-2 md:p-1.5 ${showControls} transition-opacity hover:bg-red-500 hover:text-white hover:border-red-500 z-40 shadow-md print-hide items-center justify-center" onpointerdown="event.stopPropagation(); deleteNode('${node.id}')" title="Usuń element">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                     </button>
                 `;
+                // Uchwyt SKALOWANIA (w prawym dolnym rogu)
                 const resizeBtnHtml = `
                     <div class="resize-handles ${showControls} absolute -right-3 -bottom-3 w-6 h-6 bg-blue-500 border-2 border-white rounded-full cursor-se-resize z-40 shadow-md print-hide items-center justify-center text-white" onpointerdown="startResize(event, '${node.id}')" title="Zmień rozmiar">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 21 15 21"/><line x1="21" y1="21" x2="13" y2="13"/></svg>
@@ -1513,9 +1541,7 @@
                         <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] border-b border-slate-200 cursor-text">
                             <span class="font-medium text-slate-600">FTE:</span><input type="text" class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.fte||'1'}" oninput="updateNodeData('${node.id}', 'fte', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
-                        <div class="flex justify-between px-2 py-1 bg-white text-[11px] border-b border-slate-200 cursor-text">
-                            <span class="font-medium text-slate-600">C/T:</span><input type="text" class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.ct||'10 min'}" oninput="updateNodeData('${node.id}', 'ct', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
-                        </div>
+                        ${renderTimeField(node, 'ct', '10 min', 'C/T')}
                         <div class="flex justify-between px-2 py-1 bg-slate-100 text-[11px] border-b border-slate-200 cursor-text">
                             <span class="font-medium text-slate-600">RFT:</span><input type="text" class="w-12 text-right bg-transparent outline-none font-bold text-slate-800 cursor-pointer" value="${node.data.rft||'85%'}" oninput="updateNodeData('${node.id}', 'rft', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">
                         </div>
@@ -1589,7 +1615,7 @@
                         ${resizeBtnHtml}
                         
                         <div class="w-full flex justify-center z-10 mb-1 relative pointer-events-none">
-                            <div contenteditable="false" class="kaizen-text-box pointer-events-auto ${textBgClass} border px-3 py-2 rounded-md text-[11px] font-bold text-red-800 outline-none text-center min-w-[50px] max-w-full break-words whitespace-pre-wrap cursor-pointer transition-colors" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">${node.label}</div>
+                            <div contenteditable="false" class="kaizen-text-box pointer-events-auto ${textBgClass} border px-3 py-2 rounded-md text-[11px] font-bold text-red-800 outline-none text-center min-w-[50px] max-w-[200px] break-words whitespace-pre-wrap cursor-pointer transition-colors" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">${node.label}</div>
                         </div>
 
                         <div class="relative flex-1 w-full pointer-events-none drop-shadow-md min-h-0">
@@ -1644,8 +1670,8 @@
                     } else if(node.type === 'data') {
                         extraFields = `
                             <div class="w-full flex flex-col gap-1 mt-3 border-t border-slate-100 pt-2">
-                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/T</span><input type="text" class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="s" value="${node.data.ct || ''}" oninput="updateNodeData('${node.id}', 'ct', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
-                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/O</span><input type="text" class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="min" value="${node.data.co || ''}" oninput="updateNodeData('${node.id}', 'co', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
+                                ${renderTimeField(node, 'ct', '10 min', 'C/T')}
+                                ${renderTimeField(node, 'co', '0 min', 'C/O')}
                                 <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Uptime</span><input type="text" class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="%" value="${node.data.uptime || ''}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
                                 <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Zmiany</span><input type="text" class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="ilość" value="${node.data.shifts || ''}" oninput="updateNodeData('${node.id}', 'shifts', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
                             </div>
