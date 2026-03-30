@@ -99,13 +99,13 @@
         }
     </style>
 </head>
-<body class="bg-grid flex h-screen">
+<body class="bg-grid flex h-screen relative">
 
     <!-- Overlay for mobile menu -->
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar bg-white border-r border-emerald-100 flex flex-col shadow-2xl md:shadow-none h-full overflow-y-auto overflow-x-hidden">
+    <aside id="sidebar" class="sidebar bg-white border-r border-emerald-100 flex flex-col shadow-2xl md:shadow-none h-full overflow-y-auto overflow-x-hidden z-50">
         
         <!-- Logo Area -->
         <div class="p-6 flex items-center justify-between border-b border-emerald-50 h-20 shrink-0">
@@ -123,7 +123,7 @@
             </button>
         </div>
 
-        <!-- Toggle Menu Button (Przeniesione na górę) -->
+        <!-- Toggle Menu Button -->
         <div class="p-4 border-b border-emerald-50 shrink-0">
             <button onclick="toggleSidebar()" class="w-full flex items-center gap-4 p-3 rounded-xl text-slate-500 bg-slate-50 hover:bg-slate-100 hover:text-slate-700 transition-colors group">
                 <i id="toggle-icon" class="fas fa-angle-double-left w-6 shrink-0 text-center group-hover:-translate-x-1 transition-transform"></i>
@@ -163,7 +163,7 @@
                 <span class="nav-text font-bold text-xs whitespace-nowrap" id="nav-contact">Kontakt</span>
             </button>
 
-            <!-- Zapisz/Wczytaj (Przeniesione pod VSM i Kontakt) -->
+            <!-- Zapisz/Wczytaj -->
             <div class="pt-3 mt-2 border-t border-slate-100 flex flex-col gap-1.5">
                 <button onclick="exportWorkspace()" class="nav-link w-full flex items-center gap-3 p-2 rounded-xl text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors font-bold group">
                     <i class="fas fa-download w-5 shrink-0 text-center text-sm"></i>
@@ -181,7 +181,6 @@
         <!-- Sidebar Bottom: Ad Space -->
         <div class="mt-auto flex flex-col shrink-0">
             <div class="p-4 flex flex-col gap-3 sidebar-extras border-t border-emerald-50">
-                <!-- Ad Space (Powiększone - h-64 to ok. 250px wysokości) -->
                 <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition-all group overflow-hidden relative h-64">
                     <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 z-10 group-hover:text-emerald-600" id="ad-label">Miejsce na reklamę</span>
                     <i class="fas fa-ad text-4xl text-slate-300 mb-2 z-10 group-hover:scale-110 transition-transform group-hover:text-emerald-500"></i>
@@ -195,16 +194,24 @@
     <!-- Main Content Area -->
     <main class="main-content flex-grow flex flex-col relative overflow-hidden">
         
-        <!-- Mobile Header (Visible only on Mobile) -->
-        <div class="md:hidden flex items-center justify-between p-4 bg-white/80 backdrop-blur-md border-b border-emerald-50 z-40">
-            <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-emerald-50 rounded-xl text-emerald-600 transition-colors border border-slate-100">
-                <i class="fas fa-bars"></i>
-            </button>
-            <div class="text-xs font-black text-emerald-700 uppercase tracking-widest">Workspace</div>
-            <button onclick="resetToWelcome()" class="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 rounded-xl text-slate-400 transition-colors border border-slate-100">
+        <!-- Global Header (Project Name) -->
+        <header class="flex items-center justify-between p-3 md:p-4 bg-white/90 backdrop-blur-md border-b border-emerald-100 z-40 shadow-sm shrink-0">
+            <div class="flex items-center gap-3 md:gap-4 flex-1">
+                <button onclick="toggleSidebar()" class="md:hidden w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-emerald-50 rounded-xl text-emerald-600 transition-colors border border-slate-100 shrink-0">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="flex flex-col flex-1 max-w-xl relative">
+                    <label for="global-project-name" id="lbl-global-project" class="text-[9px] md:text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 ml-1">Nazwa Projektu</label>
+                    <!-- Zmienione: Podświetlenie na zielono -->
+                    <input type="text" id="global-project-name" value="Projekt Optymalizacji Procesu" 
+                           class="bg-emerald-50 border border-emerald-300 outline-none text-sm md:text-lg font-extrabold text-emerald-700 placeholder-emerald-400 w-full px-3 py-1.5 rounded-lg shadow-inner focus:ring-2 focus:ring-emerald-500 focus:bg-emerald-100 transition-all duration-300" 
+                           oninput="broadcastProjectName()">
+                </div>
+            </div>
+            <button onclick="resetToWelcome()" class="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 rounded-xl text-slate-400 transition-colors border border-slate-100 shrink-0 ml-4" title="Powrót do ekranu głównego">
                 <i class="fas fa-home"></i>
             </button>
-        </div>
+        </header>
 
         <!-- Content Container -->
         <div class="flex-grow relative overflow-hidden bg-transparent">
@@ -258,7 +265,7 @@
                 </div>
             </div>
 
-            <!-- Iframe Containers - One for each tool to preserve state when switching! -->
+            <!-- Iframe Containers -->
             <div id="iframe-container" class="absolute inset-0 hidden bg-white">
                 <iframe id="iframe-sipoc" class="w-full h-full hidden" src="about:blank"></iframe>
                 <iframe id="iframe-flowchart" class="w-full h-full hidden" src="about:blank"></iframe>
@@ -270,9 +277,24 @@
     </main>
 
     <!-- Global Toast Notification -->
-    <div id="toast" class="fixed bottom-8 right-8 translate-y-20 opacity-0 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-50 pointer-events-none">
+    <div id="toast" class="fixed bottom-8 right-8 translate-y-20 opacity-0 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-50 pointer-events-none transition-all duration-300">
         <i class="fas fa-info-circle text-emerald-400 text-xl" id="toast-icon"></i>
         <span id="toast-message" class="text-sm font-bold">Wiadomość</span>
+    </div>
+
+    <!-- MODAL - Przypomnienie o nazwie projektu -->
+    <div id="name-reminder-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 transform scale-95 transition-transform duration-300" id="name-reminder-box">
+            <div class="w-14 h-14 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mb-5 text-2xl shadow-inner mx-auto md:mx-0">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="text-xl font-extrabold text-slate-800 mb-3 text-center md:text-left" id="rem-title">Domyślna nazwa projektu</h3>
+            <p class="text-slate-600 mb-8 text-sm leading-relaxed text-center md:text-left" id="rem-desc">Twój projekt wciąż ma domyślną nazwę. Zmień ją, aby łatwiej odnaleźć swój proces w przyszłości.</p>
+            <div class="flex flex-col-reverse md:flex-row gap-3 justify-end">
+                <button onclick="continueWithDefaultName()" class="px-5 py-2.5 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-sm transition-colors w-full md:w-auto" id="rem-btn-cont">Zostaw domyślną</button>
+                <button onclick="focusProjectName()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-colors shadow-md hover:shadow-lg w-full md:w-auto" id="rem-btn-change">Zmień nazwę</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -286,11 +308,14 @@
         // Workspace Data Handling
         let workspaceData = { sipoc: null, flowchart: null, vsm: null };
         let exportPending = false;
+        let pendingAction = null; // Obsługa wstrzymanej akcji (eksport lub druk)
 
         // Translations dict
         const i18n = {
             pl: {
                 projects: "Projekty",
+                projectName: "Nazwa Projektu",
+                defaultProject: "Projekt Optymalizacji Procesu",
                 collapse: "Zwiń menu",
                 welcome: "Witaj w",
                 welcomeDesc: "Wybierz narzędzie z menu po lewej stronie, aby rozpocząć optymalizację procesu. Możesz zapisać lub wczytać swoje projekty w menu bocznym.",
@@ -307,10 +332,17 @@
                 exportFile: "Zapisz do pliku",
                 importFile: "Wczytaj z pliku",
                 statusSaved: "Plik zapisany pomyślnie!",
-                statusLoaded: "Dane wczytane pomyślnie!"
+                statusLoaded: "Dane wczytane pomyślnie!",
+                // Modal
+                remTitle: "Domyślna nazwa projektu",
+                remDesc: "Twój projekt wciąż ma domyślną nazwę. Zmień ją, aby łatwiej zidentyfikować swój proces w przyszłości.",
+                remBtnCont: "Kontynuuj z domyślną",
+                remBtnChange: "Zmień nazwę"
             },
             en: {
                 projects: "Projects",
+                projectName: "Project Name",
+                defaultProject: "Process Optimization Project",
                 collapse: "Collapse menu",
                 welcome: "Welcome to",
                 welcomeDesc: "Select a tool from the menu on the left to start process optimization. You can save or load your projects from the side menu.",
@@ -327,7 +359,12 @@
                 exportFile: "Save to file",
                 importFile: "Load from file",
                 statusSaved: "File saved successfully!",
-                statusLoaded: "Data loaded successfully!"
+                statusLoaded: "Data loaded successfully!",
+                // Modal
+                remTitle: "Default Project Name",
+                remDesc: "Your project still has the default name. Change it to easily identify your process later.",
+                remBtnCont: "Continue with default",
+                remBtnChange: "Change name"
             }
         };
 
@@ -338,13 +375,98 @@
             setLanguage(currentLang);
         };
 
-        // Listen for export data coming from iframes
+        // Broadcast Project Name to inner iframes
+        function broadcastProjectName() {
+            const name = document.getElementById('global-project-name').value;
+            ['sipoc', 'flowchart', 'vsm'].forEach(v => {
+                const frame = document.getElementById(`iframe-${v}`);
+                if (frame && frame.contentWindow) {
+                    frame.contentWindow.postMessage({ action: 'updateProjectName', name: name }, '*');
+                }
+            });
+        }
+
+        // Listen for export/autosave data coming from iframes
         window.addEventListener('message', (event) => {
-            if (event.data && event.data.action === 'exportData') {
+            if (event.data && (event.data.action === 'exportData' || event.data.action === 'autoSaveData')) {
                 workspaceData[event.data.source] = event.data.data;
-                checkExportReady();
+                if(event.data.action === 'exportData') {
+                    checkExportReady();
+                }
             }
         });
+
+        // --- OBSŁUGA PRZYPOMNIENIA O NAZWIE (MODAL) ---
+        function isDefaultName() {
+            const val = document.getElementById('global-project-name').value.trim();
+            const defPl = i18n['pl'].defaultProject.trim();
+            const defEn = i18n['en'].defaultProject.trim();
+            return val === defPl || val === defEn || val === '';
+        }
+
+        function showNameReminderModal() {
+            const modal = document.getElementById('name-reminder-modal');
+            const box = document.getElementById('name-reminder-box');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                box.classList.remove('scale-95');
+            });
+        }
+
+        function hideNameReminderModal() {
+            const modal = document.getElementById('name-reminder-modal');
+            const box = document.getElementById('name-reminder-box');
+            modal.classList.add('opacity-0');
+            box.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function continueWithDefaultName() {
+            hideNameReminderModal();
+            if (typeof pendingAction === 'function') {
+                pendingAction();
+            } else if (pendingAction === 'export') {
+                proceedExportWorkspace();
+            }
+            pendingAction = null;
+        }
+
+        function focusProjectName() {
+            hideNameReminderModal();
+            const input = document.getElementById('global-project-name');
+            input.focus();
+            input.select();
+            
+            // Wizualny błysk naprowadzający
+            input.classList.add('ring-4', 'ring-emerald-400', 'animate-pulse');
+            setTimeout(() => {
+                input.classList.remove('ring-4', 'ring-emerald-400', 'animate-pulse');
+            }, 1500);
+            
+            pendingAction = null;
+        }
+
+        // Nadpisanie funkcji Print w ramkach (aby sprawdzić nazwę)
+        function overrideIframePrint(frame) {
+            try {
+                const cw = frame.contentWindow;
+                if (cw && !cw._originalPrint) {
+                    cw._originalPrint = cw.print;
+                    cw.print = function() {
+                        if (isDefaultName()) {
+                            pendingAction = () => { cw._originalPrint.call(cw); };
+                            showNameReminderModal();
+                        } else {
+                            cw._originalPrint.call(cw);
+                        }
+                    };
+                }
+            } catch (e) {
+                console.warn("Nie można nadpisać eventu drukowania w iframe", e);
+            }
+        }
+        // ----------------------------------------------
 
         function setLanguage(lang) {
             currentLang = lang;
@@ -360,6 +482,7 @@
 
             // Update DOM texts
             document.getElementById('label-projects').innerText = i18n[lang].projects;
+            document.getElementById('lbl-global-project').innerText = i18n[lang].projectName;
             document.getElementById('label-collapse').innerText = i18n[lang].collapse;
             document.getElementById('welcome-title').innerText = i18n[lang].welcome;
             document.getElementById('welcome-desc').innerText = i18n[lang].welcomeDesc;
@@ -375,8 +498,21 @@
             
             document.getElementById('btn-export').innerText = i18n[lang].exportFile;
             document.getElementById('btn-import').innerText = i18n[lang].importFile;
+
+            // Modal texts
+            document.getElementById('rem-title').innerText = i18n[lang].remTitle;
+            document.getElementById('rem-desc').innerText = i18n[lang].remDesc;
+            document.getElementById('rem-btn-cont').innerText = i18n[lang].remBtnCont;
+            document.getElementById('rem-btn-change').innerText = i18n[lang].remBtnChange;
             
             ['link-sipoc', 'link-flowchart', 'link-vsm'].forEach(id => document.getElementById(id).innerText = i18n[lang].run);
+
+            // Update Default Project Name if unmodified
+            const pName = document.getElementById('global-project-name');
+            if(pName.value === i18n['pl'].defaultProject || pName.value === i18n['en'].defaultProject || pName.value === "") {
+                pName.value = i18n[lang].defaultProject;
+                broadcastProjectName();
+            }
 
             // Broadcast Language change
             ['sipoc', 'flowchart', 'vsm', 'contact'].forEach(v => {
@@ -408,7 +544,6 @@
 
             welcomeContent.classList.add('hidden');
             iframeContainer.classList.remove('hidden');
-            localStorage.setItem('activeView', view);
 
             ['sipoc', 'flowchart', 'vsm', 'contact'].forEach(v => {
                 const frame = document.getElementById(`iframe-${v}`);
@@ -416,6 +551,16 @@
                     frame.classList.remove('hidden');
                     if (frame.src === 'about:blank' || frame.src.endsWith('about:blank')) {
                         frame.src = `./${view}.html?lang=${currentLang}`;
+                        // Immediately sync states on load
+                        frame.onload = () => {
+                            frame.contentWindow.postMessage({ action: 'updateProjectName', name: document.getElementById('global-project-name').value }, '*');
+                            frame.contentWindow.postMessage({ action: 'setLanguage', lang: currentLang }, '*');
+                            overrideIframePrint(frame);
+                        };
+                    } else {
+                        // Resync just in case
+                        frame.contentWindow.postMessage({ action: 'updateProjectName', name: document.getElementById('global-project-name').value }, '*');
+                        overrideIframePrint(frame);
                     }
                 } else {
                     frame.classList.add('hidden');
@@ -436,8 +581,6 @@
             ['sipoc', 'flowchart', 'vsm', 'contact'].forEach(v => {
                 document.getElementById(`iframe-${v}`).classList.add('hidden');
             });
-            
-            localStorage.removeItem('activeView');
 
             if (window.innerWidth < 768) {
                 sidebar.classList.remove('mobile-open');
@@ -447,6 +590,15 @@
 
         // --- EXPORT TO EXTERNAL FILE ---
         function exportWorkspace() {
+            if (isDefaultName()) {
+                pendingAction = 'export';
+                showNameReminderModal();
+            } else {
+                proceedExportWorkspace();
+            }
+        }
+
+        function proceedExportWorkspace() {
             exportPending = true;
             workspaceData = { sipoc: null, flowchart: null, vsm: null };
             
@@ -460,7 +612,6 @@
                 }
             });
 
-            // Wait briefly for responses (frames process postMessage asynchronously)
             setTimeout(() => {
                 if (exportPending) triggerDownload();
             }, 800);
@@ -474,24 +625,24 @@
 
         async function triggerDownload() {
             exportPending = false;
+            
+            const globalName = document.getElementById('global-project-name').value || 'Lean_Workspace';
             const dataStr = JSON.stringify({
                 app: "Lean Six Sigma Mapping Workspace",
-                version: "1.0",
+                version: "2.0",
+                projectName: globalName,
                 timestamp: new Date().toISOString(),
                 data: workspaceData
             }, null, 2);
             
-            const defaultFileName = `lean_workspace_${new Date().toISOString().split('T')[0]}.json`;
+            const safeName = globalName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const defaultFileName = `${safeName}_${new Date().toISOString().split('T')[0]}.json`;
 
             try {
-                // Nowoczesna metoda zapisu (otwiera okno dialogowe "Zapisz jako...")
                 if (window.showSaveFilePicker) {
                     const handle = await window.showSaveFilePicker({
                         suggestedName: defaultFileName,
-                        types: [{
-                            description: 'JSON Workspace File',
-                            accept: {'application/json': ['.json']},
-                        }],
+                        types: [{ description: 'JSON Workspace File', accept: {'application/json': ['.json']} }],
                     });
                     const writable = await handle.createWritable();
                     await writable.write(dataStr);
@@ -499,10 +650,8 @@
                     
                     showToast(i18n[currentLang].statusSaved, 'fa-check-circle', 'text-emerald-400');
                 } else {
-                    // Fallback dla starszych przeglądarek
                     const blob = new Blob([dataStr], { type: "application/json" });
                     const url = URL.createObjectURL(blob);
-                    
                     const a = document.createElement('a');
                     a.href = url;
                     a.download = defaultFileName;
@@ -510,13 +659,10 @@
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
-
                     showToast(i18n[currentLang].statusSaved, 'fa-check-circle', 'text-emerald-400');
                 }
             } catch (err) {
-                // Ignoruj błąd jeśli użytkownik po prostu anulował okno zapisu
                 if (err.name !== 'AbortError') {
-                    console.error('Błąd podczas zapisu pliku:', err);
                     showToast("Błąd zapisu / Save error", 'fa-exclamation-triangle', 'text-red-400');
                 }
             }
@@ -531,21 +677,29 @@
             reader.onload = (e) => {
                 try {
                     const parsed = JSON.parse(e.target.result);
+                    
+                    // Odczytywanie Globalnej Nazwy Projektu
+                    if (parsed.projectName) {
+                        document.getElementById('global-project-name').value = parsed.projectName;
+                    }
+
                     if (parsed.data) {
                         ['sipoc', 'flowchart', 'vsm'].forEach(v => {
                             if (parsed.data[v] && Object.keys(parsed.data[v]).length > 0) {
                                 const frame = document.getElementById(`iframe-${v}`);
-                                // If frame hasn't been loaded yet, load it first
                                 if (frame.src === 'about:blank' || frame.src.endsWith('about:blank')) {
                                     frame.src = `./${v}.html?lang=${currentLang}`;
                                     frame.onload = () => {
                                         frame.contentWindow.postMessage({ action: 'importData', data: parsed.data[v] }, '*');
+                                        broadcastProjectName();
+                                        overrideIframePrint(frame);
                                     };
                                 } else {
                                     frame.contentWindow.postMessage({ action: 'importData', data: parsed.data[v] }, '*');
                                 }
                             }
                         });
+                        broadcastProjectName();
                         showToast(i18n[currentLang].statusLoaded, 'fa-check-circle', 'text-emerald-400');
                     } else {
                         throw new Error("Invalid format");
@@ -553,21 +707,17 @@
                 } catch (err) {
                     showToast("Błąd pliku / File error", 'fa-exclamation-triangle', 'text-red-400');
                 }
-                event.target.value = ''; // Reset input to allow re-uploading the same file
+                event.target.value = ''; 
             };
             reader.readAsText(file);
         }
 
         function showToast(msg, iconClass, colorClass) {
             document.getElementById('toast-message').innerText = msg;
-            
             const icon = document.getElementById('toast-icon');
             icon.className = `fas ${iconClass} ${colorClass} text-xl`;
-            
             toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
+            setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3000);
         }
     </script>
 </body>
