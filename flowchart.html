@@ -112,22 +112,30 @@
         .color-btn { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.1s; }
         .color-btn:hover { transform: scale(1.15); }
         
+        .tab-btn { transition: all 0.2s; }
+        .tab-active { color: #10b981; border-bottom-color: #10b981; }
+        .tab-inactive { color: #64748b; border-bottom-color: transparent; }
+        .tab-inactive:hover { color: #334155; }
+
         #print-container { display: none; }
 
         @media print {
             body { background: white; margin: 0; padding: 0; }
             body > *:not(#print-container) { display: none !important; }
             #print-container {
-                display: flex !important;
-                flex-direction: column;
-                justify-content: flex-start;
-                align-items: center;
+                display: block !important;
                 position: absolute;
                 top: 0; left: 0; width: 100%;
-                padding-top: 1cm;
+                margin: 0; padding: 0;
             }
-            #print-container img { max-width: 100%; height: auto; }
-            @page { margin: 1cm; }
+            #print-container img { 
+                max-width: 100%; 
+                max-height: 85vh; 
+                object-fit: contain; 
+                display: block;
+                margin: 0 auto;
+            }
+            @page { margin: 10mm; }
         }
     </style>
 </head>
@@ -246,7 +254,7 @@
                     <div class="w-px h-6 sm:h-8 bg-slate-200 mx-1"></div>
                     <button id="tb-label-ok" class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-bold text-green-600 hover:bg-green-50 rounded-lg">OK</button>
                     <button id="tb-label-nok" class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-bold text-red-600 hover:bg-red-50 border border-transparent rounded-lg">NOK</button>
-                    <button id="tb-label-clear" class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-bold text-slate-400 hover:bg-slate-100 rounded-lg" data-i18n="none">Brak</button>
+                    <button id="tb-label-clear" class="px-2 sm:px-3 py-1.5 py-2 text-xs font-bold text-slate-400 hover:bg-slate-100 rounded-lg" data-i18n="none">Brak</button>
                     <div class="w-px h-6 sm:h-8 bg-slate-200 mx-1"></div>
                     <button id="tb-delete-edge" class="p-1.5 sm:p-2 text-red-500 hover:bg-red-50 rounded-lg"><i data-lucide="trash-2"></i></button>
                 </div>
@@ -276,7 +284,7 @@
     <div id="print-container"></div>
 
     <script>
-        let globalProjectName = "Projekt Optymalizacji Procesu"; // Domyślnie zsynchronizowana
+        let globalProjectName = "Projekt Optymalizacji Procesu"; 
 
         const contentHTML = {
             tutPL: `
@@ -286,6 +294,77 @@
                     </h2>
                     <div class="text-slate-600 space-y-6 leading-relaxed">
                         <p class="text-lg font-medium text-slate-700">Oto krótki i konkretny samouczek, który przeprowadzi Cię od pustej kartki do gotowej mapy procesu.</p>
+                        <section>
+                            <h3 class="text-xl font-bold text-slate-800 mb-3 border-b pb-2 border-slate-100">Część 1: Co to właściwie jest Flowchart?</h3>
+                            <p class="mb-3"><strong>Flowchart (schemat blokowy)</strong> to graficzny język opisywania procesów. Zamiast pisać pięciostronicową instrukcję, rysujesz ścieżkę, którą podąża praca. W świecie Lean Six Sigma flowchart jest jak „zdjęcie RTG” – pozwala zobaczyć złamania i nieprawidłowości wewnątrz organizacji.</p>
+                            <h4 class="font-bold text-slate-700 mt-4 mb-2">Po co go robić?</h4>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li><strong>Wizualizacja:</strong> Ludzki mózg przetwarza obrazy 60 000 razy szybciej niż tekst.</li>
+                                <li><strong>Standard:</strong> Każdy widzi ten sam proces (koniec z domysłami typu „wydawało mi się, że to robi dział X”).</li>
+                                <li><strong>Analiza:</strong> Łatwiej wskazać, gdzie tracimy czas lub pieniądze.</li>
+                            </ul>
+                        </section>
+                        <section>
+                            <h3 class="text-xl font-bold text-slate-800 mb-3 border-b pb-2 border-slate-100">Część 2: Alfabet Flowchartu (Symbole)</h3>
+                            <p class="mb-3">Zanim zaczniesz rysować, musisz znać podstawowe „klocki”. Używanie standardowych symboli sprawi, że Twoja mapa będzie zrozumiała dla każdego.</p>
+                            <ul class="space-y-4">
+                                <li class="flex items-center gap-4">
+                                    <div class="w-12 h-6 border-2 border-green-500 bg-green-50 rounded-full shrink-0 shadow-sm"></div>
+                                    <div><strong>Start/Koniec (Owal):</strong> Każdy proces musi mieć jasny początek i punkt końcowy.</div>
+                                </li>
+                                <li class="flex items-center gap-4">
+                                    <div class="w-12 h-8 border-2 border-emerald-500 bg-emerald-50 rounded shrink-0 shadow-sm"></div>
+                                    <div><strong>Działanie (Prostokąt):</strong> Opisuje konkretną czynność (np. „Wyślij maila”, „Zapakuj paczkę”).</div>
+                                </li>
+                                <li class="flex items-center gap-4">
+                                    <div class="w-8 h-8 border-2 border-yellow-500 bg-yellow-50 transform rotate-45 shrink-0 mx-2 shadow-sm"></div>
+                                    <div><strong>Decyzja (Romb):</strong> Pytanie, na które odpowiadamy „Tak” lub „Nie”. Tu proces się rozgałęzia.</div>
+                                </li>
+                                <li class="flex items-center gap-4">
+                                    <div class="w-12 h-8 relative shrink-0 shadow-sm">
+                                        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M 2 2 L 98 2 L 98 80 C 75 100, 25 60, 2 80 Z" fill="#eff6ff" stroke="#3b82f6" stroke-width="2" /></svg>
+                                    </div>
+                                    <div><strong>Dokument:</strong> Symbolizuje wejście lub wyjście danych w formie dokumentu.</div>
+                                </li>
+                                <li class="flex items-center gap-4">
+                                    <i data-lucide="arrow-right" class="w-8 h-8 text-slate-500 shrink-0 ml-2"></i>
+                                    <div><strong>Kierunek (Strzałka):</strong> Pokazuje, w którą stronę płynie praca.</div>
+                                </li>
+                            </ul>
+                        </section>
+                        <section>
+                            <h3 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2 border-slate-100">Część 3: Jak wykonać Flowchart krok po kroku</h3>
+                            <div class="space-y-4">
+                                <div><h4 class="font-bold text-emerald-600">Krok 1: Określ granice (Scope)</h4>
+                                <p>Nie próbuj opisać całego funkcjonowania firmy na jednej kartce.</p>
+                                <ul class="list-disc pl-6 mt-1 text-sm text-slate-500">
+                                    <li>Gdzie proces się zaczyna? (np. Klient składa zamówienie)</li>
+                                    <li>Gdzie proces się kończy? (np. Klient otrzymuje towar)</li>
+                                </ul></div>
+                                <div><h4 class="font-bold text-emerald-600">Krok 2: Zbierz fakty (Go to Gemba)</h4>
+                                <p>Największy błąd to rysowanie procesu „zza biurka”. Idź tam, gdzie praca się odbywa (w LSS nazywamy to <em>Gemba</em>). Porozmawiaj z ludźmi, którzy faktycznie wykonują te zadania.</p></div>
+                                <div><h4 class="font-bold text-emerald-600">Krok 3: Wypisz główne kroki</h4>
+                                <p>Zanim zaczniesz rysować piękne kształty, wypisz czynności na karteczkach samoprzylepnych (Post-it). Pozwoli Ci to łatwo zmieniać ich kolejność, gdy okaże się, że o czymś zapomniałeś.</p></div>
+                                <div><h4 class="font-bold text-emerald-600">Krok 4: Narysuj schemat</h4>
+                                <ul class="list-disc pl-6 mt-1 text-sm text-slate-500 space-y-1">
+                                    <li>Ustaw kroki w kolejności chronologicznej.</li>
+                                    <li>Użyj rombów wszędzie tam, gdzie proces może pójść w dwie różne strony.</li>
+                                    <li>Zadbaj o czytelność – strzałki nie powinny się nadmiernie krzyżować.</li>
+                                </ul></div>
+                                <div><h4 class="font-bold text-emerald-600">Krok 5: Weryfikacja</h4>
+                                <p>Pokaż gotowy schemat komuś, kto bierze udział w tym procesie. Zapytaj: „Czy to naprawdę tak wygląda?”.</p></div>
+                            </div>
+                        </section>
+                        <section class="bg-emerald-50 border border-emerald-200 p-5 rounded-lg mt-6">
+                            <h3 class="text-lg font-bold text-emerald-800 mb-3 flex items-center gap-2">
+                                <i data-lucide="award" class="w-5 h-5"></i> Złote zasady Flowchartingu
+                            </h3>
+                            <ul class="list-disc pl-6 space-y-2 text-emerald-900">
+                                <li><strong>Keep It Simple:</strong> Jeśli proces jest zbyt skomplikowany, podziel go na podprocesy.</li>
+                                <li><strong>Konsekwencja:</strong> Opisuj działania czasownikami (np. „Sprawdź”, „Generuj”, „Zatwierdź”).</li>
+                                <li><strong>Prawda ponad ideał:</strong> Rysuj to, co się <em>dzieje</em>, a nie to, co <em>powinno</em> się dziać według instrukcji.</li>
+                            </ul>
+                        </section>
                     </div>
                 </div>
             `,
@@ -296,6 +375,75 @@
                     </h2>
                     <div class="text-slate-600 space-y-6 leading-relaxed">
                         <p class="text-lg font-medium text-slate-700">Here is a short and concrete tutorial that will guide you from a blank page to a finished process map.</p>
+                        <section>
+                            <h3 class="text-xl font-bold text-slate-800 mb-3 border-b pb-2 border-slate-100">Part 1: What is a Flowchart?</h3>
+                            <p class="mb-3"><strong>Flowchart</strong> is a graphical language for describing processes. Instead of writing a five-page manual, you draw the path the work follows. In Lean Six Sigma, a flowchart is like an "X-ray" - it lets you see the fractures and irregularities inside the organization.</p>
+                            <h4 class="font-bold text-slate-700 mt-4 mb-2">Why do it?</h4>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li><strong>Visualization:</strong> The human brain processes images 60,000 times faster than text.</li>
+                                <li><strong>Standard:</strong> Everyone sees the same process.</li>
+                                <li><strong>Analysis:</strong> It's easier to point out where we lose time or money.</li>
+                            </ul>
+                        </section>
+                        <section>
+                            <h3 class="text-xl font-bold text-slate-800 mb-3 border-b pb-2 border-slate-100">Part 2: Flowchart Alphabet (Symbols)</h3>
+                            <p class="mb-3">Before you start drawing, you must know the basic "building blocks". Using standard symbols will make your map understandable to everyone.</p>
+                            <ul class="space-y-4">
+                                <li class="flex items-center gap-4">
+                                    <div class="w-12 h-6 border-2 border-green-500 bg-green-50 rounded-full shrink-0 shadow-sm"></div>
+                                    <div><strong>Start/End (Oval):</strong> Every process must have a clear start and end point.</div>
+                                </li>
+                                <li class="flex items-center gap-4">
+                                    <div class="w-12 h-8 border-2 border-emerald-500 bg-emerald-50 rounded shrink-0 shadow-sm"></div>
+                                    <div><strong>Action (Rectangle):</strong> Describes a specific action.</div>
+                                </li>
+                                <li class="flex items-center gap-4">
+                                    <div class="w-8 h-8 border-2 border-yellow-500 bg-yellow-50 transform rotate-45 shrink-0 mx-2 shadow-sm"></div>
+                                    <div><strong>Decision (Diamond):</strong> A question we answer with "Yes" or "No". The process branches here.</div>
+                                </li>
+                                <li class="flex items-center gap-4">
+                                    <div class="w-12 h-8 relative shrink-0 shadow-sm">
+                                        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M 2 2 L 98 2 L 98 80 C 75 100, 25 60, 2 80 Z" fill="#eff6ff" stroke="#3b82f6" stroke-width="2" /></svg>
+                                    </div>
+                                    <div><strong>Document:</strong> Symbolizes the input or output of data in the form of a document.</div>
+                                </li>
+                                <li class="flex items-center gap-4">
+                                    <i data-lucide="arrow-right" class="w-8 h-8 text-slate-500 shrink-0 ml-2"></i>
+                                    <div><strong>Direction (Arrow):</strong> Shows which way the work flows.</div>
+                                </li>
+                            </ul>
+                        </section>
+                        <section>
+                            <h3 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2 border-slate-100">Part 3: Flowchart step by step</h3>
+                            <div class="space-y-4">
+                                <div><h4 class="font-bold text-emerald-600">Step 1: Define limits (Scope)</h4>
+                                <ul class="list-disc pl-6 mt-1 text-sm text-slate-500">
+                                    <li>Where does the process start?</li>
+                                    <li>Where does the process end?</li>
+                                </ul></div>
+                                <div><h4 class="font-bold text-emerald-600">Step 2: Gather facts (Go to Gemba)</h4>
+                                <p>Talk to the people who actually perform these tasks.</p></div>
+                                <div><h4 class="font-bold text-emerald-600">Step 3: List main steps</h4>
+                                <p>Write down tasks on Post-it notes before drawing beautiful shapes.</p></div>
+                                <div><h4 class="font-bold text-emerald-600">Step 4: Draw the diagram</h4>
+                                <ul class="list-disc pl-6 mt-1 text-sm text-slate-500 space-y-1">
+                                    <li>Place steps in chronological order.</li>
+                                    <li>Ensure clarity - arrows should not cross excessively.</li>
+                                </ul></div>
+                                <div><h4 class="font-bold text-emerald-600">Step 5: Verification</h4>
+                                <p>Show the finished diagram to someone involved in the process.</p></div>
+                            </div>
+                        </section>
+                        <section class="bg-emerald-50 border border-emerald-200 p-5 rounded-lg mt-6">
+                            <h3 class="text-lg font-bold text-emerald-800 mb-3 flex items-center gap-2">
+                                <i data-lucide="award" class="w-5 h-5"></i> Golden rules of Flowcharting
+                            </h3>
+                            <ul class="list-disc pl-6 space-y-2 text-emerald-900">
+                                <li><strong>Keep It Simple:</strong> If the process is too complex, divide it into sub-processes.</li>
+                                <li><strong>Consistency:</strong> Describe actions with verbs.</li>
+                                <li><strong>Truth over ideal:</strong> Draw what <em>happens</em>, not what <em>should</em> happen (As-Is map).</li>
+                            </ul>
+                        </section>
                     </div>
                 </div>
             `,
@@ -304,6 +452,12 @@
                     <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
                         <i data-lucide="book" class="w-6 h-6 text-emerald-500"></i> Instrukcja Obsługi
                     </h2>
+                    <ul class="space-y-4 text-slate-600">
+                        <li class="flex gap-3"><i data-lucide="plus-circle" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Dodawanie elementów:</b> Przeciągnij i upuść (lub po prostu kliknij) wybrany kształt z menu po lewej stronie, aby dodać go do planszy roboczej. Na telefonie tapnij w kształt.</div></li>
+                        <li class="flex gap-3"><i data-lucide="zoom-in" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Powiększanie i przesuwanie:</b> Użyj kółka myszy z wciśniętym <code>Ctrl</code> do przybliżania. Na ekranach dotykowych uszczypnij dwoma palcami. Aby przesunąć planszę, łap za puste pole.</div></li>
+                        <li class="flex gap-3"><i data-lucide="link" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Łączenie bloków:</b> Zaznacz blok klikając go, a następnie przeciągnij linię z jednej z niebieskich kropek (punktów zaczepienia) do innego bloku. Linie omijają figury automatycznie!</div></li>
+                        <li class="flex gap-3"><i data-lucide="type" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Edycja Tekstu:</b> Kliknij dwukrotnie w blok, aby zmienić tekst, lub użyj ikonki ołówka w menu kafelka. Rozmiar klocka dopasuje się automatycznie.</div></li>
+                    </ul>
                 </div>
             `,
             manEN: `
@@ -311,6 +465,12 @@
                     <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
                         <i data-lucide="book" class="w-6 h-6 text-emerald-500"></i> User Manual
                     </h2>
+                    <ul class="space-y-4 text-slate-600">
+                        <li class="flex gap-3"><i data-lucide="plus-circle" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Adding elements:</b> Drag and drop (or click) a shape from the left menu to add it to the canvas. Tap it on mobile.</div></li>
+                        <li class="flex gap-3"><i data-lucide="zoom-in" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Zooming and panning:</b> Use the mouse wheel while holding <code>Ctrl</code> to zoom in. Pinch with two fingers on touchscreens. Grab an empty space to pan the canvas.</div></li>
+                        <li class="flex gap-3"><i data-lucide="link" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Connecting blocks:</b> Select a block by clicking on it, then drag a line from a blue dot (anchor point) to another block. Lines bypass shapes automatically!</div></li>
+                        <li class="flex gap-3"><i data-lucide="type" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i> <div><b>Text Editing:</b> Double-click a block to change the text, or use the pencil icon in the tile menu. The size adapts automatically.</div></li>
+                    </ul>
                 </div>
             `
         };
@@ -352,6 +512,18 @@
             document.getElementById('view-manual').innerHTML = i18n[currentLang].manHtml;
 
             lucide.createIcons();
+
+            const titleInput = document.getElementById('project-title');
+            if(titleInput) {
+                if(currentLang === 'en' && titleInput.value === "Projekt Optymalizacji Procesu") titleInput.value = "Process Optimization Project";
+                else if (currentLang === 'pl' && titleInput.value === "Process Optimization Project") titleInput.value = "Projekt Optymalizacji Procesu";
+            }
+            
+            const subInput = document.getElementById('project-subtitle');
+            if(subInput) {
+                if(currentLang === 'en' && subInput.value === "FLOWCHART") subInput.value = "FLOWCHART";
+                else if (currentLang === 'pl' && subInput.value === "FLOWCHART") subInput.value = "FLOWCHART";
+            }
         }
 
         function switchTab(tabId) {
@@ -387,7 +559,6 @@
         const nodeToolbar = document.getElementById('node-toolbar');
         const handleFrom = document.getElementById('edge-handle-from');
         const handleTo = document.getElementById('edge-handle-to');
-        const zoomLevelEl = document.getElementById('zoom-level');
 
         const THEMES = {
             gray: { bg: '#f1f5f9', border: '#94a3b8' }, green: { bg: '#dcfce7', border: '#22c55e' },
@@ -408,15 +579,22 @@
         const history = { past: [], future: [] };
 
         const notifyDashboard = () => {
+            const ptInput = document.getElementById('project-title');
+            const psInput = document.getElementById('project-subtitle');
             window.parent.postMessage({
                 action: 'autoSaveData',
                 source: 'flowchart',
                 data: {
                     nodes: state.nodes,
-                    edges: state.edges
+                    edges: state.edges,
+                    title: ptInput ? ptInput.value : globalProjectName,
+                    subtitle: psInput ? psInput.value : 'FLOWCHART'
                 }
             }, '*');
         };
+
+        const titleEl = document.getElementById('project-title');
+        if (titleEl) titleEl.addEventListener('change', notifyDashboard);
         
         function saveState() {
             history.past.push({
@@ -426,7 +604,7 @@
             if (history.past.length > 50) history.past.shift();
             history.future = [];
             updateUndoRedoButtons();
-            notifyDashboard();
+            notifyDashboard(); 
         }
 
         function restoreState(historicState) {
@@ -476,9 +654,11 @@
 
         function showIndicator(msg, duration = 3000) {
             const ind = document.getElementById('autosave-indicator');
-            ind.innerText = msg; 
-            ind.classList.remove('hidden');
-            setTimeout(() => ind.classList.add('hidden'), duration);
+            if (ind) {
+                ind.innerText = msg; 
+                ind.classList.remove('hidden');
+                setTimeout(() => ind.classList.add('hidden'), duration);
+            }
         }
 
         let initialPinchDist = null;
@@ -487,29 +667,36 @@
         function setZoom(val) {
             state.zoom = Math.max(0.2, Math.min(val, 3));
             canvasBoard.style.transform = `scale(${state.zoom})`;
-            zoomLevelEl.innerText = Math.round(state.zoom * 100) + '%';
+            const zoomLvl = document.getElementById('zoom-level');
+            if (zoomLvl) zoomLvl.innerText = Math.round(state.zoom * 100) + '%';
             positionToolbars();
         }
-        document.getElementById('btn-zoom-in').onclick = () => setZoom(state.zoom + 0.1);
-        document.getElementById('btn-zoom-out').onclick = () => setZoom(state.zoom - 0.1);
+        
+        const btnZoomIn = document.getElementById('btn-zoom-in');
+        if(btnZoomIn) btnZoomIn.onclick = () => setZoom(state.zoom + 0.1);
+        const btnZoomOut = document.getElementById('btn-zoom-out');
+        if(btnZoomOut) btnZoomOut.onclick = () => setZoom(state.zoom - 0.1);
 
-        document.getElementById('btn-center-view').onclick = () => {
-            if (state.nodes.length === 0) return;
-            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-            state.nodes.forEach(n => {
-                minX = Math.min(minX, n.x); minY = Math.min(minY, n.y);
-                maxX = Math.max(maxX, n.x + n.width); maxY = Math.max(maxY, n.y + n.height);
-            });
-            const centerX = (minX + maxX) / 2;
-            const centerY = (minY + maxY) / 2;
-            
-            const ws = document.getElementById('workspace');
-            ws.scrollTo({
-                left: (centerX * state.zoom) - (ws.clientWidth / 2),
-                top: (centerY * state.zoom) - (ws.clientHeight / 2),
-                behavior: 'smooth'
-            });
-        };
+        const btnCenterView = document.getElementById('btn-center-view');
+        if (btnCenterView) {
+            btnCenterView.onclick = () => {
+                if (state.nodes.length === 0) return;
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                state.nodes.forEach(n => {
+                    minX = Math.min(minX, n.x); minY = Math.min(minY, n.y);
+                    maxX = Math.max(maxX, n.x + n.width); maxY = Math.max(maxY, n.y + n.height);
+                });
+                const centerX = (minX + maxX) / 2;
+                const centerY = (minY + maxY) / 2;
+                
+                const ws = document.getElementById('workspace');
+                ws.scrollTo({
+                    left: (centerX * state.zoom) - (ws.clientWidth / 2),
+                    top: (centerY * state.zoom) - (ws.clientHeight / 2),
+                    behavior: 'smooth'
+                });
+            };
+        }
 
         workspace.addEventListener('wheel', (e) => {
             if (e.ctrlKey) { e.preventDefault(); setZoom(state.zoom * (e.deltaY > 0 ? 0.9 : 1.1)); }
@@ -882,12 +1069,13 @@
                 }
 
                 if (state.selectedEdgeId === edge.id && !state.isReconnecting) {
-                    handleFrom.setAttribute('cx', p1.x); handleFrom.setAttribute('cy', p1.y); handleFrom.classList.remove('hidden');
-                    handleTo.setAttribute('cx', p2.x); handleTo.setAttribute('cy', p2.y); handleTo.classList.remove('hidden');
+                    if (handleFrom) { handleFrom.setAttribute('cx', p1.x); handleFrom.setAttribute('cy', p1.y); handleFrom.classList.remove('hidden'); }
+                    if (handleTo) { handleTo.setAttribute('cx', p2.x); handleTo.setAttribute('cy', p2.y); handleTo.classList.remove('hidden'); }
                 }
             });
             if(!state.selectedEdgeId || state.isReconnecting) {
-                handleFrom.classList.add('hidden'); handleTo.classList.add('hidden');
+                if (handleFrom) handleFrom.classList.add('hidden'); 
+                if (handleTo) handleTo.classList.add('hidden');
             }
             positionToolbars();
         }
@@ -988,8 +1176,12 @@
 
         const handleReconnFrom = (e) => { e.stopPropagation(); e.preventDefault(); state.isReconnecting = true; state.reconnectEnd = 'from'; };
         const handleReconnTo = (e) => { e.stopPropagation(); e.preventDefault(); state.isReconnecting = true; state.reconnectEnd = 'to'; };
-        handleFrom.addEventListener('mousedown', handleReconnFrom); handleFrom.addEventListener('touchstart', handleReconnFrom, {passive: false});
-        handleTo.addEventListener('mousedown', handleReconnTo); handleTo.addEventListener('touchstart', handleReconnTo, {passive: false});
+        if (handleFrom) {
+            handleFrom.addEventListener('mousedown', handleReconnFrom); handleFrom.addEventListener('touchstart', handleReconnFrom, {passive: false});
+        }
+        if (handleTo) {
+            handleTo.addEventListener('mousedown', handleReconnTo); handleTo.addEventListener('touchstart', handleReconnTo, {passive: false});
+        }
 
         function getGlobalClosestAnchor(mx, my) {
             let closest = null; let minDist = 120; 
@@ -1067,7 +1259,9 @@
                     d = getPathData(p1, p2_path, edge.fromAnchor, targetDir, rType, obstacles).d;
                 }
                 tempEdge.setAttribute('d', d); tempEdge.classList.remove('hidden');
-                edgeToolbar.classList.add('hidden'); handleFrom.classList.add('hidden'); handleTo.classList.add('hidden');
+                edgeToolbar.classList.add('hidden'); 
+                if (handleFrom) handleFrom.classList.add('hidden'); 
+                if (handleTo) handleTo.classList.add('hidden');
                 const origPathGroup = document.getElementById(edge.id)?.parentElement;
                 if (origPathGroup) origPathGroup.style.opacity = '0.2';
             }
@@ -1149,71 +1343,97 @@
         });
 
         // --- EXPORTY & IDEALNY WYDRUK PDF ---
-        document.getElementById('btn-export-pdf').onclick = () => {
-            deselectAll();
-            
-            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-            if (state.nodes.length === 0) return alert(currentLang==='pl'?'Plansza jest pusta!':'Canvas is empty!');
+        const btnExportPdf = document.getElementById('btn-export-pdf');
+        if (btnExportPdf) {
+            btnExportPdf.onclick = () => {
+                deselectAll();
+                
+                const prevZoom = state.zoom;
+                setZoom(1);
+                
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                if (state.nodes.length === 0) {
+                    setZoom(prevZoom);
+                    return alert(currentLang==='pl'?'Plansza jest pusta!':'Canvas is empty!');
+                }
 
-            state.nodes.forEach(n => { 
-                minX = Math.min(minX, n.x); minY = Math.min(minY, n.y); 
-                maxX = Math.max(maxX, n.x + n.width); maxY = Math.max(maxY, n.y + n.height); 
-            });
-
-            edgesLayer.querySelectorAll('.edge-path').forEach(path => {
-                try { const bbox = path.getBBox(); if (bbox.width > 0 || bbox.height > 0) { minX = Math.min(minX, bbox.x); minY = Math.min(minY, bbox.y); maxX = Math.max(maxX, bbox.x + bbox.width); maxY = Math.max(maxY, bbox.y + bbox.height); } } catch(e) {}
-            });
-
-            const pad = 40;
-            const captureMinX = Math.max(0, minX - pad); const captureMinY = Math.max(0, minY - pad);
-            const w = (maxX + pad) - captureMinX; const h = (maxY + pad) - captureMinY;
-
-            canvasBoard.classList.add('export-mode');
-
-            showIndicator(currentLang === 'pl' ? 'Przygotowywanie wydruku...' : 'Preparing print...', 4000);
-
-            setTimeout(() => {
-                html2canvas(canvasBoard, { x: captureMinX, y: captureMinY, width: w, height: h, backgroundColor: '#ffffff', scale: 2 }).then(canvas => {
-                    const imgUrl = canvas.toDataURL('image/png');
-                    
-                    const titleText = globalProjectName || 'Schemat';
-                    const subtitleText = 'FLOWCHART';
-                    
-                    const printContainer = document.getElementById('print-container');
-                    printContainer.innerHTML = `
-                        <div style="text-align: left; margin-bottom: 20px; font-family: sans-serif; width: 100%;">
-                            <div style="color: #064e3b; font-size: 24px; font-weight: bold; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px;">
-                                ${titleText} <span style="font-size: 14px; font-weight: normal; color: #64748b; margin-left: 8px;">| ${subtitleText}</span>
-                            </div>
-                        </div>
-                        <img src="${imgUrl}" alt="Wydruk">
-                    `;
-                    
-                    canvasBoard.classList.remove('export-mode');
-                    
-                    setTimeout(() => {
-                        window.print();
-                        printContainer.innerHTML = ''; 
-                    }, 500);
+                state.nodes.forEach(n => { 
+                    minX = Math.min(minX, n.x); minY = Math.min(minY, n.y); 
+                    maxX = Math.max(maxX, n.x + n.width); maxY = Math.max(maxY, n.y + n.height); 
                 });
-            }, 300);
-        };
+
+                edgesLayer.querySelectorAll('.edge-path').forEach(path => {
+                    try { const bbox = path.getBBox(); if (bbox.width > 0 || bbox.height > 0) { minX = Math.min(minX, bbox.x); minY = Math.min(minY, bbox.y); maxX = Math.max(maxX, bbox.x + bbox.width); maxY = Math.max(maxY, bbox.y + bbox.height); } } catch(e) {}
+                });
+
+                const pad = 40;
+                const captureMinX = Math.max(0, minX - pad); const captureMinY = Math.max(0, minY - pad);
+                const w = (maxX + pad) - captureMinX; const h = (maxY + pad) - captureMinY;
+
+                canvasBoard.classList.add('export-mode');
+
+                showIndicator(currentLang === 'pl' ? 'Przygotowywanie wydruku...' : 'Preparing print...', 4000);
+
+                setTimeout(() => {
+                    html2canvas(canvasBoard, { x: captureMinX, y: captureMinY, width: w, height: h, backgroundColor: '#ffffff', scale: 2 }).then(canvas => {
+                        const imgUrl = canvas.toDataURL('image/png');
+                        const ptInput = document.getElementById('project-title');
+                        const psInput = document.getElementById('project-subtitle');
+                        const titleText = ptInput ? ptInput.value.trim() : globalProjectName;
+                        const subtitleText = psInput ? psInput.value.trim() : 'FLOWCHART';
+                        
+                        const printContainer = document.getElementById('print-container');
+                        if (printContainer) {
+                            printContainer.innerHTML = `
+                                <div style="text-align: left; margin-bottom: 20px; font-family: sans-serif; width: 100%;">
+                                    <div style="color: #064e3b; font-size: 24px; font-weight: bold; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px;">
+                                        ${titleText} <span style="font-size: 14px; font-weight: normal; color: #64748b; margin-left: 8px;">| ${subtitleText}</span>
+                                    </div>
+                                </div>
+                                <img src="${imgUrl}" alt="Wydruk">
+                            `;
+                        }
+                        
+                        canvasBoard.classList.remove('export-mode');
+                        setZoom(prevZoom);
+                        
+                        setTimeout(() => {
+                            window.print();
+                            if (printContainer) printContainer.innerHTML = ''; 
+                        }, 500);
+                    }).catch(err => {
+                        console.error(err);
+                        canvasBoard.classList.remove('export-mode');
+                        setZoom(prevZoom);
+                    });
+                }, 300);
+            };
+        }
 
         // --- NASŁUCHIWANIE KOMUNIKATÓW Z DASHBOARDU ---
         window.addEventListener('message', (event) => {
             if (event.data.action === 'requestExport') {
+                const ptInput = document.getElementById('project-title');
+                const psInput = document.getElementById('project-subtitle');
                 window.parent.postMessage({
                     action: 'exportData',
                     source: 'flowchart',
                     data: {
                         nodes: state.nodes,
-                        edges: state.edges
+                        edges: state.edges,
+                        title: ptInput ? ptInput.value : globalProjectName,
+                        subtitle: psInput ? psInput.value : 'FLOWCHART'
                     }
                 }, '*');
             } 
             else if (event.data.action === 'importData') {
                 if (event.data.data) {
                     saveState(); 
+                    
+                    const ptInput = document.getElementById('project-title');
+                    const psInput = document.getElementById('project-subtitle');
+                    if (event.data.data.title && ptInput) ptInput.value = event.data.data.title;
+                    if (event.data.data.subtitle && psInput) psInput.value = event.data.data.subtitle;
                     
                     state.nodes = event.data.data.nodes || [];
                     state.edges = event.data.data.edges || [];
