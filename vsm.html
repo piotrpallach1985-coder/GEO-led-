@@ -592,7 +592,15 @@
                     })) : [];
                     
                     edges = Array.isArray(msg.data.edges) ? msg.data.edges : [];
-                    customTimelineY = msg.data.customTimelineY !== undefined ? parseFloat(msg.data.customTimelineY) : null;
+                    
+                    // POPRAWKA: Bezpieczne parsowanie pozycji Linii Czasu
+                    if (msg.data.customTimelineY !== undefined && msg.data.customTimelineY !== null) {
+                        customTimelineY = parseFloat(msg.data.customTimelineY);
+                        if (isNaN(customTimelineY)) customTimelineY = null;
+                    } else {
+                        customTimelineY = null;
+                    }
+                    
                     selectedNodeId = null;
                     
                     historyStack = [JSON.stringify({nodes, edges, customTimelineY})];
@@ -688,7 +696,15 @@
             const state = JSON.parse(stateStr);
             nodes = state.nodes;
             edges = state.edges;
-            customTimelineY = state.customTimelineY !== undefined ? state.customTimelineY : null;
+            
+            // POPRAWKA: Bezpieczne ładowanie stanu cofania
+            if (state.customTimelineY !== undefined && state.customTimelineY !== null) {
+                customTimelineY = parseFloat(state.customTimelineY);
+                if (isNaN(customTimelineY)) customTimelineY = null;
+            } else {
+                customTimelineY = null;
+            }
+            
             selectedNodeId = null;
             renderNodes();
             renderEdges();
