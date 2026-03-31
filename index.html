@@ -165,16 +165,20 @@
 
             <!-- Zapisz/Wczytaj -->
             <div class="pt-3 mt-2 border-t border-slate-100 flex flex-col gap-1.5">
-                <button onclick="exportWorkspace()" class="nav-link w-full flex items-center gap-3 p-2 rounded-xl text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors font-bold group">
+                <button onclick="exportWorkspace(false)" class="nav-link w-full flex items-center gap-3 p-2 rounded-xl text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors font-bold group">
+                    <i class="fas fa-save w-5 shrink-0 text-center text-sm"></i>
+                    <span class="nav-text text-xs whitespace-nowrap" id="btn-export">Zapisz</span>
+                </button>
+                <button onclick="exportWorkspace(true)" class="nav-link w-full flex items-center gap-3 p-2 rounded-xl text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors font-bold group">
                     <i class="fas fa-download w-5 shrink-0 text-center text-sm"></i>
-                    <span class="nav-text text-xs whitespace-nowrap" id="btn-export">Zapisz do pliku</span>
+                    <span class="nav-text text-xs whitespace-nowrap" id="btn-export-as">Zapisz jako...</span>
                 </button>
                 
-                <button onclick="document.getElementById('file-upload').click()" class="nav-link w-full flex items-center gap-3 p-2 rounded-xl text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors font-bold group">
+                <button onclick="handleImportClick()" class="nav-link w-full flex items-center gap-3 p-2 rounded-xl text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors font-bold group">
                     <i class="fas fa-upload w-5 shrink-0 text-center text-sm"></i>
                     <span class="nav-text text-xs whitespace-nowrap" id="btn-import">Wczytaj z pliku</span>
                 </button>
-                <input type="file" id="file-upload" class="hidden" accept=".json" onchange="importWorkspace(event)">
+                <input type="file" id="file-upload" class="hidden" accept=".json" onchange="importWorkspaceFallback(event)">
             </div>
         </nav>
 
@@ -304,12 +308,12 @@
         const iframeContainer = document.getElementById('iframe-container');
         const toast = document.getElementById('toast');
 
-        // Workspace Data Handling
         let workspaceData = { sipoc: null, flowchart: null, vsm: null };
         let exportPending = false;
-        let pendingAction = null; // Obsługa wstrzymanej akcji (eksport lub druk)
+        let pendingAction = null; 
+        let currentFileHandle = null;
+        let forceSaveAs = false;
 
-        // Translations dict
         const i18n = {
             pl: {
                 projects: "Projekty",
@@ -328,7 +332,8 @@
                 contactTitle: "Kontakt",
                 adSpace: "Miejsce na reklamę",
                 adDesc: "Twój baner 250x250",
-                exportFile: "Zapisz do pliku",
+                exportFile: "Zapisz",
+                exportFileAs: "Zapisz jako...",
                 importFile: "Wczytaj z pliku",
                 statusSaved: "Plik zapisany pomyślnie!",
                 statusLoaded: "Dane wczytane pomyślnie!",
@@ -355,7 +360,8 @@
                 contactTitle: "Contact",
                 adSpace: "Ad Space",
                 adDesc: "Your banner 250x250",
-                exportFile: "Save to file",
+                exportFile: "Save",
+                exportFileAs: "Save As...",
                 importFile: "Load from file",
                 statusSaved: "File saved successfully!",
                 statusLoaded: "Data loaded successfully!",
@@ -496,6 +502,7 @@
             document.getElementById('ad-desc').innerText = i18n[lang].adDesc;
             
             document.getElementById('btn-export').innerText = i18n[lang].exportFile;
+            document.getElementById('btn-export-as').innerText = i18n[lang].exportFileAs;
             document.getElementById('btn-import').innerText = i18n[lang].importFile;
 
             // Modal texts
@@ -588,7 +595,8 @@
         }
 
         // --- EXPORT TO EXTERNAL FILE ---
-        function exportWorkspace() {
+        function exportWorkspace(saveAs = false) {
+            forceSaveAs = saveAs;
             if (isDefaultName()) {
                 pendingAction = 'export';
                 showNameReminderModal();
@@ -639,11 +647,13 @@
 
             try {
                 if (window.showSaveFilePicker) {
-                    const handle = await window.showSaveFilePicker({
-                        suggestedName: defaultFileName,
-                        types: [{ description: 'JSON Workspace File', accept: {'application/json': ['.json']} }],
-                    });
-                    const writable = await handle.createWritable();
+                    if (forceSaveAs || !currentFileHandle) {
+                        currentFileHandle = await window.showSaveFilePicker({
+                            suggestedName: defaultFileName,
+                            types: [{ description: 'JSON Workspace File', accept: {'application/json': ['.json']} }],
+                        });
+                    }
+                    const writable = await currentFileHandle.createWritable();
                     await writable.write(dataStr);
                     await writable.close();
                     
@@ -668,10 +678,35 @@
         }
 
         // --- IMPORT FROM EXTERNAL FILE ---
-        function importWorkspace(event) {
+        async function handleImportClick() {
+            if (window.showOpenFilePicker) {
+                try {
+                    const [fileHandle] = await window.showOpenFilePicker({
+                        types: [{ description: 'JSON Workspace File', accept: {'application/json': ['.json']} }],
+                        multiple: false
+                    });
+                    currentFileHandle = fileHandle; // Zapisujemy uchwyt pliku do ew. nadpisywania w przyszłości
+                    const file = await fileHandle.getFile();
+                    processImportedFile(file);
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        showToast("Błąd pliku / File error", 'fa-exclamation-triangle', 'text-red-400');
+                    }
+                }
+            } else {
+                document.getElementById('file-upload').click();
+            }
+        }
+
+        function importWorkspaceFallback(event) {
             const file = event.target.files[0];
             if (!file) return;
+            currentFileHandle = null; // Stare API input nie udostępnia uchwytu zapisu
+            processImportedFile(file);
+            event.target.value = ''; 
+        }
 
+        function processImportedFile(file) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
@@ -706,7 +741,6 @@
                 } catch (err) {
                     showToast("Błąd pliku / File error", 'fa-exclamation-triangle', 'text-red-400');
                 }
-                event.target.value = ''; 
             };
             reader.readAsText(file);
         }
