@@ -197,6 +197,7 @@
             <!-- OBSZAR PŁÓTNA -->
             <div id="workspace" class="flex-1 overflow-hidden relative bg-grid bg-white cursor-grab no-select">
                 
+                <!-- COFNIJ / PONÓW -->
                 <div id="undo-redo-panel" class="absolute top-4 left-4 z-20 flex bg-white border border-slate-200 rounded-md shadow-sm print-hide">
                     <button id="btn-undo" onclick="undo()" class="p-2 text-slate-600 hover:bg-slate-100 transition-colors rounded-l-md border-r border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed" title="Cofnij">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
@@ -580,9 +581,18 @@
                 window.parent.postMessage({ action: 'exportData', source: 'vsm', data: dataToExport }, '*');
             } else if (msg.action === 'importData') {
                 if (msg.data) {
-                    if (msg.data.nodes) nodes = msg.data.nodes;
-                    if (msg.data.edges) edges = msg.data.edges;
-                    customTimelineY = msg.data.customTimelineY !== undefined ? msg.data.customTimelineY : null;
+                    // BEZPIECZNE ŁADOWANIE (ZABEZPIECZENIE PRZED AWARIAMI UKRYTEGO IFRAME)
+                    nodes = Array.isArray(msg.data.nodes) ? msg.data.nodes.map(n => ({
+                        ...n,
+                        x: parseFloat(n.x) || 0,
+                        y: parseFloat(n.y) || 0,
+                        type: n.type || 'process',
+                        label: n.label || '',
+                        data: n.data || {}
+                    })) : [];
+                    
+                    edges = Array.isArray(msg.data.edges) ? msg.data.edges : [];
+                    customTimelineY = msg.data.customTimelineY !== undefined ? parseFloat(msg.data.customTimelineY) : null;
                     selectedNodeId = null;
                     
                     historyStack = [JSON.stringify({nodes, edges, customTimelineY})];
@@ -747,11 +757,11 @@
             if (n.type === 'inventory' || n.type === 'transport-int') { w = 80; h = 100; }
             if (n.type === 'kaizen') { w = n.width || 180; h = n.height || 120; }
             if (n.type === 'text') { w = 100; h = 40; } 
-            if (n.type.startsWith('arrow-thick')) { w = n.width || 120; h = n.height || 50; }
+            if (n.type && n.type.startsWith('arrow-thick')) { w = n.width || 120; h = n.height || 50; }
             if (n.type === 'data') { w = 140; h = 140; }
             if (n.type === 'supplier') { w = 130; h = 120; }
             if (n.type === 'transport') { w = 90; h = 120; }
-            return { w, h, cx: n.x + w/2, cy: n.y + h/2 };
+            return { w, h, cx: (parseFloat(n.x) || 0) + w/2, cy: (parseFloat(n.y) || 0) + h/2 };
         }
 
         const workspaceEl = document.getElementById('workspace');
@@ -777,6 +787,9 @@
         }
 
         function updateTransform() {
+            if (!isFinite(zoom) || zoom <= 0) zoom = 1;
+            if (!isFinite(pan.x)) pan.x = 0;
+            if (!isFinite(pan.y)) pan.y = 0;
             transformContainer.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
         }
 
@@ -888,7 +901,7 @@
             if (isDraggingTimeline) {
                 let baseMaxY = 300;
                 const mainNodes = nodes.filter(n => ['process', 'supplier', 'data'].includes(n.type));
-                if (mainNodes.length > 0) baseMaxY = Math.max(...mainNodes.map(n => n.y + (n.height || (n.type === 'process' ? 180 : 120))));
+                if (mainNodes.length > 0) baseMaxY = Math.max(...mainNodes.map(n => (parseFloat(n.y)||0) + (n.height || (n.type === 'process' ? 180 : 120))));
                 
                 let currentBottom = customTimelineY !== null ? customTimelineY : baseMaxY + 80;
                 currentBottom += dy / zoom;
@@ -942,7 +955,7 @@
                         const oRect = getNodeRect(other);
                         if (Math.abs(nRect.cx - oRect.cx) < snapThreshold) snapX = oRect.cx;
                         if (Math.abs(nRect.cy - oRect.cy) < snapThreshold) snapY = oRect.cy;
-                        if (Math.abs(newY - other.y) < snapThreshold) snapY = other.y + nRect.h/2;
+                        if (Math.abs(newY - (parseFloat(other.y)||0)) < snapThreshold) snapY = (parseFloat(other.y)||0) + nRect.h/2;
                     });
 
                     if (snapX !== null) { newX = snapX - nRect.w/2; guides.x = snapX; } else { guides.x = null; }
@@ -1017,23 +1030,30 @@
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
             nodes.forEach(n => {
                 const r = getNodeRect(n);
-                if (n.x < minX) minX = n.x;
-                if (n.y < minY) minY = n.y;
-                if (n.x + r.w > maxX) maxX = n.x + r.w;
-                if (n.y + r.h > maxY) maxY = n.y + r.h;
+                const nx = parseFloat(n.x) || 0;
+                const ny = parseFloat(n.y) || 0;
+                if (nx < minX) minX = nx;
+                if (ny < minY) minY = ny;
+                if (nx + r.w > maxX) maxX = nx + r.w;
+                if (ny + r.h > maxY) maxY = ny + r.h;
             });
             minX -= 100; minY -= 100; maxX += 100; maxY += 100;
-            const bboxWidth = maxX - minX;
-            const bboxHeight = maxY - minY;
-            const viewportWidth = workspaceEl.clientWidth;
-            const viewportHeight = workspaceEl.clientHeight;
+            
+            // BEZPIECZNE FALLBACKI PRZED NaN i 0
+            const viewportWidth = workspaceEl.clientWidth || window.innerWidth || 800;
+            const viewportHeight = workspaceEl.clientHeight || window.innerHeight || 600;
+            const bboxWidth = Math.max(10, maxX - minX);
+            const bboxHeight = Math.max(10, maxY - minY);
+            
             const scaleX = viewportWidth / bboxWidth;
             const scaleY = viewportHeight / bboxHeight;
-            zoom = Math.min(scaleX, scaleY, 1.5);
+            zoom = Math.max(0.1, Math.min(scaleX, scaleY, 1.5));
+            
             const centerX = (minX + maxX) / 2;
             const centerY = (minY + maxY) / 2;
             pan.x = viewportWidth / 2 - centerX * zoom;
             pan.y = viewportHeight / 2 - centerY * zoom;
+            
             updateTransform();
         }
 
@@ -1048,12 +1068,15 @@
             if(type === 'text') label = i18n[currentLang].defaultText;
             if(type.startsWith('arrow')) label = '';
 
+            const viewportW = workspaceEl.clientWidth || window.innerWidth || 800;
+            const viewportH = workspaceEl.clientHeight || window.innerHeight || 600;
+
             const newNode = {
                 id: generateId(),
                 type,
                 label: label,
-                x: (-pan.x + workspaceEl.clientWidth / 2) / zoom - 60,
-                y: (-pan.y + workspaceEl.clientHeight / 2) / zoom - 50,
+                x: (-pan.x + viewportW / 2) / zoom - 60,
+                y: (-pan.y + viewportH / 2) / zoom - 50,
                 data: {}
             };
 
@@ -1165,7 +1188,7 @@
             try { e.target.setPointerCapture(e.pointerId); } catch(err){}
             draggingNode = id;
             const n = nodes.find(x => x.id === id);
-            if(n) { dragVirtualX = n.x; dragVirtualY = n.y; }
+            if(n) { dragVirtualX = parseFloat(n.x)||0; dragVirtualY = parseFloat(n.y)||0; }
             hasMoved = false;
             lastPointerPos = { x: e.clientX, y: e.clientY };
         };
@@ -1251,7 +1274,7 @@
         }
 
         window.renderDynamicTimeline = function() {
-            const flowNodes = nodes.filter(n => n.type === 'process' || n.type === 'inventory' || n.type === 'transport-int').sort((a,b) => a.x - b.x);
+            const flowNodes = nodes.filter(n => n.type === 'process' || n.type === 'inventory' || n.type === 'transport-int').sort((a,b) => (parseFloat(a.x)||0) - (parseFloat(b.x)||0));
             const layer = document.getElementById('timeline-layer');
             const labelsLayer = document.getElementById('timeline-labels');
             const dragLayer = document.getElementById('timeline-drag-layer');
@@ -1265,7 +1288,7 @@
 
             let baseMaxY = 300;
             const mainNodes = nodes.filter(n => ['process', 'supplier', 'data'].includes(n.type));
-            if (mainNodes.length > 0) baseMaxY = Math.max(...mainNodes.map(n => n.y + (n.height || (n.type === 'process' ? 180 : 120))));
+            if (mainNodes.length > 0) baseMaxY = Math.max(...mainNodes.map(n => (parseFloat(n.y)||0) + (n.height || (n.type === 'process' ? 180 : 120))));
             
             const yBottom = customTimelineY !== null ? customTimelineY : baseMaxY + 80;
             const yTop = yBottom - 40;
@@ -1275,7 +1298,7 @@
             let guidesHtml = "";
             let sumVA = 0; let sumNVA = 0;
 
-            let currentX = flowNodes[0].x - 50;
+            let currentX = (parseFloat(flowNodes[0].x)||0) - 50;
             pathD += `M ${currentX} ${yTop} `;
 
             guidesHtml += `
@@ -1288,22 +1311,24 @@
             `;
 
             flowNodes.forEach((node) => {
+                const nx = parseFloat(node.x) || 0;
+                const ny = parseFloat(node.y) || 0;
                 const w = node.width || getNodeRect(node).w;
-                const centerX = node.x + w/2;
+                const centerX = nx + w/2;
                 
                 if (node.type === 'process') {
-                    guidesHtml += `<line x1="${centerX}" y1="${node.y + (node.height||180)-5}" x2="${centerX}" y2="${yTop}" stroke="#cbd5e1" stroke-dasharray="6 4" stroke-width="1.5" />`;
+                    guidesHtml += `<line x1="${centerX}" y1="${ny + (node.height||180)-5}" x2="${centerX}" y2="${yTop}" stroke="#cbd5e1" stroke-dasharray="6 4" stroke-width="1.5" />`;
 
-                    pathD += `L ${node.x} ${yTop} `;
-                    pathD += `L ${node.x} ${yBottom} `;
-                    pathD += `L ${node.x + w} ${yBottom} `;
-                    pathD += `L ${node.x + w} ${yTop} `;
+                    pathD += `L ${nx} ${yTop} `;
+                    pathD += `L ${nx} ${yBottom} `;
+                    pathD += `L ${nx + w} ${yBottom} `;
+                    pathD += `L ${nx + w} ${yTop} `;
                     
                     const valStr = node.data.ct || '10 min';
                     sumVA += parseTime(valStr);
-                    labelsHtml += `<div class="absolute text-center text-[11px] font-bold text-emerald-700 bg-white/80 px-1" style="left: ${node.x}px; top: ${yBottom + 5}px; width: ${w}px;">${valStr}</div>`;
+                    labelsHtml += `<div class="absolute text-center text-[11px] font-bold text-emerald-700 bg-white/80 px-1" style="left: ${nx}px; top: ${yBottom + 5}px; width: ${w}px;">${valStr}</div>`;
                 } else if (node.type === 'inventory' || node.type === 'transport-int') {
-                    guidesHtml += `<line x1="${centerX}" y1="${node.y + (node.height||100)-5}" x2="${centerX}" y2="${yTop}" stroke="#cbd5e1" stroke-dasharray="6 4" stroke-width="1.5" />`;
+                    guidesHtml += `<line x1="${centerX}" y1="${ny + (node.height||100)-5}" x2="${centerX}" y2="${yTop}" stroke="#cbd5e1" stroke-dasharray="6 4" stroke-width="1.5" />`;
 
                     pathD += `L ${centerX} ${yTop} `;
                     
@@ -1313,7 +1338,8 @@
                 }
             });
 
-            const endX = flowNodes[flowNodes.length-1].x + (flowNodes[flowNodes.length-1].width||150) + 70;
+            const lastN = flowNodes[flowNodes.length-1];
+            const endX = (parseFloat(lastN.x)||0) + (lastN.width||150) + 70;
             pathD += `L ${endX} ${yTop}`;
             guidesHtml += `<polygon points="${endX},${yTop-7} ${endX},${yTop+7} ${endX+14},${yTop}" fill="#0f766e" />`;
 
@@ -1430,7 +1456,7 @@
                 const isProcess = type === 'process';
                 const isInventory = type === 'inventory' || type === 'transport-int';
                 const isText = type === 'text';
-                const isThickArrow = type.startsWith('arrow-thick');
+                const isThickArrow = type && type.startsWith('arrow-thick');
                 
                 let baseClasses = `vsm-node absolute flex flex-col p-2 transition-colors `;
                 
@@ -1499,11 +1525,13 @@
                 const isInventory = node.type === 'inventory';
                 const isTransportInt = node.type === 'transport-int';
                 const isText = node.type === 'text';
-                const isThickArrow = node.type.startsWith('arrow-thick');
+                const isThickArrow = node.type && node.type.startsWith('arrow-thick');
                 
                 const w = node.width || getNodeRect(node).w;
                 const h = node.height || getNodeRect(node).h;
                 const rot = node.rotation || 0;
+                const nx = parseFloat(node.x) || 0;
+                const ny = parseFloat(node.y) || 0;
 
                 const showControls = isSelected ? 'flex' : 'hidden';
 
@@ -1531,7 +1559,7 @@
                     if (isSelected) nodeClass += 'ring-4 ring-blue-400 border-blue-500 z-20 ';
 
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; min-height: ${h}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                    <div class="${nodeClass}" style="left: ${nx}px; top: ${ny}px; width: ${w}px; min-height: ${h}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
                         ${dragBtnHtml}
                         ${deleteBtnHtml}
                         ${resizeBtnHtml}
@@ -1558,7 +1586,7 @@
                     if (isSelected) nodeClass += 'ring-4 ring-blue-400 bg-white/50 rounded z-20 ';
                     
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                    <div class="${nodeClass}" style="left: ${nx}px; top: ${ny}px; width: ${w}px; height: ${h}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
                         ${dragBtnHtml}
                         ${deleteBtnHtml}
                         ${resizeBtnHtml}
@@ -1576,7 +1604,7 @@
                     if (isSelected) nodeClass += 'ring-4 ring-blue-400 bg-white/50 rounded z-20 ';
                     
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                    <div class="${nodeClass}" style="left: ${nx}px; top: ${ny}px; width: ${w}px; height: ${h}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
                         ${dragBtnHtml}
                         ${deleteBtnHtml}
                         ${resizeBtnHtml}
@@ -1593,11 +1621,11 @@
                     if (isSelected) nodeClass += 'ring-2 ring-blue-400 z-20 rounded ';
 
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; min-height: ${h}px;" data-id="${node.id}" data-type="${node.type}">
+                    <div class="${nodeClass}" style="left: ${nx}px; top: ${ny}px; min-width: 100px;" data-id="${node.id}" data-type="${node.type}">
                         ${dragBtnHtml}
                         ${deleteBtnHtml}
                         ${resizeBtnHtml}
-                        <div contenteditable="false" class="outline-none w-full h-full text-slate-800 px-3 py-2 font-bold bg-transparent cursor-pointer whitespace-pre-wrap break-words leading-tight" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">${node.label}</div>
+                        <div contenteditable="false" class="outline-none w-full min-h-[30px] text-slate-800 px-3 py-2 font-bold bg-transparent cursor-pointer whitespace-pre-wrap break-words leading-tight" oninput="updateNodeLabelWithoutRender('${node.id}', this.innerText)" onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()">${node.label}</div>
                     </div>
                     `;
                 } else if (isKaizen) {
@@ -1608,7 +1636,7 @@
                     const textBgClass = textContent === '' ? 'bg-transparent border-transparent' : 'bg-white/90 border-yellow-400 shadow-sm';
 
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px; transform: rotate(${rot}deg); transform-origin: center center;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                    <div class="${nodeClass}" style="left: ${nx}px; top: ${ny}px; width: ${w}px; height: ${h}px; transform: rotate(${rot}deg); transform-origin: center center;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
                         
                         ${dragBtnHtml}
                         ${deleteBtnHtml}
@@ -1641,7 +1669,7 @@
                     `;
 
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; height: ${h}px; transform: rotate(${rot}deg); transform-origin: center center;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                    <div class="${nodeClass}" style="left: ${nx}px; top: ${ny}px; width: ${w}px; height: ${h}px; transform: rotate(${rot}deg); transform-origin: center center;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
                         ${rotateBtnHtml}
                         ${dragBtnHtml}
                         ${deleteBtnHtml}
@@ -1670,8 +1698,8 @@
                     } else if(node.type === 'data') {
                         extraFields = `
                             <div class="w-full flex flex-col gap-1 mt-3 border-t border-slate-100 pt-2">
-                                ${renderTimeField(node, 'ct', '10 min', 'C/T')}
-                                ${renderTimeField(node, 'co', '0 min', 'C/O')}
+                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/T</span><input type="text" class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="s" value="${node.data.ct || ''}" oninput="updateNodeData('${node.id}', 'ct', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
+                                <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">C/O</span><input type="text" class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="min" value="${node.data.co || ''}" oninput="updateNodeData('${node.id}', 'co', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
                                 <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Uptime</span><input type="text" class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="%" value="${node.data.uptime || ''}" oninput="updateNodeData('${node.id}', 'uptime', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
                                 <div class="flex justify-between items-center"><span class="text-[9px] font-bold text-slate-400 uppercase">Zmiany</span><input type="text" class="w-16 text-right text-[10px] font-bold bg-transparent outline-none border-b border-slate-200 focus:border-emerald-500 focus:bg-emerald-50 text-slate-700 px-1 py-1 md:py-0 cursor-pointer" placeholder="ilość" value="${node.data.shifts || ''}" oninput="updateNodeData('${node.id}', 'shifts', this.value)" readonly onpointerdown="handleTap(event, this)" onblur="disableEdit(this); saveHistory()"></div>
                             </div>
@@ -1679,7 +1707,7 @@
                     }
 
                     html += `
-                    <div class="${nodeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${w}px; min-height: ${h}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
+                    <div class="${nodeClass}" style="left: ${nx}px; top: ${ny}px; width: ${w}px; min-height: ${h}px;" data-id="${node.id}" data-type="${node.type}" onpointerdown="handleNodePointerDown(event, '${node.id}')">
                         ${dragBtnHtml}
                         ${deleteBtnHtml}
                         ${resizeBtnHtml}
