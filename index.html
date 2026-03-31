@@ -630,6 +630,21 @@
             }
         }
 
+        // Funkcja sprawdzająca uprawnienia do zapisu w już otwartym pliku
+        async function verifyPermission(fileHandle, readWrite) {
+            const options = {};
+            if (readWrite) {
+                options.mode = 'readwrite';
+            }
+            if ((await fileHandle.queryPermission(options)) === 'granted') {
+                return true;
+            }
+            if ((await fileHandle.requestPermission(options)) === 'granted') {
+                return true;
+            }
+            return false;
+        }
+
         async function triggerDownload() {
             exportPending = false;
             
@@ -647,12 +662,25 @@
 
             try {
                 if (window.showSaveFilePicker) {
-                    if (forceSaveAs || !currentFileHandle) {
+                    let needsNewHandle = forceSaveAs || !currentFileHandle;
+                    
+                    // Jeśli mamy już plik (np. z wczytania), upewnijmy się, że przeglądarka pozwala na jego ciche nadpisanie
+                    if (!needsNewHandle) {
+                        const hasPermission = await verifyPermission(currentFileHandle, true);
+                        if (!hasPermission) {
+                            needsNewHandle = true; // Jeśli odmówiono, wymuszamy okno wyboru lokalizacji
+                        }
+                    }
+
+                    // Pytaj o lokalizację TYLKO dla "Zapisz jako" lub pierwszego zapisu
+                    if (needsNewHandle) {
                         currentFileHandle = await window.showSaveFilePicker({
-                            suggestedName: defaultFileName,
+                            suggestedName: currentFileHandle ? currentFileHandle.name : defaultFileName,
                             types: [{ description: 'JSON Workspace File', accept: {'application/json': ['.json']} }],
                         });
                     }
+                    
+                    // Ciche nadpisywanie w tej samej lokalizacji
                     const writable = await currentFileHandle.createWritable();
                     await writable.write(dataStr);
                     await writable.close();
