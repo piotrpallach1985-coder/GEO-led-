@@ -92,6 +92,17 @@
         .anchor-left { left: -8px; top: calc(50% - 8px); }
         .anchor-right { right: -8px; top: calc(50% - 8px); }
 
+        .resize-handle {
+            position: absolute; width: 12px; height: 12px; background-color: #fff; border: 2px solid #10b981; border-radius: 2px;
+            display: none; z-index: 105; touch-action: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
+        .shape-node.selected .resize-handle { display: block; }
+        .resize-nw { top: -6px; left: -6px; cursor: nwse-resize; }
+        .resize-ne { top: -6px; right: -6px; cursor: nesw-resize; }
+        .resize-sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
+        .resize-se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+
         .edge-path { fill: none; stroke: #64748b; stroke-width: 2.5; transition: stroke 0.2s; pointer-events: stroke; cursor: pointer; touch-action: none; }
         .edge-path.selected { stroke: #10b981 !important; stroke-width: 4; } 
         .edge-path.ok { stroke: #22c55e !important; }
@@ -586,7 +597,8 @@
             isConnecting: false, connectFromNode: null, connectFromAnchor: null,
             isReconnecting: false, reconnectEnd: null,
             initialDragX: null, initialDragY: null,
-            isPanning: false, panStartX: 0, panStartY: 0, panScrollLeft: 0, panScrollTop: 0
+            isPanning: false, panStartX: 0, panStartY: 0, panScrollLeft: 0, panScrollTop: 0,
+            isResizing: false, resizingNodeId: null, resizeHandle: null, resizeStartBox: null
         };
 
         const history = { past: [], future: [] };
@@ -763,6 +775,10 @@
                 newH = maxDim;
             }
 
+            // Ochrona ręcznie ustawionego rozmiaru
+            if (node.manualW && newW < node.manualW) newW = node.manualW;
+            if (node.manualH && newH < node.manualH) newH = node.manualH;
+
             if (node.width !== newW || node.height !== newH) {
                 node.width = newW; node.height = newH;
                 const el = document.getElementById(id);
@@ -900,8 +916,25 @@
                     el.appendChild(a);
                 });
 
+                ['nw', 'ne', 'sw', 'se'].forEach(pos => {
+                    const rh = document.createElement('div');
+                    rh.className = `resize-handle resize-${pos}`;
+                    const startResize = (e) => {
+                        e.stopPropagation(); e.preventDefault();
+                        saveState();
+                        state.isResizing = true;
+                        state.resizingNodeId = id;
+                        state.resizeHandle = pos;
+                        const n = state.nodes.find(v => v.id === id);
+                        state.resizeStartBox = { x: n.x, y: n.y, w: n.width, h: n.height };
+                    };
+                    rh.addEventListener('mousedown', startResize);
+                    rh.addEventListener('touchstart', startResize, {passive: false});
+                    el.appendChild(rh);
+                });
+
                 const onNodeDown = (e) => {
-                    if (e.target.classList.contains('anchor-point') || isEditingText) return;
+                    if (e.target.classList.contains('anchor-point') || e.target.classList.contains('resize-handle') || isEditingText) return;
                     selectNode(id); state.isDraggingNode = true; state.draggedNodeId = id;
                     const pt = getCoords(e); 
                     state.dragOffsetX = pt.x - node.x; state.dragOffsetY = pt.y - node.y;
@@ -1238,11 +1271,49 @@
                 return;
             }
 
-            if (e.type === 'touchmove' && (state.isDraggingNode || state.isConnecting || state.isReconnecting)) {
+            if (e.type === 'touchmove' && (state.isDraggingNode || state.isConnecting || state.isReconnecting || state.isResizing)) {
                 e.preventDefault(); 
             }
             const pt = getCoords(e);
             let mx = pt.x, my = pt.y;
+
+            if (state.isResizing && state.resizingNodeId) {
+                const n = state.nodes.find(v => v.id === state.resizingNodeId);
+                if (!n) return;
+                const start = state.resizeStartBox;
+                let newX = start.x, newY = start.y, newW = start.w, newH = start.h;
+
+                let gridMx = Math.round(mx / GRID_SIZE) * GRID_SIZE;
+                let gridMy = Math.round(my / GRID_SIZE) * GRID_SIZE;
+
+                const minW = 40;
+                const minH = 40;
+
+                if (state.resizeHandle.includes('e')) newW = Math.max(minW, gridMx - start.x);
+                if (state.resizeHandle.includes('s')) newH = Math.max(minH, gridMy - start.y);
+                if (state.resizeHandle.includes('w')) {
+                    const dx = start.x + start.w - gridMx;
+                    if (dx >= minW) { newX = gridMx; newW = dx; }
+                }
+                if (state.resizeHandle.includes('n')) {
+                    const dy = start.y + start.h - gridMy;
+                    if (dy >= minH) { newY = gridMy; newH = dy; }
+                }
+
+                if (n.type === 'decision' || n.type === 'circle') {
+                    const maxD = Math.max(newW, newH);
+                    newW = maxD; newH = maxD;
+                    if (state.resizeHandle === 'nw') { newX = start.x + start.w - newW; newY = start.y + start.h - newH; }
+                    else if (state.resizeHandle === 'ne') { newY = start.y + start.h - newH; }
+                    else if (state.resizeHandle === 'sw') { newX = start.x + start.w - newW; }
+                }
+
+                n.x = newX; n.y = newY; n.width = newW; n.height = newH;
+                n.manualW = newW; n.manualH = newH;
+
+                renderNode(n.id); renderAllEdges(); positionToolbars();
+                return;
+            }
 
             if (state.isDraggingNode && state.draggedNodeId) {
                 const n = state.nodes.find(v => v.id === state.draggedNodeId);
@@ -1304,6 +1375,12 @@
             if (state.isPanning) {
                 state.isPanning = false;
                 workspace.classList.remove('workspace-grabbing');
+            }
+
+            if (state.isResizing) {
+                state.isResizing = false;
+                state.resizingNodeId = null;
+                notifyDashboard();
             }
 
             if (e.touches && e.touches.length < 2) initialPinchDist = null;
